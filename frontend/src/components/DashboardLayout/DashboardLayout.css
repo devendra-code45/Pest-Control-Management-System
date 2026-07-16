@@ -1,0 +1,69 @@
+.dl-shell {
+  --layout-sidebar-width: 240px;
+  --layout-sidebar-width-collapsed: 80px;
+
+  min-height: 100vh;
+  background: #f7faf8;
+  font-family: "Poppins", sans-serif;
+}
+
+.dl-shell.dl-sidebar-collapsed {
+  --layout-sidebar-width: 80px;
+}
+
+.dl-body {
+  margin-left: var(--layout-sidebar-width);
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  transition: margin-left 0.25s ease;
+}
+
+.dl-main {
+  margin-top: 72px;
+  flex: 1;
+  overflow-y: auto;
+  height: calc(100vh - 72px);
+}
+
+.dl-content {
+  padding: 28px 32px 40px;
+  max-width: 1760px;
+  margin: 0 auto;
+}
+
+.dl-main::-webkit-scrollbar {
+  width: 8px;
+}
+
+.dl-main::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 4px;
+}
+
+.dl-main::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* ---------- Responsive ---------- */
+
+@media (max-width: 1440px) {
+  .dl-shell {
+    --layout-sidebar-width: 220px;
+  }
+
+  .dl-content {
+    padding: 24px 24px 36px;
+  }
+}
+
+@media (max-width: 1366px) {
+  .dl-shell {
+    --layout-sidebar-width: 210px;
+    --layout-sidebar-width-collapsed: 72px;
+  }
+
+  .dl-content {
+    padding: 20px 20px 32px;
+  }
+}
