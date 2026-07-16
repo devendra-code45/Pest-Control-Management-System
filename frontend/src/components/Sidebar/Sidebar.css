@@ -29,7 +29,7 @@
   justify-content: space-between;
   height: 72px;
   min-height: 72px;
-  padding: 0 10px;
+  padding: 0 21px;
   border-bottom: 1px solid #e5e7eb;
 }
 
@@ -77,7 +77,7 @@
 
 .sb-toggle {
   flex-shrink: 0;
-  width: 55px;
+  width: 30px;
   height: 28px;
   border-radius: 8px;
   border: 1px solid #e5e7eb;
