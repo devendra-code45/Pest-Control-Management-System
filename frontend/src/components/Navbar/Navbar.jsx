@@ -4,8 +4,6 @@ import {
   Search,
   Bell,
   HelpCircle,
-  Moon,
-  Sun,
   ChevronDown,
   UserCircle,
   Settings,
@@ -27,11 +25,10 @@ function useBreadcrumb(pathname) {
 export default function Navbar({
   user = { name: "John Doe", role: "Administrator", avatarUrl: "" },
   notificationCount = 3,
+  collapsed = false,
 }) {
   const location = useLocation();
   const crumbs = useBreadcrumb(location.pathname);
-
-  const [darkMode, setDarkMode] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
 
@@ -80,10 +77,6 @@ export default function Navbar({
             className="nb-search-input"
           />
         </div>
-
-        <button type="button" className="nb-icon-btn" aria-label="Help">
-          <HelpCircle size={18} />
-        </button>
 
         <button type="button" className="nb-icon-btn" aria-label="Notifications">
           <Bell size={18} />

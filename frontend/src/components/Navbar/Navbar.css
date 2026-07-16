@@ -1,22 +1,22 @@
-.nb-navbar {
+.nb-navbar{
   position: fixed;
-  top: 5px;
-  right: 0px;
-  left: var(--layout-sidebar-width, 240px);
-  height: 40px;
+  top: 0;
+  left: 280px;
+  right: 0;
+  height: 64px;
   display: flex;
-  align-items: center;
   justify-content: space-between;
-  gap: 24px;
-  padding: 0 28px;
-  background: #ffffff;
-  border-bottom: 1px solid #e5e7eb;
-  box-shadow: 0 2px 10px rgba(15, 23, 42, 0.03);
-  z-index: 30;
-  font-family: "Poppins", sans-serif;
-  transition: left 0.25s ease;
+  align-items: center;
+  padding: 0 24px;
+  background: #fff;
+  border-bottom: 1px solid #ececec;
+  z-index: 100;
+  transition: left 0.2s ease;
 }
 
+.dl-layout-collapsed .nb-navbar {
+  left: 82px;
+}
 /* ---------- Breadcrumb ---------- */
 
 .nb-left {
@@ -72,7 +72,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  width: 280px;
+  width: 340px;
   height: 25px;
   padding: 0 14px;
   background: #f7faf8;
@@ -163,7 +163,7 @@
   border: none;
   background: transparent;
   cursor: pointer;
-  padding: 6px 8px;
+  padding: 6px 10px;
   border-radius: 10px;
   transition: background 0.18s ease;
 }
