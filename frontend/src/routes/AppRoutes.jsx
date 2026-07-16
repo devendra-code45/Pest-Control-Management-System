@@ -4,6 +4,9 @@ import DashboardLayout from "../components/DashboardLayout/DashboardLayout";
 import Dashboard from "../Pages/dashboard/Dashboard";
 
 import AddCustomer from "../Pages/customer/add-customer";
+
+import NewComplaint from "../Pages/complaint/newcomplaint";
+import ComplaintManagement from "../Pages/complaint/complaintmanagement";
 import TechnicianManagement from "../Pages/technician/technicianmanagement";
 import AddTechnician from "../Pages/technician/addtechnician";
 import AssignTechnician from "../Pages/technician/assigntechnician";
@@ -17,6 +20,8 @@ function AppRoutes() {
         <Route element={<DashboardLayout />}>
           <Route path="/" element={<Dashboard />} />
           <Route path="/add-customer" element={<AddCustomer />} />
+          <Route path="/new-complaint" element={<NewComplaint />} />
+          <Route path="/complaint" element={<ComplaintManagement />} />
           <Route path="/technician-management" element={<TechnicianManagement />} />
           <Route path="/add-technician" element={<AddTechnician />} />
           <Route path="/assign-technician" element={<AssignTechnician />} />
