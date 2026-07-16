@@ -35,7 +35,7 @@ const NAV_GROUPS = [
       { to: "/customers", label: "Customers", icon: Users },
       { to: "/bookings", label: "Bookings", icon: CalendarCheck },
       { to: "/services", label: "Services", icon: Sprout },
-      { to: "/technicians", label: "Technicians", icon: UserCog },
+      { to: "/technicians", label: "Technicians", icon: UserCog, path: "/technician-management" },
       { to: "/complaints", label: "Complaints", icon: MessageSquareWarning },
     ],
   },

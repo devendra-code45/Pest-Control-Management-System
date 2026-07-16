@@ -1,0 +1,513 @@
+/* ==========================================================================
+   Edit Technician Profile — page-level styles
+   Consistent with the existing Pest Control Management System theme
+   ========================================================================== */
+
+.edit-technician-page {
+  --primary: #15803d;
+  --secondary: #166534;
+  --accent: #22c55e;
+  --bg: #f7faf8;
+  --card: #ffffff;
+  --text: #1f2937;
+  --text-muted: #6b7280;
+  --border: #e5e7eb;
+  --success: #16a34a;
+  --warning: #f59e0b;
+  --danger: #dc2626;
+  --info: #2563eb;
+
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --shadow-card: 0 1px 2px rgba(15, 23, 42, 0.04), 0 1px 8px rgba(15, 23, 42, 0.04);
+
+  font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  color: var(--text);
+  background: var(--bg);
+ max-width: 1224px;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+.edit-technician-page *,
+.edit-technician-page *::before,
+.edit-technician-page *::after {
+  box-sizing: border-box;
+}
+
+/* --------------------------------------------------------------------------
+   Breadcrumb
+   -------------------------------------------------------------------------- */
+
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  margin-bottom: 16px;
+}
+
+.breadcrumb__link {
+  color: var(--primary);
+  text-decoration: none;
+}
+
+.breadcrumb__link:hover {
+  text-decoration: underline;
+}
+
+.breadcrumb__separator {
+  color: var(--text-muted);
+}
+
+.breadcrumb__current {
+  color: var(--text-muted);
+}
+
+/* --------------------------------------------------------------------------
+   Page header
+   -------------------------------------------------------------------------- */
+
+.page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 24px;
+  gap: 16px;
+}
+
+.page-header__title {
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  margin: 0 0 4px;
+}
+
+.page-header__subtitle {
+  font-size: 14px;
+  color: var(--text-muted);
+  margin: 0;
+  font-weight: 400;
+}
+
+.page-header__actions {
+  display: flex;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+/* --------------------------------------------------------------------------
+   Buttons
+   -------------------------------------------------------------------------- */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 10px 18px;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease, transform 0.05s ease;
+  white-space: nowrap;
+}
+
+.btn:active {
+  transform: translateY(1px);
+}
+
+.btn--outline {
+  background: var(--card);
+  color: var(--text);
+  border-color: var(--border);
+}
+
+.btn--outline:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.btn--success {
+  background: var(--success);
+  color: #ffffff;
+}
+
+.btn--success:hover {
+  background: #128038;
+}
+
+/* --------------------------------------------------------------------------
+   Form layout
+   -------------------------------------------------------------------------- */
+
+.form-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 340px;
+  gap: 20px;
+  align-items: start;
+}
+
+.form-main {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-width: 0;
+}
+
+.form-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  position: sticky;
+  top: 20px;
+}
+
+.form-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
+  padding: 24px;
+}
+
+.section-heading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.section-heading__icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: #dcfce7;
+  color: var(--primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.section-heading h2 {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--primary);
+  margin: 0;
+}
+
+/* --------------------------------------------------------------------------
+   Field grid
+   -------------------------------------------------------------------------- */
+
+.field-grid {
+  display: grid;
+  gap: 18px;
+  margin-bottom: 18px;
+}
+
+.field-grid--3 {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.field-grid--4 {
+  grid-template-columns: repeat(4, 1fr);
+}
+
+.form-field {
+  margin-bottom: 18px;
+}
+
+.form-card > .form-field:last-child,
+.form-field--last {
+  margin-bottom: 0;
+}
+
+.field-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 7px;
+}
+
+.field-label__required {
+  color: var(--danger);
+  margin-left: 2px;
+}
+
+/* --------------------------------------------------------------------------
+   Inputs
+   -------------------------------------------------------------------------- */
+
+.input-shell {
+  position: relative;
+  display: flex;
+  align-items: center;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--card);
+  height: 42px;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.input-shell:focus-within {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(21, 128, 61, 0.12);
+}
+
+.input-shell__icon {
+  color: var(--text-muted);
+  margin-left: 14px;
+  flex-shrink: 0;
+  pointer-events: none;
+}
+
+.input-shell__field {
+  flex: 1;
+  border: none;
+  background: transparent;
+  font-family: inherit;
+  font-size: 13.5px;
+  color: var(--text);
+  padding: 0 14px 0 10px;
+  height: 100%;
+  min-width: 0;
+}
+
+.input-shell__field:focus {
+  outline: none;
+}
+
+.input-shell__field::placeholder {
+  color: #9ca3af;
+}
+
+.input-shell__field--select {
+  appearance: none;
+  cursor: pointer;
+  padding-right: 30px;
+  color: var(--text);
+}
+
+.input-shell__chevron {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  pointer-events: none;
+}
+
+.textarea-field {
+  width: 100%;
+  font-family: inherit;
+  font-size: 13.5px;
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 14px;
+  resize: vertical;
+  min-height: 96px;
+}
+
+.textarea-field:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(21, 128, 61, 0.12);
+}
+
+/* --------------------------------------------------------------------------
+   Status select with colored dot
+   -------------------------------------------------------------------------- */
+
+.input-shell--status {
+  padding-left: 14px;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  margin-right: 8px;
+}
+
+.status-dot--active {
+  background: var(--success);
+}
+
+.status-dot--inactive {
+  background: #9ca3af;
+}
+
+.status-dot--leave {
+  background: var(--warning);
+}
+
+.status-dot--suspended {
+  background: var(--danger);
+}
+
+.input-shell--status .input-shell__field {
+  padding-left: 0;
+}
+
+/* --------------------------------------------------------------------------
+   Profile photo upload
+   -------------------------------------------------------------------------- */
+
+.photo-upload {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.photo-upload__avatar {
+  position: relative;
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  border: none;
+  padding: 0;
+  background: #f0f4f1;
+  cursor: pointer;
+  overflow: visible;
+  margin-bottom: 12px;
+}
+
+.photo-upload__avatar img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  display: block;
+}
+
+.photo-upload__placeholder {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: #eef2f1;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.photo-upload__badge {
+  position: absolute;
+  bottom: 2px;
+  right: 2px;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--primary);
+  color: #ffffff;
+  border: 2px solid #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.photo-upload__hint-title {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text);
+  margin: 0 0 2px;
+}
+
+.photo-upload__hint {
+  font-size: 11.5px;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+/* --------------------------------------------------------------------------
+   Quick guidelines
+   -------------------------------------------------------------------------- */
+
+.guidelines-card {
+  background: #f0fdf4;
+  border-color: #dcfce7;
+}
+
+.guidelines-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.guidelines-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 12.5px;
+  color: var(--text);
+  line-height: 1.5;
+}
+
+.guidelines-list li svg {
+  color: var(--primary);
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+/* --------------------------------------------------------------------------
+   Footer actions
+   -------------------------------------------------------------------------- */
+
+.form-footer {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
+  padding: 16px 24px;
+}
+
+/* --------------------------------------------------------------------------
+   Responsive breakpoints (desktop-first)
+   -------------------------------------------------------------------------- */
+
+@media (max-width: 1600px) {
+  .form-grid {
+    grid-template-columns: minmax(0, 1fr) 320px;
+  }
+}
+
+@media (max-width: 1440px) {
+  .field-grid--4 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 1366px) {
+  .edit-technician-page {
+    padding: 20px;
+  }
+
+  .form-grid {
+    grid-template-columns: minmax(0, 1fr) 300px;
+    gap: 16px;
+  }
+
+  .form-card {
+    padding: 20px;
+  }
+
+  .field-grid--3 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
