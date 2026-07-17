@@ -20,7 +20,6 @@ import AddTechnician from "../Pages/technician/addtechnician";
 import AssignTechnician from "../Pages/technician/assigntechnician";
 import EditTechnician from "../Pages/technician/edittechnicianprofile";
 import TechnicianProfile from "../Pages/technician/technicianprofile";
-
 function AppRoutes() {
   return (
     <BrowserRouter>
