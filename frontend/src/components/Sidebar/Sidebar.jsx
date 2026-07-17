@@ -37,9 +37,9 @@ const NAV_GROUPS = [
         label: 'Customers',
         icon: Users,
         children: [
-          { key: 'add-customer', label: 'Add Customer', icon: UserPlus },
-          { key: 'customer-details', label: 'Customer Details', icon: Eye },
-          { key: 'edit-customer', label: 'Edit Customer', icon: Pencil },
+          { key: 'add-customer', label: 'Add Customer', icon: UserPlus, path: '/add-customer' },
+          { key: 'customer-details', label: 'Customer Details', icon: Eye, path: '/customer-details' },
+          { key: 'edit-customer', label: 'Edit Customer', icon: Pencil, path: '/edit-customer' },
         ],
       },
       {
