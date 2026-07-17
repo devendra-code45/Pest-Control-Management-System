@@ -20,6 +20,8 @@ import AddTechnician from "../Pages/technician/addtechnician";
 import AssignTechnician from "../Pages/technician/assigntechnician";
 import EditTechnician from "../Pages/technician/edittechnicianprofile";
 import TechnicianProfile from "../Pages/technician/technicianprofile";
+
+import LoginPage from "../Pages/login/login-page";
 function AppRoutes() {
   return (
     <BrowserRouter>
@@ -45,6 +47,8 @@ function AppRoutes() {
           <Route path="/assign-technician" element={<AssignTechnician />} />
           <Route path="/edit-technician" element={<EditTechnician />} />
           <Route path="/technician-profile" element={<TechnicianProfile />} />
+
+          <Route path="/login" element={<LoginPage />} />
         </Route>
       </Routes>
     </BrowserRouter>
