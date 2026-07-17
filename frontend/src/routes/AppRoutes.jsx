@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 
 import DashboardLayout from "../components/DashboardLayout/DashboardLayout";
 import Dashboard from "../Pages/dashboard/Dashboard";
@@ -20,12 +20,17 @@ import AddTechnician from "../Pages/technician/addtechnician";
 import AssignTechnician from "../Pages/technician/assigntechnician";
 import EditTechnician from "../Pages/technician/edittechnicianprofile";
 import TechnicianProfile from "../Pages/technician/technicianprofile";
+import Login from "../Pages/login/login";
+
 function AppRoutes() {
   return (
     <BrowserRouter>
       <Routes>
+        <Route path="/login" element={<Login />} />
+        <Route path="/" element={<Navigate to="/login" replace />} />
+
         <Route element={<DashboardLayout />}>
-          <Route path="/" element={<Dashboard />} />
+          <Route path="/dashboard" element={<Dashboard />} />
 
           <Route path="/add-customer" element={<AddCustomer />} />
           <Route path="/edit-customer" element={<EditCustomer />} />
