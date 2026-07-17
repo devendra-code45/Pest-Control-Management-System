@@ -71,7 +71,7 @@ const NAV_GROUPS = [
         icon: UserCog,
         children: [
           { key: 'technicians-list', label: 'Technicians', icon: ClipboardList },
-          { key: 'add-technician', label: 'Add Technician', icon: UserPlus },
+          { key: 'add-technician', label: 'Add Technician', icon: UserPlus, path: 'technicians/add-technician' },
           { key: 'technician-profile', label: 'Technician Profile', icon: User },
           { key: 'assign-technician', label: 'Assign Technician', icon: UserCheck },
           { key: 'technician-schedule', label: 'Technician Schedule', icon: Clock },
