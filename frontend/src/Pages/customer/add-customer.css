@@ -24,8 +24,8 @@
   font-family: "Poppins", "Segoe UI", sans-serif;
   color: var(--color-text);
   background: var(--color-bg);
-  min-width: 1366px;
-  padding: 28px 32px 40px;
+ max-width:1224px;
+  margin :0 auto; 
   box-sizing: border-box;
 }
 
