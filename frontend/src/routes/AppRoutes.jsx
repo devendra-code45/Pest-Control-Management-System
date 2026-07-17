@@ -13,6 +13,8 @@ import AssignTechnician from "../Pages/technician/assigntechnician";
 import EditTechnician from "../Pages/technician/edittechnicianprofile";
 import TechnicianProfile from "../Pages/technician/technicianprofile";
 
+import CustomerDetails from "../Pages/customer/customer-details";
+import EditCustomer from "../Pages/customer/edit-customer";
 function AppRoutes() {
   return (
     <BrowserRouter>
@@ -27,7 +29,9 @@ function AppRoutes() {
           <Route path="/assign-technician" element={<AssignTechnician />} />
           <Route path="/edit-technician" element={<EditTechnician />} />
           <Route path="/technician-profile" element={<TechnicianProfile />} />
-        </Route>
+          <Route path="/customer-details" element={<CustomerDetails />} />
+          <Route path="/edit-customer" element={<EditCustomer />} />
+          </Route>
       </Routes>
     </BrowserRouter>
   );
