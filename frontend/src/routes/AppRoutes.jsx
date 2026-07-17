@@ -8,6 +8,11 @@ import EditCustomer from "../Pages/customer/edit-customer";
 import CustomerList from "../Pages/customer/customer-list";
 import CustomerDetails from "../Pages/customer/customer-details";
 
+import CreateBooking from "../Pages/booking/Create-Booking";
+import BookingDetails from "../Pages/booking/Booking-details";
+import BookingCalendar from "../Pages/booking/Booking-Calendar";
+import Booking from "../Pages/booking/Booking";
+
 import NewComplaint from "../Pages/complaint/newcomplaint";
 import ComplaintManagement from "../Pages/complaint/complaintmanagement";
 import TechnicianManagement from "../Pages/technician/technicianmanagement";
@@ -28,11 +33,16 @@ function AppRoutes() {
           <Route path="/customer-details" element={<CustomerDetails />} />
           <Route path="/customer-list" element={<CustomerList />} />
 
+          <Route path="/create-booking" element={<CreateBooking />} />
+          <Route path="/booking-details" element={<BookingDetails />} />
+          <Route path="/booking-calendar" element={<BookingCalendar />} />
+          <Route path="/booking" element={<Booking />} />
+
           <Route path="/new-complaint" element={<NewComplaint />} />
           <Route path="/complaint" element={<ComplaintManagement />} />
 
           <Route path="/technician-management" element={<TechnicianManagement />} />
-          <Route path="/add-technician" element={<AddTechnician />} />
+          <Route path="/technician/add-technician" element={<AddTechnician />} />
           <Route path="/assign-technician" element={<AssignTechnician />} />
           <Route path="/edit-technician" element={<EditTechnician />} />
           <Route path="/technician-profile" element={<TechnicianProfile />} />
