@@ -51,11 +51,10 @@ const NAV_GROUPS = [
         label: 'Bookings',
         icon: Calendar,
         children: [
-          { key: 'bookings-list', label: 'Bookings', icon: ClipboardList, path: '/bookings' },
+          { key: 'bookings-list', label: 'Bookings', icon: ClipboardList, path: '/booking' },
           { key: 'create-booking', label: 'Create Booking', icon: CalendarPlus, path: '/create-booking' },
           { key: 'booking-details', label: 'Booking Details', icon: Eye, path: '/booking-details' },
           { key: 'edit-booking', label: 'Edit Booking', icon: Pencil, path: '/edit-booking' },
-          { key: 'booking-calendar', label: 'Booking Calendar', icon: CalendarDays, path: '/booking-calendar' },
         ],
       },
       {
@@ -75,7 +74,7 @@ const NAV_GROUPS = [
         icon: UserCog,
         children: [
           { key: 'technicians-list', label: 'Technicians', icon: ClipboardList, path: '/technician-management' },
-          
+
           { key: 'add-technician', label: 'Add Technician', icon: UserPlus, path: '/technician/add-technician' },
           { key: 'technician-profile', label: 'Technician Profile', icon: User, path: '/technician-profile' },
           { key: 'assign-technician', label: 'Assign Technician', icon: UserCheck, path: '/assign-technician' },
