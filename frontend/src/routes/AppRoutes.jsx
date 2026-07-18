@@ -10,8 +10,8 @@ import CustomerDetails from "../Pages/customer/customer-details";
 
 import CreateBooking from "../Pages/booking/Create-Booking";
 import BookingDetails from "../Pages/booking/Booking-details";
-import BookingCalendar from "../Pages/booking/Booking-Calendar";
 import Booking from "../Pages/booking/Booking";
+import EditBooking from "../Pages/booking/Edit-Booking";
 
 
 import NewComplaint from "../Pages/complaint/newcomplaint";
@@ -21,8 +21,13 @@ import AddTechnician from "../Pages/technician/addtechnician";
 import AssignTechnician from "../Pages/technician/assigntechnician";
 import EditTechnician from "../Pages/technician/edittechnicianprofile";
 import TechnicianProfile from "../Pages/technician/technicianprofile";
-import Login from "../Pages/login/login";
 
+import Payment from "../Pages/Payments/Payments";
+import CreatePayment from "../pages/Payments/CreatePayments";
+import Invoice from "../Pages/Payments/invoice";
+import PaymentDetail from "../pages/Payments/PaymentsDetail";
+
+import Login from "../Pages/login/Login";
 function AppRoutes() {
   return (
     <BrowserRouter>
@@ -40,7 +45,7 @@ function AppRoutes() {
 
           <Route path="/create-booking" element={<CreateBooking />} />
           <Route path="/booking-details" element={<BookingDetails />} />
-          <Route path="/booking-calendar" element={<BookingCalendar />} />
+          <Route path="/edit-booking" element={<EditBooking />} />
           <Route path="/booking" element={<Booking />} />
 
           <Route path="/new-complaint" element={<NewComplaint />} />
@@ -51,6 +56,7 @@ function AppRoutes() {
           <Route path="/assign-technician" element={<AssignTechnician />} />
           <Route path="/edit-technician" element={<EditTechnician />} />
           <Route path="/technician-profile" element={<TechnicianProfile />} />
+
           <Route path="/payments" element={<Payment />} />
           <Route path="/create-payment" element={<CreatePayment />} />
           <Route path="/invoice" element={<Invoice />} />

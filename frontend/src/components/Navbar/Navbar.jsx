@@ -81,24 +81,6 @@ export default function Navbar({
       </div>
 
       <div className={`nb-right ${mobileSearchOpen ? "nb-search-active" : ""}`}>
-        <div className="nb-search">
-          <Search size={16} className="nb-search-icon" />
-          <input
-            type="text"
-            placeholder="Search customers, bookings, invoices..."
-            className="nb-search-input"
-            autoFocus={mobileSearchOpen}
-          />
-        </div>
-
-        <button
-          type="button"
-          className="nb-icon-btn nb-search-toggle"
-          aria-label={mobileSearchOpen ? "Close search" : "Open search"}
-          onClick={() => setMobileSearchOpen((o) => !o)}
-        >
-          {mobileSearchOpen ? <X size={18} /> : <Search size={18} />}
-        </button>
 
         <button type="button" className="nb-icon-btn" aria-label="Notifications">
           <Bell size={18} />

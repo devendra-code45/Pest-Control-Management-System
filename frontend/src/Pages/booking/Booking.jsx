@@ -191,14 +191,6 @@ export default function Booking() {
             <span>Select Date Range</span>
           </div>
         </div>
-
-        <button className="btn btn-outline filter-btn">
-          <Filter size={16} />
-          Filter
-        </button>
-        <button className="btn btn-icon-only" title="Refresh">
-          <RotateCw size={16} />
-        </button>
       </div>
 
       <div className="table-card">

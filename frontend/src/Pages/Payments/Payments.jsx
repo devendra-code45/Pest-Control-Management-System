@@ -103,11 +103,7 @@ export default function Payments() {
     <p className="py-subtitle">Manage all customer payments, invoices and transactions.</p>
   </div>
   <div className="py-header-actions">
-    <button type="button" className="py-btn py-btn-outline">
-      <Download size={16} />
-      Export
-    </button>
-    <Link to="/payments/create" className="py-btn py-btn-primary">
+    <Link to="/create-payment" className="py-btn py-btn-primary">
       <Plus size={16} />
       Create Payment
     </Link>
