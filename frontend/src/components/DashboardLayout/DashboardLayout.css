@@ -60,3 +60,46 @@ body {
   background: #d5d5d5;
   border-radius: 10px;
 }
+
+/* ---------- Backdrop (mobile drawer overlay) ---------- */
+
+.dl-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+  z-index: 190;
+  animation: dl-backdrop-in 0.18s ease;
+}
+
+@keyframes dl-backdrop-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* ---------- Responsive ---------- */
+
+/* Tablet: sidebar becomes an off-canvas drawer, so it no longer takes
+   up flex space in the layout. Sidebar.css switches it to
+   position:fixed at this same breakpoint. */
+@media (max-width: 1024px) {
+  .dl-sidebar,
+  .dl-sidebar.collapsed {
+    width: 0;
+  }
+}
+
+@media (max-width: 768px) {
+  .dl-content {
+    padding: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .dl-content {
+    padding: 12px;
+  }
+}

@@ -27,7 +27,29 @@
 .nb-left {
   display: flex;
   align-items: center;
+  gap: 6px;
   min-width: 0;
+}
+
+.nb-menu-btn {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  min-width: 38px;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: #374151;
+  cursor: pointer;
+  margin-right: 4px;
+  transition: background 0.18s ease, color 0.18s ease;
+}
+
+.nb-menu-btn:hover {
+  background: #f0fdf4;
+  color: #15803d;
 }
 
 .nb-breadcrumb {
@@ -108,6 +130,10 @@
 
 .nb-search-input::placeholder {
   color: #9ca3af;
+}
+
+.nb-search-toggle {
+  display: none;
 }
 
 .nb-icon-btn {
@@ -306,5 +332,87 @@
 
   .nb-user-info {
     display: none;
+  }
+}
+
+/* Tablet: sidebar becomes an overlay drawer, so the navbar always
+   spans full width and gets a hamburger button to open it. */
+@media (max-width: 1024px) {
+  .nb-navbar,
+  .dl-layout-collapsed .nb-navbar {
+    left: 0;
+  }
+
+  .nb-menu-btn {
+    display: inline-flex;
+  }
+
+  .nb-search {
+    width: 200px;
+  }
+}
+
+@media (max-width: 768px) {
+  .nb-navbar {
+    padding: 0 14px;
+    gap: 10px;
+  }
+
+  .nb-search {
+    width: 160px;
+  }
+
+  .nb-divider {
+    display: none;
+  }
+}
+
+/* Small phones: collapse the search bar behind a toggle button so the
+   breadcrumb, menu button, and profile always stay visible. */
+@media (max-width: 640px) {
+  .nb-search {
+    display: none;
+  }
+
+  .nb-search-toggle {
+    display: inline-flex;
+  }
+
+  .nb-right {
+    gap: 8px;
+    position: relative;
+  }
+
+  .nb-right.nb-search-active .nb-search {
+    display: flex;
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    transform: translateY(-50%);
+    width: auto;
+    z-index: 10;
+    background: #ffffff;
+  }
+
+  .nb-right.nb-search-active > *:not(.nb-search):not(.nb-search-toggle) {
+    visibility: hidden;
+  }
+
+  .nb-crumb-current,
+  .nb-crumb {
+    font-size: 12.5px;
+  }
+}
+
+@media (max-width: 480px) {
+  .nb-navbar {
+    padding: 0 10px;
+  }
+
+  .nb-user-avatar,
+  .nb-avatar {
+    width: 32px;
+    height: 32px;
   }
 }
