@@ -27,6 +27,7 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   X,
+  Lock,
 } from 'lucide-react';
 import './Sidebar.css';
 
@@ -111,7 +112,7 @@ const NAV_GROUPS = [
   {
     label: 'CONTROLS',
     items: [
-      { key: 'settings', label: 'Settings', icon: Settings, path: '/settings' },
+      { key: 'change-password', label: 'Change Password', icon: Lock, path: '/change-password' },
       { key: 'profile', label: 'Profile', icon: User, path: '/profile' },
       { key: 'logout', label: 'Logout', icon: LogOut, danger: true },
     ],

@@ -28,11 +28,17 @@ import Invoice from "../Pages/Payments/invoice";
 import PaymentDetail from "../pages/Payments/PaymentsDetail";
 
 import Login from "../Pages/login/Login";
+import Registration from "../Pages/login/Registration";
+import ChangePassword from "../Pages/login/ChangePassword";
+import ForgotPassword from "../Pages/login/ForgotPassword";
 function AppRoutes() {
   return (
     <BrowserRouter>
       <Routes>
         <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Registration />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/change-password" element={<ChangePassword />} />
         <Route path="/" element={<Navigate to="/login" replace />} />
 
         <Route element={<DashboardLayout />}>
