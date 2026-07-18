@@ -93,25 +93,25 @@ export default function PaymentsDetail() {
       </nav>
 
       <div className="pd-header">
-        <div>
-          <h1 className="pd-title">Payment Details</h1>
-          <p className="pd-subtitle">View complete payment and transaction information.</p>
-        </div>
-        <div className="pd-header-actions">
-          <button type="button" className="pd-btn pd-btn-outline">
-            <Download size={16} />
-            Download Receipt
-          </button>
-          <button type="button" className="pd-btn pd-btn-outline">
-            <Printer size={16} />
-            Print Receipt
-          </button>
-          <button type="button" className="pd-btn pd-btn-primary">
-            <RotateCcw size={16} />
-            Refund Payment
-          </button>
-        </div>
-      </div>
+  <div>
+    <h1 className="pd-title">Payment Details</h1>
+    <p className="pd-subtitle">View complete payment and transaction information.</p>
+  </div>
+  <div className="pd-header-actions">
+    <button type="button" className="pd-btn pd-btn-outline">
+      <Download size={16} />
+      Download Receipt
+    </button>
+    <button type="button" className="pd-btn pd-btn-outline">
+      <Printer size={16} />
+      Print Receipt
+    </button>
+    <button type="button" className="pd-btn pd-btn-primary">
+      <RotateCcw size={16} />
+      Refund Payment
+    </button>
+  </div>
+</div>
 
       <div className="pd-grid">
         <section className="pd-card">

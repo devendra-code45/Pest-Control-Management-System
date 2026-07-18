@@ -98,21 +98,21 @@ export default function Payments() {
       </nav>
 
       <div className="py-header">
-        <div>
-          <h1 className="py-title">Payments</h1>
-          <p className="py-subtitle">Manage all customer payments, invoices and transactions.</p>
-        </div>
-        <div className="py-header-actions">
-          <button type="button" className="py-btn py-btn-outline">
-            <Download size={16} />
-            Export
-          </button>
-          <Link to="/payments/create" className="py-btn py-btn-primary">
-            <Plus size={16} />
-            Create Payment
-          </Link>
-        </div>
-      </div>
+  <div>
+    <h1 className="py-title">Payments</h1>
+    <p className="py-subtitle">Manage all customer payments, invoices and transactions.</p>
+  </div>
+  <div className="py-header-actions">
+    <button type="button" className="py-btn py-btn-outline">
+      <Download size={16} />
+      Export
+    </button>
+    <Link to="/payments/create" className="py-btn py-btn-primary">
+      <Plus size={16} />
+      Create Payment
+    </Link>
+  </div>
+</div>
 
       <div className="py-stats-grid">
         {STATS.map(({ label, value, icon: Icon, note }) => (

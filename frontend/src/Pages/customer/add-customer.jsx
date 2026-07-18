@@ -143,7 +143,7 @@ export default function AddCustomer() {
             </nav>
           </div>
         </div>
-        
+
         <div className="page-header-actions">
           <button type="button" className="btn btn-outline">
             <X size={16} />

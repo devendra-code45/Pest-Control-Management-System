@@ -61,20 +61,17 @@ export default function CreatePayments() {
         <div>
           <h1 className="cp-title">Create Payment</h1>
           <p className="cp-subtitle">Record a new payment against an invoice or booking.</p>
-
-
-           <div className="cp-header-actions">
-           <button type="button" className="cp-btn cp-btn-outline">
+        </div>
+        <div className="cp-header-actions">
+          <Link to="/payments" className="cp-btn cp-btn-outline">
             <X size={16} />
             Cancel
-          </button>
+          </Link>
           <button type="submit" form="cp-form" className="cp-btn cp-btn-primary">
             <Save size={16} />
             Save Payment
           </button>
         </div>
-        </div>
-    
       </div>
 
       <form className="cp-grid" id="cp-form" onSubmit={handleSubmit}>

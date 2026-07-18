@@ -37,25 +37,25 @@ export default function Invoice() {
       </nav>
 
       <div className="inv-header">
-        <div>
-          <h1 className="inv-title">Invoice</h1>
-          <p className="inv-subtitle">View and download invoice details.</p>
-        </div>
-        <div className="inv-header-actions">
-          <button type="button" className="inv-btn inv-btn-outline">
-            <Download size={16} />
-            Download PDF
-          </button>
-          <button type="button" className="inv-btn inv-btn-primary">
-            <Mail size={16} />
-            Send Invoice
-          </button>
-          <button type="button" className="inv-btn inv-btn-outline">
-            <Printer size={16} />
-            Print Invoice
-          </button>
-        </div>
-      </div>
+  <div>
+    <h1 className="inv-title">Invoice</h1>
+    <p className="inv-subtitle">View and download invoice details.</p>
+  </div>
+  <div className="inv-header-actions">
+    <button type="button" className="inv-btn inv-btn-outline">
+      <Download size={16} />
+      Download PDF
+    </button>
+    <button type="button" className="inv-btn inv-btn-primary">
+      <Mail size={16} />
+      Send Invoice
+    </button>
+    <button type="button" className="inv-btn inv-btn-outline">
+      <Printer size={16} />
+      Print Invoice
+    </button>
+  </div>
+</div>
 
       <div className="inv-grid">
         <section className="inv-card inv-doc">
