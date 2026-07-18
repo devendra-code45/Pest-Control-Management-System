@@ -8,6 +8,8 @@ import {
   UserCircle,
   Settings,
   LogOut,
+  Menu,
+  X,
 } from "lucide-react";
 import "./Navbar.css";
 
@@ -26,10 +28,12 @@ export default function Navbar({
   user = { name: "John Doe", role: "Administrator", avatarUrl: "" },
   notificationCount = 3,
   collapsed = false,
+  onMenuClick,
 }) {
   const location = useLocation();
   const crumbs = useBreadcrumb(location.pathname);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const dropdownRef = useRef(null);
 
   useEffect(() => {
@@ -52,6 +56,14 @@ export default function Navbar({
   return (
     <header className="nb-navbar">
       <div className="nb-left">
+        <button
+          type="button"
+          className="nb-menu-btn"
+          onClick={onMenuClick}
+          aria-label="Open sidebar"
+        >
+          <Menu size={20} />
+        </button>
         <nav className="nb-breadcrumb" aria-label="Breadcrumb">
           {crumbs.map((crumb, i) => (
             <span className="nb-crumb-wrap" key={crumb.path}>
@@ -68,15 +80,25 @@ export default function Navbar({
         </nav>
       </div>
 
-      <div className="nb-right">
+      <div className={`nb-right ${mobileSearchOpen ? "nb-search-active" : ""}`}>
         <div className="nb-search">
           <Search size={16} className="nb-search-icon" />
           <input
             type="text"
             placeholder="Search customers, bookings, invoices..."
             className="nb-search-input"
+            autoFocus={mobileSearchOpen}
           />
         </div>
+
+        <button
+          type="button"
+          className="nb-icon-btn nb-search-toggle"
+          aria-label={mobileSearchOpen ? "Close search" : "Open search"}
+          onClick={() => setMobileSearchOpen((o) => !o)}
+        >
+          {mobileSearchOpen ? <X size={18} /> : <Search size={18} />}
+        </button>
 
         <button type="button" className="nb-icon-btn" aria-label="Notifications">
           <Bell size={18} />

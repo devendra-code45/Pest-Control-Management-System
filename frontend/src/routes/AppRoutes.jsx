@@ -13,6 +13,7 @@ import BookingDetails from "../Pages/booking/Booking-details";
 import BookingCalendar from "../Pages/booking/Booking-Calendar";
 import Booking from "../Pages/booking/Booking";
 
+
 import NewComplaint from "../Pages/complaint/newcomplaint";
 import ComplaintManagement from "../Pages/complaint/complaintmanagement";
 import TechnicianManagement from "../Pages/technician/technicianmanagement";
@@ -49,6 +50,10 @@ function AppRoutes() {
           <Route path="/assign-technician" element={<AssignTechnician />} />
           <Route path="/edit-technician" element={<EditTechnician />} />
           <Route path="/technician-profile" element={<TechnicianProfile />} />
+          <Route path="/payments" element={<Payment />} />
+          <Route path="/create-payment" element={<CreatePayment />} />
+          <Route path="/invoice" element={<Invoice />} />
+          <Route path="/payments-details" element={<PaymentDetail />} />
         </Route>
       </Routes>
     </BrowserRouter>

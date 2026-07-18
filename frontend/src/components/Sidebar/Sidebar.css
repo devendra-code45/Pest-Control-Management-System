@@ -301,3 +301,60 @@
 .sb-sub-icon {
   flex-shrink: 0;
 }
+
+/* ---------- Mobile backdrop ---------- */
+
+.sb-backdrop {
+  display: none;
+}
+
+/* ---------- Responsive ---------- */
+
+@media (max-width: 1024px) {
+  .sb-sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 200;
+    width: 280px;
+    transform: translateX(-100%);
+    transition: transform 0.22s ease;
+  }
+
+  /* Icon-rail collapse doesn't make sense as an overlay drawer, so on
+     tablet/mobile the sidebar is either fully hidden or fully open. */
+  .sb-sidebar.collapsed {
+    width: 280px;
+  }
+
+  .sb-sidebar.mobile-open {
+    transform: translateX(0);
+    box-shadow: 8px 0 24px rgba(15, 23, 42, 0.18);
+  }
+
+  .sb-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.45);
+    z-index: 190;
+    animation: sb-backdrop-in 0.18s ease;
+  }
+
+  @keyframes sb-backdrop-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+}
+
+@media (max-width: 400px) {
+  .sb-sidebar,
+  .sb-sidebar.mobile-open {
+    width: 84vw;
+    max-width: 300px;
+  }
+}
