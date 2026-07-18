@@ -455,11 +455,6 @@ const ComplaintManagement = () => {
           value={dateFilter}
           onChange={setDateFilter}
         />
-
-        <button type="button" className="btn btn--outline btn--icon-only-label">
-          <Filter size={16} />
-          Filter
-        </button>
       </section>
 
       {/* Content: table + details panel */}

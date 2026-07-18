@@ -21,6 +21,12 @@ import AddTechnician from "../Pages/technician/addtechnician";
 import AssignTechnician from "../Pages/technician/assigntechnician";
 import EditTechnician from "../Pages/technician/edittechnicianprofile";
 import TechnicianProfile from "../Pages/technician/technicianprofile";
+
+import Payment from "../Pages/Payments/Payments";
+import CreatePayment from "../pages/Payments/CreatePayments";
+import Invoice from "../Pages/Payments/invoice";
+import PaymentDetail from "../pages/Payments/PaymentsDetail";
+
 import Login from "../Pages/login/Login";
 function AppRoutes() {
   return (
@@ -50,6 +56,7 @@ function AppRoutes() {
           <Route path="/assign-technician" element={<AssignTechnician />} />
           <Route path="/edit-technician" element={<EditTechnician />} />
           <Route path="/technician-profile" element={<TechnicianProfile />} />
+          
           <Route path="/payments" element={<Payment />} />
           <Route path="/create-payment" element={<CreatePayment />} />
           <Route path="/invoice" element={<Invoice />} />

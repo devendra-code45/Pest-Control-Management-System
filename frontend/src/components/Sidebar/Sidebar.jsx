@@ -74,11 +74,11 @@ const NAV_GROUPS = [
         label: 'Technicians',
         icon: UserCog,
         children: [
-          { key: 'technicians-list', label: 'Technicians', icon: ClipboardList, path: '/technicians' },
-          { key: 'add-technician', label: 'Add Technician', icon: UserPlus, path: '/add-technician' },
+          { key: 'technicians-list', label: 'Technicians', icon: ClipboardList, path: '/technician-management' },
+          
+          { key: 'add-technician', label: 'Add Technician', icon: UserPlus, path: '/technician/add-technician' },
           { key: 'technician-profile', label: 'Technician Profile', icon: User, path: '/technician-profile' },
           { key: 'assign-technician', label: 'Assign Technician', icon: UserCheck, path: '/assign-technician' },
-          { key: 'technician-schedule', label: 'Technician Schedule', icon: Clock, path: '/technician-schedule' },
         ],
       },
       {
@@ -86,9 +86,8 @@ const NAV_GROUPS = [
         label: 'Complaints',
         icon: MessageSquare,
         children: [
-          { key: 'complaints-list', label: 'Complaints', icon: ClipboardList, path: '/complaints' },
-          { key: 'complaint-details', label: 'Complaint Details', icon: Eye, path: '/complaint-details' },
-          { key: 'resolve-complaint', label: 'Resolve Complaint', icon: CheckCircle2, path: '/resolve-complaint' },
+          { key: 'complaints-list', label: 'New Complaint', icon: ClipboardList, path: '/new-complaint' },
+          { key: 'complaint-details', label: 'Complaint Details', icon: Eye, path: '/complaint' },
         ],
       },
     ],

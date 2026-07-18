@@ -346,70 +346,7 @@ export default function TechnicianProfile() {
             <InfoRow label="Last Activity" value="10 min ago" />
           </div>
         </div>
-
-        {/* Row 2 */}
-        <div className="tp-card">
-          <SectionHeader icon={Award} title="Skills" />
-          <div className="tp-skill-bars">
-            {SKILLS.map((skill) => (
-              <div className="tp-skill-row" key={skill.name}>
-                <div className="tp-skill-top">
-                  <span>{skill.name}</span>
-                  <span className="tp-skill-percent">{skill.value}%</span>
-                </div>
-                <div className="tp-progress-track">
-                  <div
-                    className="tp-progress-fill"
-                    style={{ width: `${skill.value}%` }}
-                  />
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="tp-card">
-          <SectionHeader icon={ShieldCheck} title="Certifications" />
-          <table className="tp-cert-table">
-            <thead>
-              <tr>
-                <th>Certification</th>
-                <th>Issued Date</th>
-                <th>Expiry Date</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {CERTIFICATIONS.map((cert) => (
-                <tr key={cert.name}>
-                  <td>{cert.name}</td>
-                  <td className="tp-muted">{cert.issued}</td>
-                  <td className="tp-muted">{cert.expiry}</td>
-                  <td>
-                    <span className="tp-badge tp-badge-success tp-badge-sm">
-                      {cert.status}
-                    </span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
-        <div className="tp-card">
-          <SectionHeader icon={Activity} title="Recent Activity" />
-          <ul className="tp-activity-list">
-            {RECENT_ACTIVITY.map((item, i) => (
-              <li key={i}>
-                <span className="tp-activity-dot" />
-                <div className="tp-activity-body">
-                  <span className="tp-activity-time">{item.time}</span>
-                  <span className="tp-activity-text">{item.text}</span>
-                </div>
-              </li>
-            ))}
-          </ul>
-        </div>
+        
       </div>
     </div>
   );
