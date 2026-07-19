@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import {useNavigate} from 'react-router-dom';
 import {
   Calendar,
   CalendarCheck,
@@ -99,6 +100,7 @@ export default function Booking() {
   const [serviceFilter, setServiceFilter] = useState('All');
   const [currentPage, setCurrentPage] = useState(1);
   const [openMenu, setOpenMenu] = useState(null);
+  const navigate = useNavigate();
 
   const filteredBookings = useMemo(() => {
     return BOOKINGS.filter((b) => {
@@ -126,7 +128,7 @@ export default function Booking() {
           <h1 className="page-title">Bookings</h1>
           <p className="page-subtitle">Manage and track all pest control service bookings.</p>
         </div>
-        <button className="btn btn-primary" id="create-booking-btn">
+        <button className="btn btn-primary" id="create-booking-btn" onClick = {() => navigate("/create-booking")}>
           <Plus size={18} />
           Create Booking
         </button>

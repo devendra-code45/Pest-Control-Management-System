@@ -43,8 +43,8 @@ const NAV_GROUPS = [
         icon: Users,
         children: [
           { key: 'add-customer', label: 'Add Customer', icon: UserPlus, path: '/add-customer' },
-          { key: 'customer-details', label: 'Customer Details', icon: Eye, path: '/customer-details' },
           { key: 'edit-customer', label: 'Edit Customer', icon: Pencil, path: '/edit-customer' },
+          { key: 'customer-details', label: 'Customer Details', icon: Eye, path: '/customer-details' },
         ],
       },
       {
@@ -52,10 +52,10 @@ const NAV_GROUPS = [
         label: 'Bookings',
         icon: Calendar,
         children: [
-          { key: 'bookings-list', label: 'Bookings', icon: ClipboardList, path: '/booking' },
           { key: 'create-booking', label: 'Create Booking', icon: CalendarPlus, path: '/create-booking' },
-          { key: 'booking-details', label: 'Booking Details', icon: Eye, path: '/booking-details' },
           { key: 'edit-booking', label: 'Edit Booking', icon: Pencil, path: '/edit-booking' },
+          { key: 'bookings-list', label: 'Bookings', icon: ClipboardList, path: '/booking' },
+          { key: 'booking-details', label: 'Booking Details', icon: Eye, path: '/booking-details' },
         ],
       },
       {
@@ -63,10 +63,10 @@ const NAV_GROUPS = [
         label: 'Services',
         icon: Sprout,
         children: [
-          { key: 'services-list', label: 'Services', icon: ClipboardList, path: '/services' },
           { key: 'add-service', label: 'Add Service', icon: Plus, path: '/add-service' },
-          { key: 'service-details', label: 'Service Details', icon: Eye, path: '/service-details' },
           { key: 'edit-service', label: 'Edit Service', icon: Pencil, path: '/edit-service' },
+          { key: 'service-details', label: 'Service Details', icon: Eye, path: '/service-details' },
+          { key: 'services-list', label: 'Services', icon: ClipboardList, path: '/services' },
         ],
       },
       {
@@ -74,11 +74,11 @@ const NAV_GROUPS = [
         label: 'Technicians',
         icon: UserCog,
         children: [
-          { key: 'technicians-list', label: 'Technicians', icon: ClipboardList, path: '/technician-management' },
-
           { key: 'add-technician', label: 'Add Technician', icon: UserPlus, path: '/technician/add-technician' },
+          { key: 'edit-technician', label: 'Edit Technician', icon: Pencil, path: '/edit-technician' },
           { key: 'technician-profile', label: 'Technician Profile', icon: User, path: '/technician-profile' },
           { key: 'assign-technician', label: 'Assign Technician', icon: UserCheck, path: '/assign-technician' },
+          { key: 'technicians-list', label: 'Technicians', icon: ClipboardList, path: '/technician-management' },
         ],
       },
       {
@@ -100,9 +100,8 @@ const NAV_GROUPS = [
         label: 'Payments',
         icon: CreditCard,
         children: [
-          { key: 'payments-list', label: 'Payments', icon: ClipboardList, path: '/payments' },
-          { key: 'payments-details', label: 'Payments Details', icon: Eye, path: '/payments-details' },
           { key: 'create-payment', label: 'Create Payment', icon: Plus, path: '/create-payment' },
+          { key: 'payments-list', label: 'Payments', icon: ClipboardList, path: '/payments' },
           { key: 'invoice', label: 'Invoice', icon: Receipt, path: '/invoice' },
         ],
       },
@@ -114,7 +113,7 @@ const NAV_GROUPS = [
     items: [
       { key: 'change-password', label: 'Change Password', icon: Lock, path: '/change-password' },
       { key: 'profile', label: 'Profile', icon: User, path: '/profile' },
-      { key: 'logout', label: 'Logout', icon: LogOut, danger: true },
+      { key: 'logout', label: 'Logout', icon: LogOut, danger: true, path: '/'},
     ],
   },
 ];

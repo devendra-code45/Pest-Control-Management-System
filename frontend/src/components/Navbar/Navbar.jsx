@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   Search,
   Bell,
@@ -124,16 +124,8 @@ export default function Navbar({
                 <UserCircle size={16} />
                 My Profile
               </Link>
-              <Link
-                to="/settings"
-                className="nb-dropdown-item"
-                onClick={() => setDropdownOpen(false)}
-              >
-                <Settings size={16} />
-                Settings
-              </Link>
               <div className="nb-dropdown-sep" />
-              <button type="button" className="nb-dropdown-item nb-dropdown-danger">
+              <button type="button" className="nb-dropdown-item nb-dropdown-danger"  onClick={() => navigate("/")}>
                 <LogOut size={16} />
                 Logout
               </button>
