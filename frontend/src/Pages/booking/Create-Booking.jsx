@@ -232,8 +232,7 @@ export default function CreateBooking() {
 
               <div className="form-field span-3">
                 <label>Notes (Optional)</label>
-                <div className="input-with-icon textarea-wrap">
-                  <FileText size={16} />
+                <div>
                   <textarea
                     rows={3}
                     placeholder="Enter any special instructions or notes..."

@@ -48,19 +48,6 @@
   margin-bottom: 16px;
 }
 
-.breadcrumb__link {
-  color: var(--primary);
-  text-decoration: none;
-}
-
-.breadcrumb__link:hover {
-  text-decoration: underline;
-}
-
-.breadcrumb__separator {
-  color: var(--text-muted);
-}
-
 .breadcrumb__current {
   color: var(--text-muted);
 }

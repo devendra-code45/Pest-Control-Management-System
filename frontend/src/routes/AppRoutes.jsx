@@ -5,7 +5,6 @@ import Dashboard from "../Pages/dashboard/Dashboard";
 
 import AddCustomer from "../Pages/customer/add-customer";
 import EditCustomer from "../Pages/customer/edit-customer";
-import CustomerList from "../Pages/customer/customer-list";
 import CustomerDetails from "../Pages/customer/customer-details";
 
 import CreateBooking from "../Pages/booking/Create-Booking";
@@ -47,7 +46,6 @@ function AppRoutes() {
           <Route path="/add-customer" element={<AddCustomer />} />
           <Route path="/edit-customer" element={<EditCustomer />} />
           <Route path="/customer-details" element={<CustomerDetails />} />
-          <Route path="/customer-list" element={<CustomerList />} />
 
           <Route path="/create-booking" element={<CreateBooking />} />
           <Route path="/booking-details" element={<BookingDetails />} />
@@ -67,6 +65,11 @@ function AppRoutes() {
           <Route path="/create-payment" element={<CreatePayment />} />
           <Route path="/invoice" element={<Invoice />} />
           <Route path="/payments-details" element={<PaymentDetail />} />
+
+
+          <Route path="/*" element={<h1>404 - Page Not Found</h1>} />
+
+
         </Route>
       </Routes>
     </BrowserRouter>
