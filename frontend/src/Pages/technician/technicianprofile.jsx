@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import {useNavigate} from 'react-router-dom';
 import {
   Home,
   ChevronRight,
@@ -144,6 +145,7 @@ const SectionHeader = ({ icon: Icon, title }) => (
 
 export default function TechnicianProfile() {
   const [activeTab, setActiveTab] = useState("overview");
+  const navigate = useNavigate();
 
   return (
     <div className="tp-page">
@@ -168,18 +170,13 @@ export default function TechnicianProfile() {
           </p>
         </div>
         <div className="tp-header-actions">
-          <button type="button" className="tp-btn tp-btn-outline">
+          <button type="button" className="tp-btn tp-btn-outline" onClick={() => navigate("/technician-management")}>
             <ArrowLeft size={16} />
             Back to Technicians
           </button>
-          <button type="button" className="tp-btn tp-btn-primary">
+          <button type="button" className="tp-btn tp-btn-primary" onClick={() => navigate("/edit-technician")}>
             <Pencil size={15} />
             Edit Profile
-          </button>
-          <button type="button" className="tp-btn tp-btn-outline">
-            <MoreHorizontal size={16} />
-            More
-            <ChevronDown size={14} />
           </button>
         </div>
       </div>
@@ -239,7 +236,7 @@ export default function TechnicianProfile() {
               <MapPin size={15} />
               <div>
                 <span className="tp-meta-label">Region</span>
-                <span className="tp-meta-value">9876543210</span>
+                <span className="tp-meta-value">North Zone</span>
               </div>
             </div>
             <div className="tp-meta-item">

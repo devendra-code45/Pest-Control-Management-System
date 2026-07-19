@@ -153,10 +153,6 @@ export default function AddTechnician() {
           </p>
         </div>
         <div className="at-header-actions">
-          <button type="button" className="at-btn at-btn-outline">
-            <ArrowLeft size={16} />
-            Back to Technicians
-          </button>
           <button type="button" className="at-btn at-btn-primary">
             <Save size={16} />
             Save Technician

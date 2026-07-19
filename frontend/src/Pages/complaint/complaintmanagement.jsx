@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import {useNavigate} from 'react-router-dom';
 import {
   Bug,
   Clock,
@@ -323,6 +324,7 @@ const ComplaintManagement = () => {
   const [activeTab, setActiveTab] = useState('details');
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
+  const navigate = useNavigate();
 
   const filteredComplaints = useMemo(() => {
     return COMPLAINTS.filter((c) => {
@@ -363,16 +365,12 @@ const ComplaintManagement = () => {
     <div className="complaint-page">
       {/* Breadcrumb */}
       <nav className="breadcrumb" aria-label="Breadcrumb">
-        <a href="#home" className="breadcrumb__link">
-          Home
-        </a>
-        <span className="breadcrumb__separator">/</span>
-        <a href="#complaints" className="breadcrumb__link">
-          Complaints
-        </a>
-        <span className="breadcrumb__separator">/</span>
-        <span className="breadcrumb__current">Complaint Management</span>
-      </nav>
+                Dashboard
+              <ChevronRight size={13} className="at-crumb-sep" />
+                Complaints
+              <ChevronRight size={13} className="at-crumb-sep" />
+              <span className="breadcrumb__current">Complaint Details</span>
+            </nav>
 
       {/* Page header */}
       <header className="page-header">
@@ -383,14 +381,10 @@ const ComplaintManagement = () => {
           </p>
         </div>
         <div className="page-header__actions">
-          <button type="button" className="btn btn--primary">
+          <button type="button" className="btn btn--primary" onClick={() => navigate('/new-complaint')}>
             <Plus size={16} />
             New Complaint
             <ChevronDown size={14} />
-          </button>
-          <button type="button" className="btn btn--outline">
-            <Download size={16} />
-            Export
           </button>
         </div>
       </header>

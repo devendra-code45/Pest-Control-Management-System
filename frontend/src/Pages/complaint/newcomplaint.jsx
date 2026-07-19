@@ -1,4 +1,5 @@
 import React, { useState, useRef } from 'react';
+import {useNavigate} from 'react-router-dom';
 import {
   ArrowLeft,
   Save,
@@ -20,6 +21,7 @@ import {
   FileText,
   Info,
   Building,
+  ChevronRight,
 } from 'lucide-react';
 import './newcomplaint.css';
 
@@ -111,6 +113,7 @@ const NewComplaint = () => {
   const [photos, setPhotos] = useState([]);
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef(null);
+  const navigate = useNavigate();
 
   const updateField = (field) => (e) => {
     setForm((prev) => ({ ...prev, [field]: e.target.value }));
@@ -160,18 +163,10 @@ const NewComplaint = () => {
     <div className="new-complaint-page">
       {/* Breadcrumb */}
       <nav className="breadcrumb" aria-label="Breadcrumb">
-        <a href="#home" className="breadcrumb__link">
-          Home
-        </a>
-        <span className="breadcrumb__separator">/</span>
-        <a href="#complaint-management" className="breadcrumb__link">
-          Complaint Management
-        </a>
-        <span className="breadcrumb__separator">/</span>
-        <a href="#complaints" className="breadcrumb__link">
+          Dashboard
+        <ChevronRight size={13} className="at-crumb-sep" />
           Complaints
-        </a>
-        <span className="breadcrumb__separator">/</span>
+        <ChevronRight size={13} className="at-crumb-sep" />
         <span className="breadcrumb__current">New Complaint</span>
       </nav>
 
@@ -184,7 +179,7 @@ const NewComplaint = () => {
           </p>
         </div>
         <div className="page-header__actions">
-          <button type="button" className="btn btn--outline">
+          <button type="button" className="btn btn--outline" onClick={() => navigate('/complaint')}>
             <ArrowLeft size={16} />
             Back to Complaints
           </button>

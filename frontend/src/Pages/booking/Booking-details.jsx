@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   ChevronRight,
   Copy,
@@ -61,6 +62,7 @@ const TIMELINE = [
 ];
 
 export default function BookingDetails() {
+  const navigate = useNavigate();
   return (
     <div className="bd-page">
       <div className="bd-breadcrumb">
@@ -77,11 +79,11 @@ export default function BookingDetails() {
           <p className="page-subtitle">View complete booking information and status.</p>
         </div>
         <div className="bd-header-actions">
-          <button className="btn btn-outline">
+          <button className="btn btn-outline" onClick={() => navigate("/edit-booking")}>
             <Edit3 size={16} />
             Edit Booking
           </button>
-          <button className="btn btn-primary">
+          <button className="btn btn-primary" onClick={() => navigate("/create-booking")}>
             <Plus size={17} />
             New Booking
           </button>
