@@ -28,6 +28,12 @@ import Invoice from "../Pages/Payments/invoice";
 import PaymentDetail from "../pages/Payments/PaymentsDetail";
 
 import Login from "../Pages/login/Login";
+
+import Profile from '../Pages/profile/profile';
+import ProfileSecurity from '../Pages/profile/ProfileSecurity';
+import ProfilePreferences from '../Pages/profile/ProfilePreferences';
+import ProfileActivity from '../Pages/profile/ProfileActivity';
+
 function AppRoutes() {
   return (
     <BrowserRouter>
@@ -61,6 +67,13 @@ function AppRoutes() {
           <Route path="/create-payment" element={<CreatePayment />} />
           <Route path="/invoice" element={<Invoice />} />
           <Route path="/payments-details" element={<PaymentDetail />} />
+
+          <Route path="/profile" element={<Profile />} />
+          <Route path="/profile/security" element={<ProfileSecurity />} />
+          <Route path="/profile/preferences" element={<ProfilePreferences />} />
+          <Route path="/profile/activity" element={<ProfileActivity />} />
+
+          
         </Route>
       </Routes>
     </BrowserRouter>
