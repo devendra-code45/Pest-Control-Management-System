@@ -126,7 +126,7 @@ export default function Booking() {
           <h1 className="page-title">Bookings</h1>
           <p className="page-subtitle">Manage and track all pest control service bookings.</p>
         </div>
-        <button className="btn btn-primary">
+        <button className="btn btn-primary" id="create-booking-btn">
           <Plus size={18} />
           Create Booking
         </button>

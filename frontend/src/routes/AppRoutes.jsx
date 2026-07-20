@@ -28,18 +28,22 @@ import Invoice from "../Pages/Payments/invoice";
 import PaymentDetail from "../pages/Payments/PaymentsDetail";
 
 import Login from "../Pages/login/Login";
-
 import Profile from '../Pages/profile/profile';
-import ProfileSecurity from '../Pages/profile/ProfileSecurity';
-import ProfilePreferences from '../Pages/profile/ProfilePreferences';
-import ProfileActivity from '../Pages/profile/ProfileActivity';
+import Reports from "../Pages/reports/Reports";
+
+import Registration from "../Pages/login/Registration";
+import ChangePassword from "../Pages/login/ChangePassword";
+import ForgotPassword from "../Pages/login/ForgotPassword";
 
 function AppRoutes() {
   return (
     <BrowserRouter>
       <Routes>
         <Route path="/login" element={<Login />} />
-        <Route path="/" element={<Navigate to="/login" replace />} />
+        <Route path="/register" element={<Registration />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/change-password" element={<ChangePassword />} />
+        <Route path="/login" element={<Navigate to="/login" replace />} />
 
         <Route element={<DashboardLayout />}>
           <Route path="/dashboard" element={<Dashboard />} />
@@ -69,10 +73,7 @@ function AppRoutes() {
           <Route path="/payments-details" element={<PaymentDetail />} />
 
           <Route path="/profile" element={<Profile />} />
-          <Route path="/profile/security" element={<ProfileSecurity />} />
-          <Route path="/profile/preferences" element={<ProfilePreferences />} />
-          <Route path="/profile/activity" element={<ProfileActivity />} />
-
+          <Route path="/reports" element={<Reports />} />
           
         </Route>
       </Routes>

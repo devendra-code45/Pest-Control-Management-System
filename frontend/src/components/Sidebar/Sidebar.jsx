@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import {
   Leaf,
@@ -8,6 +8,7 @@ import {
   Pencil,
   Calendar,
   CalendarPlus,
+  CalendarDays,
   ClipboardList,
   Sprout,
   Plus,
@@ -15,8 +16,8 @@ import {
   User,
   UserCheck,
   Clock,
-  Lock,
   MessageSquare,
+  CheckCircle2,
   CreditCard,
   Receipt,
   BarChart3,
@@ -26,12 +27,19 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   X,
+  Lock,
 } from 'lucide-react';
 import './Sidebar.css';
 
 // Every leaf item gets a `path`, matching the convention already used by
 // the Customers submenu (add-customer -> /add-customer, etc).
 const NAV_GROUPS = [
+  {
+    label: 'MAIN',
+    items: [
+      { key: 'dashboard', label: 'Dashboard', icon: Sprout, path: '/dashboard' }, 
+    ]
+  },
   {
     label: 'OPERATIONS',
     items: [
@@ -90,7 +98,6 @@ const NAV_GROUPS = [
       },
     ],
   },
-
   {
     label: 'FINANCE & INSIGHTS',
     items: [
@@ -105,26 +112,14 @@ const NAV_GROUPS = [
           { key: 'invoice', label: 'Invoice', icon: Receipt, path: '/invoice' },
         ],
       },
-
       { key: 'reports', label: 'Reports', icon: BarChart3, path: '/reports' },
     ],
   },
   {
     label: 'CONTROLS',
     items: [
-      {
-        key: 'profile',
-        label: 'Profile',
-        icon: User,
-        children: [
-          { key: 'profile', label: 'Profile', icon: User, path: '/profile' },
-          { key: 'profile-security', label: 'Security', icon: Lock, path: '/profile/security' },
-          { key: 'profile-preferences', label: 'Preferences', icon: Settings, path: '/profile/preferences' },
-          { key: 'profile-activity', label: 'Activity', icon: Clock, path: '/profile/activity' },
-        ],
-      },
-      { key: 'settings', label: 'Settings', icon: Settings, path: '/settings' },
-
+      { key: 'change-password', label: 'Change Password', icon: Lock, path: '/change-password' },
+      { key: 'profile', label: 'Profile', icon: User, path: '/profile' },
       { key: 'logout', label: 'Logout', icon: LogOut, danger: true },
     ],
   },
@@ -147,17 +142,18 @@ export default function Sidebar({
   // an already-open group doesn't silently force it back open.
   const [manuallyClosed, setManuallyClosed] = useState(new Set());
 
-  const routeGroupKey = useMemo(() => {
+  // Whichever group contains the current route opens automatically --
+  // this is what makes "click the module, it opens, and shows the right
+  // submenu item" work, and keeps things in sync on direct/deep links.
+  useEffect(() => {
     const groupForRoute = NAV_GROUPS.flatMap((g) => g.items).find(
       (item) => item.children?.some((child) => child.path === location.pathname)
     );
-    return groupForRoute?.key ?? null;
+    if (groupForRoute && !manuallyClosed.has(groupForRoute.key)) {
+      setOpenKey(groupForRoute.key);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.pathname]);
-
-  const effectiveOpenKey =
-    routeGroupKey && !manuallyClosed.has(routeGroupKey)
-      ? routeGroupKey
-      : openKey;
 
   const toggleGroup = (key) => {
     setOpenKey((prev) => {
@@ -241,7 +237,7 @@ export default function Sidebar({
               {group.items.map((item) => {
                 const Icon = item.icon;
                 const hasChildren = Boolean(item.children && item.children.length);
-                const isOpen = hasChildren && effectiveOpenKey === item.key;
+                const isOpen = hasChildren && openKey === item.key;
                 // The parent module is "active" if it's open right now,
                 // OR one of its children matches the current route -- so
                 // it stays highlighted even after the submenu is closed

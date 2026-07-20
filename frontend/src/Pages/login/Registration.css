@@ -1,5 +1,5 @@
 /* ===================================================================
-   Pest Control Management System — Login Page
+   Pest Control Management System — Registration Page
    =================================================================== */
 
 @import url("https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap");
@@ -23,7 +23,7 @@ html, body, #root {
   height: 100%;
 }
 
-.login-page {
+.registration-page {
   font-family: "Poppins", sans-serif;
   color: var(--color-text);
   display: flex;
@@ -34,10 +34,10 @@ html, body, #root {
 }
 
 /* ------------------------------------------------------------------ */
-/* LEFT SIDE                                                          */
+/* LEFT SIDE (identical to the Login page brand panel)                */
 /* ------------------------------------------------------------------ */
 
-.login-left {
+.registration-left {
   flex: 0 0 45%;
   max-width: 45%;
   height: 100%;
@@ -46,6 +46,16 @@ html, body, #root {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+}
+
+.dot-grid {
+  position: absolute;
+  top: clamp(90px, 12vh, 140px);
+  right: clamp(24px, 6vw, 90px);
+  width: 60px;
+  height: 60px;
+  opacity: 0.9;
+  pointer-events: none;
 }
 
 .brand-row {
@@ -212,32 +222,32 @@ html, body, #root {
 }
 
 /* ------------------------------------------------------------------ */
-/* RIGHT SIDE                                                         */
+/* RIGHT SIDE — registration card                                     */
 /* ------------------------------------------------------------------ */
 
-.login-right {
+.registration-right {
   flex: 0 0 55%;
   max-width: 55%;
   height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: clamp(16px, 2.5vw, 40px);
+  padding: clamp(14px, 2.5vw, 32px);
   overflow: hidden;
 }
 
-.login-card {
+.registration-card {
   width: 100%;
-  max-width: 573px;
-  max-height: 104%;
+  max-width: 800px;
+  max-height: 100%;
   overflow-y: auto;
   background: var(--color-white);
   border-radius: 20px;
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.08);
-  padding: clamp(22px, 3vh, 32px) clamp(20px, 3vw, 40px);
+  padding: clamp(20px, 2.6vh, 28px) clamp(20px, 3vw, 44px);
 }
 
-.login-card-icon {
+.registration-card-icon {
   width: 56px;
   height: 56px;
   border-radius: 50%;
@@ -246,23 +256,13 @@ html, body, #root {
   display: flex;
   align-items: center;
   justify-content: center;
-  position: relative;
-  font-size: 22px;
+  font-size: 24px;
   color: var(--color-primary);
-}
-
-.login-card-icon-lock {
-  position: absolute;
-  font-size: 13px;
-  bottom: 12px;
-  right: 12px;
-  background: var(--color-light-green);
-  border-radius: 50%;
 }
 
 .welcome-heading {
   text-align: center;
-  font-size: clamp(18px, 1.6vw, 21px);
+  font-size: clamp(18px, 1.6vw, 22px);
   font-weight: 700;
   margin: 0 0 4px 0;
 }
@@ -297,18 +297,19 @@ html, body, #root {
   font-size: 13px;
 }
 
-.divider-or {
-  margin: 10px 0;
+.registration-form {
+  display: flex;
+  flex-direction: column;
 }
 
-.divider-or-text {
-  font-size: 10.5px;
-  font-weight: 600;
-  letter-spacing: 1px;
-  color: var(--color-text-secondary);
+.form-columns {
+  display: flex;
+  gap: 24px;
 }
 
-.login-form {
+.form-col {
+  flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
 }
@@ -339,24 +340,66 @@ html, body, #root {
   pointer-events: none;
 }
 
-.input-wrapper input {
+.input-icon-top {
+  top: 13px;
+}
+
+.input-wrapper input,
+.input-wrapper select {
   width: 100%;
   height: 44px;
   border: 1px solid var(--color-border);
   border-radius: 10px;
   padding: 0 42px;
-  font-size: 13.5px;
+  font-size: 13px;
   font-family: inherit;
   color: var(--color-text);
   background: var(--color-white);
   transition: border-color 0.25s ease;
 }
 
-.input-wrapper input::placeholder {
+.input-wrapper select {
+  appearance: none;
+  -webkit-appearance: none;
+  color: var(--color-text);
+  cursor: pointer;
+}
+
+.input-wrapper select:invalid,
+.input-wrapper select option[value=""] {
   color: #9ca3af;
 }
 
-.input-wrapper input:focus {
+.select-caret {
+  position: absolute;
+  right: 16px;
+  font-size: 16px;
+  color: var(--color-text-secondary);
+  pointer-events: none;
+}
+
+.input-wrapper-textarea textarea {
+  width: 100%;
+  min-height: 44px;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  padding: 11px 42px 11px 42px;
+  font-size: 13px;
+  font-family: inherit;
+  color: var(--color-text);
+  background: var(--color-white);
+  resize: vertical;
+  transition: border-color 0.25s ease;
+}
+
+.input-wrapper input::placeholder,
+.input-wrapper-textarea textarea::placeholder {
+  color: #9ca3af;
+}
+
+.input-wrapper input:focus,
+.input-wrapper select:focus,
+.input-wrapper-textarea textarea:focus {
   outline: none;
   border-color: var(--color-primary);
 }
@@ -373,18 +416,9 @@ html, body, #root {
   align-items: center;
 }
 
-.form-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 14px;
-}
-
 .checkbox-label {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 8px;
   font-size: 12.5px;
   color: var(--color-text);
@@ -394,78 +428,56 @@ html, body, #root {
 .checkbox-label input[type="checkbox"] {
   width: 15px;
   height: 15px;
+  margin-top: 2px;
   accent-color: var(--color-primary);
   cursor: pointer;
+  flex-shrink: 0;
 }
 
-.forgot-link {
-  font-size: 12.5px;
+.terms-row {
+  margin-bottom: 16px;
+}
+
+.terms-row a {
   color: var(--color-primary);
-  font-weight: 500;
+  font-weight: 600;
   text-decoration: none;
 }
 
-.forgot-link:hover {
+.terms-row a:hover {
   text-decoration: underline;
 }
 
 .btn {
   width: 100%;
-  height: 44px;
+  height: 46px;
   border-radius: 10px;
   font-family: inherit;
-  font-size: 13.5px;
+  font-size: 14px;
   font-weight: 600;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
   cursor: pointer;
-  transition: background 0.25s ease, border-color 0.25s ease,
-    transform 0.15s ease;
+  border: none;
+  transition: background 0.25s ease, transform 0.15s ease;
 }
 
 .btn-primary {
   background: var(--color-primary-dark);
   color: var(--color-white);
-  border: none;
 }
 
 .btn-primary:hover {
   background: #14532d;
 }
 
-.btn-google {
-  background: #ceeddc;
-  color: var(--color-text);
-  border: 1px solid var(--color-border);
-  margin-bottom: 10px;
-}
-
-.btn-google svg {
-  font-size: 18px;
-}
-
-.btn-google:hover {
-  background: #9ee3bd;
-}
-
-.btn-outline {
-  background: var(--color-white);
-  color: var(--color-primary);
-  border: 1.5px solid var(--color-primary);
-  margin-bottom: 14px;
-}
-
-.btn-outline:hover {
-  background: var(--color-light-green);
-}
-
 .register-text {
   text-align: center;
   font-size: 13px;
   color: var(--color-text-secondary);
-  margin: 0;
+  margin: 12px 0 0 0;
 }
 
 .register-link {
@@ -482,38 +494,40 @@ html, body, #root {
 /* RESPONSIVE                                                         */
 /* ------------------------------------------------------------------ */
 
-/* Tablet / narrow laptop — keep the two-column layout but tighten up */
 @media (max-width: 1100px) {
-  .login-left {
+  .registration-left {
     padding-left: 28px;
     padding-right: 28px;
   }
   .illustration-wrapper {
     margin: 0 -28px;
   }
-  .login-card {
-    padding: 22px 24px;
+  .registration-card {
+    padding: 20px 24px;
   }
 }
 
-/* Below this, stack the two panels and let the page scroll naturally */
 @media (max-width: 900px) {
-  .login-page {
+  .registration-page {
     flex-direction: column;
     height: auto;
     max-height: none;
     overflow: visible;
   }
 
-  .login-left,
-  .login-right {
+  .registration-left,
+  .registration-right {
     flex: 1 1 auto;
     max-width: 100%;
     height: auto;
   }
 
-  .login-left {
+  .registration-left {
     padding: 24px 24px 0;
+  }
+
+  .dot-grid {
+    display: none;
   }
 
   .illustration-wrapper {
@@ -527,49 +541,38 @@ html, body, #root {
     max-width: 100%;
   }
 
-  .login-right {
+  .registration-right {
     padding: 24px;
   }
 
-  .login-card {
+  .registration-card {
     max-height: none;
     overflow-y: visible;
   }
+
+  .form-columns {
+    flex-direction: column;
+    gap: 0;
+  }
 }
 
-/* Small tablets / large phones */
 @media (max-width: 640px) {
-  .brand-row {
-    margin-bottom: 14px;
-  }
-
   .hero-heading {
     font-size: 24px;
-  }
-
-  .feature-card h3 {
-    font-size: 13px;
   }
 
   .illustration-wrapper {
     min-height: 180px;
   }
 
-  .login-card {
-    padding: 24px 20px;
+  .registration-card {
+    padding: 22px 18px;
     border-radius: 16px;
-  }
-
-  .form-row {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 10px;
   }
 }
 
-/* Phones */
 @media (max-width: 480px) {
-  .login-left {
+  .registration-left {
     padding: 20px 18px 0;
   }
 
@@ -586,23 +589,15 @@ html, body, #root {
     font-size: 12px;
   }
 
-  .feature-card {
-    gap: 10px;
-  }
-
-  .login-right {
+  .registration-right {
     padding: 16px;
   }
 
-  .login-card {
-    padding: 20px 16px;
+  .registration-card {
+    padding: 18px 16px;
   }
 
   .welcome-heading {
     font-size: 18px;
-  }
-
-  .btn {
-    font-size: 13px;
   }
 }
