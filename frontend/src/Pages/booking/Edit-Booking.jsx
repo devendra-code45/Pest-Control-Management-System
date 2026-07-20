@@ -207,9 +207,8 @@ export default function EditBooking() {
 
               <div className="form-field span-3">
                 <label>Notes (Optional)</label>
-                <div className="input-with-icon textarea-wrap">
-                  <FileText size={16} />
-                  <textarea rows={3} value={form.notes} onChange={update('notes')} />
+                <div>
+                  <textarea placeholder="Enter any additional notes..." rows={3} value={form.notes} onChange={update('notes')} />
                 </div>
               </div>
             </div>

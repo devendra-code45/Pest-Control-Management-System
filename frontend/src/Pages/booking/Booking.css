@@ -73,6 +73,10 @@
   transition: background 0.15s ease, box-shadow 0.15s ease, transform 0.05s ease;
   white-space: nowrap;
 }
+#create-booking-btn {
+  width: 185px;
+
+}
 
 .btn:active {
   transform: translateY(1px);
@@ -81,6 +85,7 @@
 .btn-primary {
   background: var(--primary);
   color: #fff;
+  width: 185px;
 }
 
 .btn-primary:hover {

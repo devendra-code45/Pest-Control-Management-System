@@ -1,4 +1,5 @@
 import React, { useState, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   ArrowLeft,
   Save,
@@ -69,6 +70,7 @@ const initialForm = {
 };
 
 export default function EditCustomer() {
+  const navigate = useNavigate();
   const [form, setForm] = useState(initialForm);
   const [pestTypes, setPestTypes] = useState([
     "Cockroaches",
@@ -126,7 +128,7 @@ export default function EditCustomer() {
           </nav>
         </div>
         <div className="page-header-actions">
-          <button type="button" className="btn btn-outline">
+          <button type="button" className="btn btn-outline" onClick={() => navigate("/customer-details")}>
             <ArrowLeft size={16} />
             Back to Details
           </button>
@@ -431,63 +433,6 @@ export default function EditCustomer() {
                 </button>
               </div>
             )}
-          </section>
-
-          {/* Primary Contact Person */}
-          <section className="form-card">
-            <div className="section-heading">
-              <div className="section-icon">
-                <User size={18} />
-              </div>
-              <h2 className="section-title">Primary Contact Person</h2>
-            </div>
-
-            <div className="form-grid form-grid-2">
-              <FormField
-                label="Contact Name"
-                required
-                icon={User}
-                value={form.contactName}
-                onChange={(v) => updateField("contactName", v)}
-              />
-              <FormField
-                label="Designation"
-                icon={FileText}
-                value={form.designation}
-                onChange={(v) => updateField("designation", v)}
-              />
-              <FormField
-                label="Email Address"
-                required
-                icon={Mail}
-                type="email"
-                value={form.contactEmail}
-                onChange={(v) => updateField("contactEmail", v)}
-              />
-              <FormField
-                label="Phone Number"
-                required
-                icon={Phone}
-                type="tel"
-                value={form.contactPhone}
-                onChange={(v) => updateField("contactPhone", v)}
-              />
-            </div>
-
-            <div className="contact-action-row">
-              <button type="button" className="btn btn-outline btn-sm">
-                <Phone size={14} />
-                Call
-              </button>
-              <button type="button" className="btn btn-outline btn-sm">
-                <Mail size={14} />
-                Email
-              </button>
-              <button type="button" className="btn btn-outline btn-sm">
-                <MessageCircle size={14} />
-                WhatsApp
-              </button>
-            </div>
           </section>
 
           {/* Additional Notes */}

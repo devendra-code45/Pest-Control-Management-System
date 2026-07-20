@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   Search,
   Bell,
@@ -8,6 +8,8 @@ import {
   UserCircle,
   Settings,
   LogOut,
+  Menu,
+  X,
 } from "lucide-react";
 import "./Navbar.css";
 
@@ -26,10 +28,12 @@ export default function Navbar({
   user = { name: "John Doe", role: "Administrator", avatarUrl: "" },
   notificationCount = 3,
   collapsed = false,
+  onMenuClick,
 }) {
   const location = useLocation();
   const crumbs = useBreadcrumb(location.pathname);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const dropdownRef = useRef(null);
 
   useEffect(() => {
@@ -52,6 +56,14 @@ export default function Navbar({
   return (
     <header className="nb-navbar">
       <div className="nb-left">
+        <button
+          type="button"
+          className="nb-menu-btn"
+          onClick={onMenuClick}
+          aria-label="Open sidebar"
+        >
+          <Menu size={20} />
+        </button>
         <nav className="nb-breadcrumb" aria-label="Breadcrumb">
           {crumbs.map((crumb, i) => (
             <span className="nb-crumb-wrap" key={crumb.path}>
@@ -68,15 +80,7 @@ export default function Navbar({
         </nav>
       </div>
 
-      <div className="nb-right">
-        <div className="nb-search">
-          <Search size={16} className="nb-search-icon" />
-          <input
-            type="text"
-            placeholder="Search customers, bookings, invoices..."
-            className="nb-search-input"
-          />
-        </div>
+      <div className={`nb-right ${mobileSearchOpen ? "nb-search-active" : ""}`}>
 
         <button type="button" className="nb-icon-btn" aria-label="Notifications">
           <Bell size={18} />
@@ -120,16 +124,8 @@ export default function Navbar({
                 <UserCircle size={16} />
                 My Profile
               </Link>
-              <Link
-                to="/settings"
-                className="nb-dropdown-item"
-                onClick={() => setDropdownOpen(false)}
-              >
-                <Settings size={16} />
-                Settings
-              </Link>
               <div className="nb-dropdown-sep" />
-              <button type="button" className="nb-dropdown-item nb-dropdown-danger">
+              <button type="button" className="nb-dropdown-item nb-dropdown-danger"  onClick={() => navigate("/")}>
                 <LogOut size={16} />
                 Logout
               </button>

@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import {useNavigate} from 'react-router-dom';
 import {
   Home,
   ChevronRight,
@@ -189,6 +190,7 @@ const Badge = ({ tone, children, dot }) => (
 export default function TechniciansManagement() {
   const [selected, setSelected] = useState([]);
   const [selectAll, setSelectAll] = useState(false);
+  const navigate = useNavigate();
 
   const toggleAll = () => {
     if (selectAll) {
@@ -226,17 +228,9 @@ export default function TechniciansManagement() {
           </p>
         </div>
         <div className="tm-header-actions">
-          <button type="button" className="tm-btn tm-btn-primary">
+          <button type="button" className="tm-btn tm-btn-primary" onClick={() => navigate("/technician/add-technician")}>
             <Plus size={16} />
             Add Technician
-          </button>
-          <button type="button" className="tm-btn tm-btn-outline">
-            <Download size={16} />
-            Export
-          </button>
-          <button type="button" className="tm-btn tm-btn-outline">
-            <FilterIcon size={16} />
-            Filter
           </button>
         </div>
       </div>

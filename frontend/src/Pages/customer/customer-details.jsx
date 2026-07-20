@@ -1,4 +1,5 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import {
   ArrowLeft,
   Pencil,
@@ -79,6 +80,7 @@ function DetailRow({ label, value, badge }) {
 }
 
 export default function CustomerDetails() {
+  const navigate = useNavigate();
   return (
     <div className="customer-details-page">
       {/* Page Header */}
@@ -96,15 +98,11 @@ export default function CustomerDetails() {
           </nav>
         </div>
         <div className="page-header-actions">
-          <button type="button" className="btn btn-outline">
-            <ArrowLeft size={16} />
-            Back to List
-          </button>
-          <button type="button" className="btn btn-outline btn-accent-text">
+          <button type="button" className="btn btn-outline btn-accent-text" onClick={() => navigate("/edit-customer")}>
             <Pencil size={16} />
             Edit Customer
           </button>
-          <button type="button" className="btn btn-primary">
+          <button type="button" className="btn btn-primary" onClick={() => navigate("/add-customer")}>
             <Plus size={16} />
             New Booking
           </button>

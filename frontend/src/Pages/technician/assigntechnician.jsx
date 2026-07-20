@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import {useNavigate} from 'react-router-dom';
 import {
   Home,
   ChevronRight,
@@ -188,6 +189,7 @@ export default function AssignTechnician() {
   const [selectedId, setSelectedId] = useState("EMP-1004");
   const [equipment, setEquipment] = useState(["Spray Machine", "PPE Kit", "Chemicals"]);
   const [notes, setNotes] = useState("");
+  const navigate = useNavigate();
 
   const selectedTech = TECHNICIANS.find((t) => t.id === selectedId);
 
@@ -218,7 +220,7 @@ export default function AssignTechnician() {
           <p className="as-subtitle">Assign a technician to a service request or job.</p>
         </div>
         <div className="as-header-actions">
-          <button type="button" className="as-btn as-btn-outline">
+          <button type="button" className="as-btn as-btn-outline" onClick={() => navigate("/technician-management")}>
             <ArrowLeft size={16} />
             Back to Technicians
           </button>

@@ -143,6 +143,7 @@ export default function AddCustomer() {
             </nav>
           </div>
         </div>
+
         <div className="page-header-actions">
           <button type="button" className="btn btn-outline">
             <X size={16} />
@@ -433,103 +434,6 @@ export default function AddCustomer() {
                 </button>
               </div>
             )}
-          </section>
-
-          {/* Primary Contact Person */}
-          <section className="form-card">
-            <div className="section-heading">
-              <div className="section-icon">
-                <User size={18} />
-              </div>
-              <h2 className="section-title">Primary Contact Person</h2>
-            </div>
-
-            <div className="form-grid form-grid-2">
-              <FormField
-                label="Contact Name"
-                required
-                icon={User}
-                placeholder="Enter contact person name"
-                value={form.contactName}
-                onChange={(v) => updateField("contactName", v)}
-              />
-              <FormField
-                label="Designation"
-                icon={IdCard}
-                placeholder="Enter designation"
-                value={form.designation}
-                onChange={(v) => updateField("designation", v)}
-              />
-              <FormField
-                label="Contact Number"
-                required
-                icon={Phone}
-                type="tel"
-                placeholder="Enter contact number"
-                value={form.contactNumber}
-                onChange={(v) => updateField("contactNumber", v)}
-              />
-              <FormField
-                label="Email Address"
-                icon={Mail}
-                type="email"
-                placeholder="Enter email address"
-                value={form.contactEmail}
-                onChange={(v) => updateField("contactEmail", v)}
-              />
-            </div>
-          </section>
-
-          {/* Additional Notes */}
-          <section className="form-card">
-            <div className="section-heading">
-              <div className="section-icon">
-                <StickyNote size={18} />
-              </div>
-              <h2 className="section-title">Additional Notes</h2>
-            </div>
-
-            <div className="textarea-wrapper">
-              <textarea
-                className="notes-textarea"
-                maxLength={500}
-                placeholder="Enter any additional notes about this customer..."
-                value={form.notes}
-                onChange={(e) => updateField("notes", e.target.value)}
-              />
-              <span className="textarea-counter">
-                {form.notes.length} / 500
-              </span>
-            </div>
-          </section>
-
-          {/* Quick Settings */}
-          <section className="form-card">
-            <div className="section-heading">
-              <div className="section-icon">
-                <Settings size={18} />
-              </div>
-              <h2 className="section-title">Quick Settings</h2>
-            </div>
-
-            <div className="quick-settings-list">
-              <label className="checkbox-row">
-                <input
-                  type="checkbox"
-                  checked={settings.sendWelcomeEmail}
-                  onChange={() => toggleSetting("sendWelcomeEmail")}
-                />
-                <span>Send welcome email to customer</span>
-              </label>
-              <label className="checkbox-row">
-                <input
-                  type="checkbox"
-                  checked={settings.addToNewsletter}
-                  onChange={() => toggleSetting("addToNewsletter")}
-                />
-                <span>Add to newsletter mailing list</span>
-              </label>
-            </div>
           </section>
         </div>
       </div>
