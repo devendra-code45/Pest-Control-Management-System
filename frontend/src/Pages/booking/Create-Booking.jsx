@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import axios from 'axios';
 import {
   ChevronRight,
   X,
@@ -31,20 +32,100 @@ const SUMMARY_FIELDS = [
 
 export default function CreateBooking() {
   const [form, setForm] = useState({
-    customer: '',
+    customerId: '',
     property: '',
-    serviceType: '',
+    serviceId: '',
     pestType: '',
     priority: '',
     scheduleDate: '',
     scheduleTime: '',
-    technician: '',
+    technicianId: '',
     duration: '',
     address: '',
     notes: '',
   });
 
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState('');
+  const [error, setError] = useState('');
+
   const update = (field) => (e) => setForm((f) => ({ ...f, [field]: e.target.value }));
+  const validateForm = () => {
+    if (!form.customerId) {
+      return 'Please select a customer.';
+    }
+
+    if (!form.property.trim()) {
+      return 'Please select a property.';
+    }
+
+    if (!form.serviceId) {
+      return 'Please select a service.';
+    }
+
+    if (!form.pestType) {
+      return 'Please select a pest type.';
+    }
+
+    if (!form.priority) {
+      return 'Please select a priority.';
+    }
+
+    if (!form.scheduleDate) {
+      return 'Please select a schedule date.';
+    }
+
+    if (!form.scheduleTime) {
+      return 'Please select a schedule time.';
+    }
+
+    if (!form.technicianId) {
+      return 'Please select a technician.';
+    }
+
+    if (!form.address.trim()) {
+      return 'Please enter the service address.';
+    }
+
+    return '';
+  };
+  const handleSubmit = async () => {
+  console.log("Save button clicked");
+  console.log("Form data:", form);
+
+  try {
+    const bookingData = {
+      customerId: Number(form.customerId),
+      property: form.property,
+      serviceId: Number(form.serviceId),
+      pestType: form.pestType,
+      priority: form.priority,
+      scheduleDate: form.scheduleDate,
+      scheduleTime: form.scheduleTime,
+      technicianId: Number(form.technicianId),
+      duration: form.duration,
+      address: form.address,
+      notes: form.notes,
+    };
+
+    const response = await axios.post(
+      "http://localhost:8080/api/bookings",
+      bookingData
+    );
+
+    console.log("Backend response:", response.data);
+    alert("Booking saved successfully");
+  } catch (error) {
+    console.error("Booking save error:", error);
+
+    const message =
+      error.response?.data?.message ||
+      error.response?.data ||
+      "Booking could not be saved";
+
+    alert(message);
+  }
+};
 
   return (
     <div className="cb-page">
@@ -66,7 +147,11 @@ export default function CreateBooking() {
             <X size={16} />
             Cancel
           </button>
-          <button className="btn btn-primary">
+          <button
+            type="button"
+            className="btn btn-primary"
+            onClick={handleSubmit}
+          >
             <CalendarCheck size={17} />
             Save Booking
           </button>
@@ -90,11 +175,14 @@ export default function CreateBooking() {
                 </label>
                 <div className="input-with-icon">
                   <User size={16} />
-                  <select value={form.customer} onChange={update('customer')}>
+                  <select
+                    value={form.customerId}
+                    onChange={update('customerId')}
+                  >
                     <option value="">Select Customer</option>
-                    <option>Ramesh Sharma</option>
-                    <option>Anita Verma</option>
-                    <option>Neha Kapoor</option>
+                    <option value="1">Ramesh Sharma</option>
+                    <option value="2">Anita Verma</option>
+                    <option value="3">Neha Kapoor</option>
                   </select>
                 </div>
               </div>
@@ -122,10 +210,9 @@ export default function CreateBooking() {
                   <SprayCan size={16} />
                   <select value={form.serviceType} onChange={update('serviceType')}>
                     <option value="">Select Service Type</option>
-                    <option>General Pest Control</option>
-                    <option>Termite Treatment</option>
-                    <option>Rodent Control</option>
-                    <option>Cockroach Control</option>
+                    <option value="1">General Pest Control</option>
+                    <option value="2">Termite Treatment</option>
+                    <option value="3">Rodent Control</option>
                   </select>
                 </div>
               </div>
@@ -194,9 +281,9 @@ export default function CreateBooking() {
                   <User size={16} />
                   <select value={form.technician} onChange={update('technician')}>
                     <option value="">Assign Technician</option>
-                    <option>Amit Kumar</option>
-                    <option>Vikram Singh</option>
-                    <option>Rahul Mehta</option>
+                    <option value="1">Amit Kumar</option>
+                    <option value="2">Vikram Singh</option>
+                    <option value="3">Rahul Mehta</option>
                   </select>
                 </div>
               </div>
