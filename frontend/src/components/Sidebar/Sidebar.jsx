@@ -35,6 +35,12 @@ import './Sidebar.css';
 // the Customers submenu (add-customer -> /add-customer, etc).
 const NAV_GROUPS = [
   {
+    label: 'MAIN',
+    items: [
+      { key: 'dashboard', label: 'Dashboard', icon: Sprout, path: '/dashboard' }, 
+    ]
+  },
+  {
     label: 'OPERATIONS',
     items: [
       {
