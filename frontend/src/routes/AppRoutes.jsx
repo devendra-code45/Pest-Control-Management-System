@@ -1,5 +1,8 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 
+import { AuthProvider } from "../context/AuthContext";
+import ProtectedRoute from "./ProtectedRoute";
+
 import DashboardLayout from "../components/DashboardLayout/DashboardLayout";
 import Dashboard from "../Pages/dashboard/Dashboard";
 
@@ -41,50 +44,75 @@ import ForgotPassword from "../Pages/login/ForgotPassword";
 function AppRoutes() {
   return (
     <BrowserRouter>
-      <Routes>
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Registration />} />
-        <Route path="/forgot-password" element={<ForgotPassword />} />
-        <Route path="/change-password" element={<ChangePassword />} />
-        <Route path="/" element={<Navigate to="/login" replace />} />
+      <AuthProvider>
+        <Routes>
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Registration />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/change-password" element={<ChangePassword />} />
+          <Route path="/" element={<Navigate to="/login" replace />} />
 
-        <Route element={<DashboardLayout />}>
-          <Route path="/dashboard" element={<Dashboard />} />
+          <Route element={<ProtectedRoute allowedRole="ADMIN" />}>
+            <Route element={<DashboardLayout />}>
 
-          <Route path="/add-customer" element={<AddCustomer />} />
-          <Route path="/edit-customer" element={<EditCustomer />} />
-          <Route path="/customer-details" element={<CustomerDetails />} />
+              <Route path="/admin/dashboard" element={<Dashboard />} />
 
-          <Route path="/create-booking" element={<CreateBooking />} />
-          <Route path="/booking-details" element={<BookingDetails />} />
-          <Route path="/edit-booking" element={<EditBooking />} />
-          <Route path="/booking" element={<Booking />} />
+              <Route path="/admin/customers" element={<CustomerDetails />} />
+              <Route path="/admin/customers/add" element={<AddCustomer />} />
+              <Route path="/admin/customers/edit" element={<EditCustomer />} />
 
-          <Route path="/new-complaint" element={<NewComplaint />} />
-          <Route path="/complaint" element={<ComplaintManagement />} />
+              <Route path="/admin/bookings" element={<Booking />} />
+              <Route path="/admin/bookings/pending" element={<Booking />} />
+              <Route path="/admin/bookings/details" element={<BookingDetails />} />
+              <Route path="/admin/bookings/edit" element={<EditBooking />} />
+              <Route path="/admin/bookings/assign-technician" element={<AssignTechnician />} />
 
-          <Route path="/technician-management" element={<TechnicianManagement />} />
-          <Route path="/technician/add-technician" element={<AddTechnician />} />
-          <Route path="/assign-technician" element={<AssignTechnician />} />
-          <Route path="/edit-technician" element={<EditTechnician />} />
-          <Route path="/technician-profile" element={<TechnicianProfile />} />
+              <Route path="/admin/technicians" element={<TechnicianManagement />} />
+              <Route path="/admin/technicians/add" element={<AddTechnician />} />
+              <Route path="/admin/technicians/edit" element={<EditTechnician />} />
+              <Route path="/admin/technicians/profile" element={<TechnicianProfile />} />
 
-          <Route path="/add-service" element={<AddService />} />
-          <Route path="/edit-service" element={<EditService />} />
-          <Route path="/service-details" element={<ServiceDetails />} />
-          <Route path="/services" element={<Services />} />
+              <Route path="/admin/services" element={<Services />} />
+              <Route path="/admin/services/add" element={<AddService />} />
+              <Route path="/admin/services/edit" element={<EditService />} />
+              <Route path="/admin/services/details" element={<ServiceDetails />} />
 
-          <Route path="/payments" element={<Payment />} />
-          <Route path="/create-payment" element={<CreatePayment />} />
-          <Route path="/invoice" element={<Invoice />} />
-          <Route path="/payments-details" element={<PaymentDetail />} />
+              <Route path="/admin/complaints" element={<ComplaintManagement />} />
 
-          <Route path="/*" element={<h1>404 - Page Not Found</h1>} />
-          
-          <Route path="/profile" element={<Profile />} />
-          <Route path="/reports" element={<Reports />} />
-        </Route>
-      </Routes>
+              <Route path="/admin/payments" element={<Payment />} />
+              <Route path="/admin/payments/create" element={<CreatePayment />} />
+              <Route path="/admin/payments/invoice" element={<Invoice />} />
+              <Route path="/admin/payments/details" element={<PaymentDetail />} />
+
+              <Route path="/admin/reports" element={<Reports />} />
+              <Route path="/admin/profile" element={<Profile />} />
+              <Route path="*" element={<h1>404 - Page Not Found</h1>} />
+
+            </Route>
+          </Route>
+          <Route element={<ProtectedRoute allowedRole="CUSTOMER" />}>
+            <Route element={<DashboardLayout />}>
+
+              <Route path="/customer/dashboard" element={<Dashboard />} />
+
+              <Route path="/customer/create-booking" element={<CreateBooking />} />
+              <Route path="/customer/bookings" element={<Booking />} />
+              <Route path="/customer/bookings/details" element={<BookingDetails />} />
+
+              <Route path="/customer/services" element={<Services />} />
+
+              <Route path="/customer/complaints" element={<NewComplaint />} />
+
+              <Route path="/customer/payments" element={<Payment />} />
+              <Route path="/customer/payments/invoice" element={<Invoice />} />
+
+              <Route path="/customer/profile" element={<Profile />} />
+              <Route path="*" element={<h1>404 - Page Not Found</h1>} />
+
+            </Route>
+          </Route>
+        </Routes>
+      </AuthProvider>
     </BrowserRouter>
   );
 }
