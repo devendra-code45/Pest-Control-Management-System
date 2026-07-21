@@ -1,4 +1,5 @@
 import React, { useState, useRef } from 'react';
+import {useNavigate} from 'react-router-dom';
 import {
   ArrowLeft,
   Save,
@@ -137,6 +138,7 @@ const EditTechnicianProfile = () => {
   const [form, setForm] = useState(initialForm);
   const [photoUrl, setPhotoUrl] = useState(null);
   const fileInputRef = useRef(null);
+  const navigate = useNavigate();
 
   const updateField = (field) => (e) => {
     setForm((prev) => ({ ...prev, [field]: e.target.value }));
@@ -181,7 +183,7 @@ const EditTechnicianProfile = () => {
           <p className="page-header__subtitle">Update technician information and details.</p>
         </div>
         <div className="page-header__actions">
-          <button type="button" className="btn btn--outline">
+          <button type="button" className="btn btn--outline" onClick={() => navigate("/technician-profile")}>
             <ArrowLeft size={16} />
             Back to Profile
           </button>

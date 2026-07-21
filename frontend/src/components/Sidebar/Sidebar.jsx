@@ -1,33 +1,18 @@
-import { useState } from 'react';
+import { useEffect, useState } from "react";
+import { NavLink, useLocation } from "react-router-dom";
 import {
   Leaf,
-  Users,
-  UserPlus,
-  Eye,
-  Pencil,
-  Calendar,
-  CalendarPlus,
-  CalendarDays,
-  ClipboardList,
-  Sprout,
-  Plus,
-  UserCog,
-  User,
-  UserCheck,
-  Clock,
-  MessageSquare,
-  CheckCircle2,
-  CreditCard,
-  Receipt,
-  BarChart3,
-  Settings,
-  LogOut,
   ChevronDown,
   PanelLeftClose,
   PanelLeftOpen,
-} from 'lucide-react';
-import './Sidebar.css';
+  X,
+} from "lucide-react";
+import "./Sidebar.css";
 
+// Every leaf item gets a `path`, matching the convention already used by
+// the Customers submenu (add-customer -> /add-customer, etc).
+
+<<<<<<< HEAD
 const NAV_GROUPS = [
   {
     label: 'OPERATIONS',
@@ -114,101 +99,223 @@ const NAV_GROUPS = [
     ],
   },
 ];
+=======
+>>>>>>> main
 
 const cx = (...parts) => parts.filter(Boolean).join(' ');
 
-export default function Sidebar({ collapsed = false, onToggle }) {
-  // Only one dropdown open at a time (accordion). Change to a Set if you want multiple open at once.
-  const [openKey, setOpenKey] = useState('customers');
-  const [activeKey, setActiveKey] = useState('customer-details');
+export default function Sidebar({
+  navGroups = [],
+  collapsed = false,
+  onToggle,
+  mobileOpen = false,
+  onCloseMobile,
+  onLogout,
+}) {
+  const location = useLocation();
+  // Accordion: only one submenu open at a time. Change to a Set if you
+  // want multiple open together.
+  const [openKey, setOpenKey] = useState(null);
+  // Groups the user manually closed, so navigating to a new page inside
+  // an already-open group doesn't silently force it back open.
+  const [manuallyClosed, setManuallyClosed] = useState(new Set());
+
+  // Whichever group contains the current route opens automatically --
+  // this is what makes "click the module, it opens, and shows the right
+  // submenu item" work, and keeps things in sync on direct/deep links.
+  useEffect(() => {
+    const groupForRoute = navGroups
+      .flatMap((group) => group.items)
+      .find((item) =>
+        item.children?.some(
+          (child) => child.path === location.pathname
+        )
+      );
+
+    if (groupForRoute && !manuallyClosed.has(groupForRoute.key)) {
+      setOpenKey(groupForRoute.key);
+    }
+  }, [location.pathname, navGroups, manuallyClosed]);
 
   const toggleGroup = (key) => {
-    setOpenKey((prev) => (prev === key ? null : key));
+    setOpenKey((prev) => {
+      const next = prev === key ? null : key;
+      setManuallyClosed((prevClosed) => {
+        const updated = new Set(prevClosed);
+        if (next === key) {
+          updated.delete(key);
+        } else {
+          updated.add(key);
+        }
+        return updated;
+      });
+      return next;
+    });
   };
 
-  const selectItem = (key) => {
-    setActiveKey(key);
+  const closeOnMobile = () => {
+    if (mobileOpen) {
+      onCloseMobile?.();
+    }
+  };
+
+  // On small screens the header button closes the drawer instead of
+  // collapsing to the icon rail (there's no icon-rail mode on mobile).
+  const handleHeaderButtonClick = () => {
+    if (mobileOpen) {
+      onCloseMobile?.();
+    } else {
+      onToggle?.();
+    }
   };
 
   return (
-    <div className={`sb-sidebar ${collapsed ? 'collapsed' : ''}`}>
-      <div className="sb-header">
-        <div className="sb-logo-wrap">
-          <div className="sb-logo">
-            <Leaf size={20} color="#fff" />
-          </div>
-          {!collapsed && (
-            <div>
-              <div className="sb-brand-name">Pest</div>
-              <div className="sb-brand-name accent">Control</div>
+    <>
+      {mobileOpen && (
+        <div className="sb-backdrop" onClick={onCloseMobile} aria-hidden="true" />
+      )}
+
+      <div
+        className={cx(
+          'sb-sidebar',
+          collapsed && !mobileOpen && 'collapsed',
+          mobileOpen && 'mobile-open'
+        )}
+      >
+        <div className="sb-header">
+          <div className="sb-logo-wrap">
+            <div className="sb-logo">
+              <Leaf size={20} color="#fff" />
             </div>
-          )}
-        </div>
-        <button
-          type="button"
-          className="sb-toggle"
-          onClick={onToggle}
-          aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-        >
-          {collapsed ? <PanelLeftOpen size={16} /> : <PanelLeftClose size={16} />}
-        </button>
-      </div>
-
-      <nav className="sb-nav">
-        {NAV_GROUPS.map((group) => (
-          <div key={group.label}>
-            <div className="sb-group-label">{group.label}</div>
-            {group.items.map((item) => {
-              const Icon = item.icon;
-              const hasChildren = Boolean(item.children && item.children.length);
-              const isOpen = hasChildren && openKey === item.key;
-              const isActive = (!hasChildren && activeKey === item.key) || (hasChildren && activeKey === item.key);
-
-              return (
-                <div className="sb-item-wrap" key={item.key}>
-                  <button
-                    type="button"
-                    className={cx('sb-item', isActive && 'active', isOpen && 'open', item.danger && 'danger', collapsed && 'collapsed-item')}
-                    onClick={() => {
-                      if (hasChildren && !collapsed) {
-                        toggleGroup(item.key);
-                      } else {
-                        selectItem(item.key);
-                      }
-                    }}
-                    aria-expanded={hasChildren && !collapsed ? isOpen : undefined}
-                  >
-                    <Icon size={18} className="sb-icon" />
-                    {!collapsed && <span className="sb-label">{item.label}</span>}
-                    {!collapsed && hasChildren && (
-                      <ChevronDown size={16} className={cx('sb-chevron', isOpen && 'open')} />
-                    )}
-                  </button>
-
-                  {!collapsed && hasChildren && (
-                    <div className={cx('sb-submenu', isOpen && 'open')}>
-                      {item.children.map((child) => {
-                        const ChildIcon = child.icon;
-                        return (
-                          <button
-                            type="button"
-                            key={child.key}
-                            className={cx('sb-subitem', activeKey === child.key && 'active')}
-                            onClick={() => selectItem(child.key)}
-                          >
-                            <ChildIcon size={15} className="sb-sub-icon" />
-                            <span>{child.label}</span>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
+            {(!collapsed || mobileOpen) && (
+              <div>
+                <div className="sb-brand-name">Pest</div>
+                <div className="sb-brand-name accent">Control</div>
+              </div>
+            )}
           </div>
-        ))}
-      </nav>
-    </div>
+          <button
+            type="button"
+            className="sb-toggle"
+            onClick={handleHeaderButtonClick}
+            aria-label={mobileOpen ? 'Close sidebar' : collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          >
+            {mobileOpen ? (
+              <X size={16} />
+            ) : collapsed ? (
+              <PanelLeftOpen size={16} />
+            ) : (
+              <PanelLeftClose size={16} />
+            )}
+          </button>
+        </div>
+
+        <nav className="sb-nav">
+          {navGroups.map((group) => (
+            <div key={group.label}>
+              {(!collapsed || mobileOpen) && (
+                <div className="sb-group-label">{group.label}</div>
+              )}
+              {group.items.map((item) => {
+                const Icon = item.icon;
+                const hasChildren = Boolean(item.children && item.children.length);
+                const isOpen = hasChildren && openKey === item.key;
+                // The parent module is "active" if it's open right now,
+                // OR one of its children matches the current route -- so
+                // it stays highlighted even after the submenu is closed
+                // while you're still on one of its pages.
+                const isActive =
+                  hasChildren &&
+                  (isOpen || item.children.some((c) => c.path === location.pathname));
+                const showLabels = !collapsed || mobileOpen;
+
+                if (hasChildren) {
+                  return (
+                    <div className="sb-item-wrap" key={item.key}>
+                      <button
+                        type="button"
+                        className={cx('sb-item', isActive && 'active', isOpen && 'open')}
+                        onClick={() => {
+                          if (showLabels) {
+                            toggleGroup(item.key);
+                          } else {
+                            // Collapsed rail: clicking expands the
+                            // sidebar back out so the submenu is visible.
+                            onToggle?.();
+                            setOpenKey(item.key);
+                          }
+                        }}
+                        aria-expanded={showLabels ? isOpen : undefined}
+                      >
+                        <Icon size={18} className="sb-icon" />
+                        {showLabels && <span className="sb-label">{item.label}</span>}
+                        {showLabels && (
+                          <ChevronDown size={16} className={cx('sb-chevron', isOpen && 'open')} />
+                        )}
+                      </button>
+
+                      {showLabels && (
+                        <div className={cx('sb-submenu', isOpen && 'open')}>
+                          {item.children.map((child) => {
+                            const ChildIcon = child.icon;
+                            return (
+                              <NavLink
+                                key={child.key}
+                                to={child.path}
+                                className={({ isActive: childActive }) =>
+                                  cx('sb-subitem', childActive && 'active')
+                                }
+                                onClick={closeOnMobile}
+                              >
+                                <ChildIcon size={15} className="sb-sub-icon" />
+                                <span>{child.label}</span>
+                              </NavLink>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  );
+                }
+
+                // Leaf items with no submenu (Reports, Settings, Profile, Logout).
+                if (item.key === 'logout') {
+                  return (
+                    <div className="sb-item-wrap" key={item.key}>
+                      <button
+                        type="button"
+                        className={cx('sb-item', 'danger')}
+                        onClick={() => {
+                          onLogout?.();
+                          closeOnMobile();
+                        }}
+                      >
+                        <Icon size={18} className="sb-icon" />
+                        {showLabels && <span className="sb-label">{item.label}</span>}
+                      </button>
+                    </div>
+                  );
+                }
+
+                return (
+                  <div className="sb-item-wrap" key={item.key}>
+                    <NavLink
+                      to={item.path}
+                      className={({ isActive: leafActive }) =>
+                        cx('sb-item', leafActive && 'active')
+                      }
+                      onClick={closeOnMobile}
+                    >
+                      <Icon size={18} className="sb-icon" />
+                      {showLabels && <span className="sb-label">{item.label}</span>}
+                    </NavLink>
+                  </div>
+                );
+              })}
+            </div>
+          ))}
+        </nav>
+      </div>
+    </>
   );
 }

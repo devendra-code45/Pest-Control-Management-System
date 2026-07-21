@@ -1,0 +1,603 @@
+/* ===================================================================
+   Pest Control Management System — Registration Page
+   =================================================================== */
+
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap");
+
+:root {
+  --color-primary: #15803d;
+  --color-primary-dark: #166534;
+  --color-light-green: #dcfce7;
+  --color-bg: #f7faf5;
+  --color-white: #ffffff;
+  --color-text: #111827;
+  --color-text-secondary: #6b7280;
+  --color-border: #e5e7eb;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html, body, #root {
+  height: 100%;
+}
+
+.registration-page {
+  font-family: "Poppins", sans-serif;
+  color: var(--color-text);
+  display: flex;
+  height: 100vh;
+  max-height: 100vh;
+  background: var(--color-bg);
+  overflow: hidden;
+}
+
+/* ------------------------------------------------------------------ */
+/* LEFT SIDE (identical to the Login page brand panel)                */
+/* ------------------------------------------------------------------ */
+
+.registration-left {
+  flex: 0 0 45%;
+  max-width: 45%;
+  height: 100%;
+  padding: clamp(16px, 2vh, 24px) clamp(24px, 3.5vw, 48px) 0;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.dot-grid {
+  position: absolute;
+  top: clamp(90px, 12vh, 140px);
+  right: clamp(24px, 6vw, 90px);
+  width: 60px;
+  height: 60px;
+  opacity: 0.9;
+  pointer-events: none;
+}
+
+.brand-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: clamp(10px, 1.6vh, 18px);
+  flex-shrink: 0;
+}
+
+.brand-logo {
+  width: clamp(36px, 3vw, 44px);
+  height: clamp(36px, 3vw, 44px);
+  border-radius: 12px;
+  background: var(--color-primary-dark);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.brand-logo-icon {
+  color: var(--color-white);
+  font-size: clamp(18px, 1.6vw, 22px);
+}
+
+.brand-title {
+  font-size: clamp(16px, 1.3vw, 19px);
+  font-weight: 700;
+  margin: 0;
+  line-height: 1.1;
+  color: var(--color-text);
+}
+
+.brand-title-accent {
+  color: var(--color-primary);
+}
+
+.brand-subtitle {
+  display: block;
+  font-size: clamp(9px, 0.7vw, 10px);
+  font-weight: 500;
+  letter-spacing: 1.3px;
+  color: var(--color-text-secondary);
+  margin-top: 2px;
+}
+
+.hero-heading {
+  font-size: clamp(22px, 2.1vw, 30px);
+  font-weight: 700;
+  line-height: 1.2;
+  margin: 0 0 clamp(6px, 1vh, 10px) 0;
+  color: var(--color-text);
+  flex-shrink: 0;
+}
+
+.hero-heading-accent {
+  color: var(--color-primary);
+}
+
+.hero-description {
+  font-size: clamp(11.5px, 0.95vw, 13px);
+  color: var(--color-text-secondary);
+  max-width: 380px;
+  line-height: 1.5;
+  margin: 0 0 clamp(12px, 1.8vh, 18px) 0;
+  flex-shrink: 0;
+}
+
+.feature-list {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(6px, 1vh, 10px);
+  margin-bottom: clamp(10px, 1.6vh, 16px);
+  flex-shrink: 0;
+}
+
+.feature-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  background: transparent;
+}
+
+.feature-icon {
+  width: clamp(32px, 2.7vw, 38px);
+  height: clamp(32px, 2.7vw, 38px);
+  border-radius: 11px;
+  background: var(--color-white);
+  box-shadow: 0 4px 14px rgba(21, 128, 61, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: clamp(14px, 1.2vw, 16px);
+  color: var(--color-primary);
+  flex-shrink: 0;
+  transition: transform 0.25s ease;
+}
+
+.feature-card:hover .feature-icon {
+  transform: translateY(-3px);
+}
+
+.feature-text h3 {
+  font-size: clamp(12.5px, 1vw, 13.5px);
+  font-weight: 600;
+  margin: 2px 0 2px 0;
+  color: var(--color-text);
+}
+
+.feature-text p {
+  font-size: clamp(11px, 0.9vw, 12px);
+  color: var(--color-text-secondary);
+  margin: 0;
+  line-height: 1.4;
+}
+
+.illustration-wrapper {
+  flex: 1;
+  min-height: 80px;
+  margin: 0 clamp(-48px, -3.5vw, -24px);
+  position: relative;
+}
+
+.illustration-svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.floating-card {
+  position: absolute;
+  left: clamp(24px, 3.5vw, 48px);
+  bottom: 16px;
+  background: var(--color-white);
+  border-radius: 14px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  max-width: min(320px, 80%);
+  z-index: 2;
+}
+
+.floating-card-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  background: var(--color-light-green);
+  color: var(--color-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.floating-card p {
+  font-size: 11.5px;
+  color: var(--color-text);
+  margin: 0;
+  line-height: 1.4;
+}
+
+/* ------------------------------------------------------------------ */
+/* RIGHT SIDE — registration card                                     */
+/* ------------------------------------------------------------------ */
+
+.registration-right {
+  flex: 0 0 55%;
+  max-width: 55%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(14px, 2.5vw, 32px);
+  overflow: hidden;
+}
+
+.registration-card {
+  width: 100%;
+  max-width: 800px;
+  max-height: 100%;
+  overflow-y: auto;
+  background: var(--color-white);
+  border-radius: 20px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.08);
+  padding: clamp(20px, 2.6vh, 28px) clamp(20px, 3vw, 44px);
+}
+
+.registration-card-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--color-light-green);
+  margin: 0 auto 12px auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  color: var(--color-primary);
+}
+
+.welcome-heading {
+  text-align: center;
+  font-size: clamp(18px, 1.6vw, 22px);
+  font-weight: 700;
+  margin: 0 0 4px 0;
+}
+
+.welcome-heading-accent {
+  color: var(--color-primary);
+}
+
+.welcome-subtitle {
+  text-align: center;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  line-height: 1.5;
+  margin: 0 0 14px 0;
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 16px 0;
+}
+
+.divider-line {
+  flex: 1;
+  height: 1px;
+  background: var(--color-border);
+}
+
+.divider-icon {
+  color: var(--color-primary);
+  font-size: 13px;
+}
+
+.registration-form {
+  display: flex;
+  flex-direction: column;
+}
+
+.form-columns {
+  display: flex;
+  gap: 24px;
+}
+
+.form-col {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.form-group {
+  margin-bottom: 12px;
+}
+
+.form-group label {
+  display: block;
+  font-size: 12.5px;
+  font-weight: 600;
+  margin-bottom: 6px;
+  color: var(--color-text);
+}
+
+.input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input-icon {
+  position: absolute;
+  left: 16px;
+  font-size: 16px;
+  color: var(--color-primary);
+  pointer-events: none;
+}
+
+.input-icon-top {
+  top: 13px;
+}
+
+.input-wrapper input,
+.input-wrapper select {
+  width: 100%;
+  height: 44px;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  padding: 0 42px;
+  font-size: 13px;
+  font-family: inherit;
+  color: var(--color-text);
+  background: var(--color-white);
+  transition: border-color 0.25s ease;
+}
+
+.input-wrapper select {
+  appearance: none;
+  -webkit-appearance: none;
+  color: var(--color-text);
+  cursor: pointer;
+}
+
+.input-wrapper select:invalid,
+.input-wrapper select option[value=""] {
+  color: #9ca3af;
+}
+
+.select-caret {
+  position: absolute;
+  right: 16px;
+  font-size: 16px;
+  color: var(--color-text-secondary);
+  pointer-events: none;
+}
+
+.input-wrapper-textarea textarea {
+  width: 100%;
+  min-height: 44px;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  padding: 11px 42px 11px 42px;
+  font-size: 13px;
+  font-family: inherit;
+  color: var(--color-text);
+  background: var(--color-white);
+  resize: vertical;
+  transition: border-color 0.25s ease;
+}
+
+.input-wrapper input::placeholder,
+.input-wrapper-textarea textarea::placeholder {
+  color: #9ca3af;
+}
+
+.input-wrapper input:focus,
+.input-wrapper select:focus,
+.input-wrapper-textarea textarea:focus {
+  outline: none;
+  border-color: var(--color-primary);
+}
+
+.toggle-password {
+  position: absolute;
+  right: 16px;
+  background: none;
+  border: none;
+  font-size: 16px;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 12.5px;
+  color: var(--color-text);
+  cursor: pointer;
+}
+
+.checkbox-label input[type="checkbox"] {
+  width: 15px;
+  height: 15px;
+  margin-top: 2px;
+  accent-color: var(--color-primary);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.terms-row {
+  margin-bottom: 16px;
+}
+
+.terms-row a {
+  color: var(--color-primary);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.terms-row a:hover {
+  text-decoration: underline;
+}
+
+.btn {
+  width: 100%;
+  height: 46px;
+  border-radius: 10px;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  border: none;
+  transition: background 0.25s ease, transform 0.15s ease;
+}
+
+.btn-primary {
+  background: var(--color-primary-dark);
+  color: var(--color-white);
+}
+
+.btn-primary:hover {
+  background: #14532d;
+}
+
+.register-text {
+  text-align: center;
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  margin: 12px 0 0 0;
+}
+
+.register-link {
+  color: var(--color-primary);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.register-link:hover {
+  text-decoration: underline;
+}
+
+/* ------------------------------------------------------------------ */
+/* RESPONSIVE                                                         */
+/* ------------------------------------------------------------------ */
+
+@media (max-width: 1100px) {
+  .registration-left {
+    padding-left: 28px;
+    padding-right: 28px;
+  }
+  .illustration-wrapper {
+    margin: 0 -28px;
+  }
+  .registration-card {
+    padding: 20px 24px;
+  }
+}
+
+@media (max-width: 900px) {
+  .registration-page {
+    flex-direction: column;
+    height: auto;
+    max-height: none;
+    overflow: visible;
+  }
+
+  .registration-left,
+  .registration-right {
+    flex: 1 1 auto;
+    max-width: 100%;
+    height: auto;
+  }
+
+  .registration-left {
+    padding: 24px 24px 0;
+  }
+
+  .dot-grid {
+    display: none;
+  }
+
+  .illustration-wrapper {
+    min-height: 220px;
+    margin: 0 -24px;
+  }
+
+  .floating-card {
+    position: static;
+    margin: 16px 0 0;
+    max-width: 100%;
+  }
+
+  .registration-right {
+    padding: 24px;
+  }
+
+  .registration-card {
+    max-height: none;
+    overflow-y: visible;
+  }
+
+  .form-columns {
+    flex-direction: column;
+    gap: 0;
+  }
+}
+
+@media (max-width: 640px) {
+  .hero-heading {
+    font-size: 24px;
+  }
+
+  .illustration-wrapper {
+    min-height: 180px;
+  }
+
+  .registration-card {
+    padding: 22px 18px;
+    border-radius: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .registration-left {
+    padding: 20px 18px 0;
+  }
+
+  .illustration-wrapper {
+    margin: 0 -18px;
+    min-height: 150px;
+  }
+
+  .hero-heading {
+    font-size: 21px;
+  }
+
+  .hero-description {
+    font-size: 12px;
+  }
+
+  .registration-right {
+    padding: 16px;
+  }
+
+  .registration-card {
+    padding: 18px 16px;
+  }
+
+  .welcome-heading {
+    font-size: 18px;
+  }
+}
