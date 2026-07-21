@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
 import {
   HiOutlineUser,
   HiOutlineLockClosed,
@@ -130,12 +131,64 @@ const PestControlIllustration = () => (
 );
 
 const Login = () => {
+  const navigate = useNavigate();
+  const { login } = useAuth();
+
   const [showPassword, setShowPassword] = useState(false);
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-  };
+  const [form, setForm] = useState({
+    username: "",
+    password: "",
+  });
 
+  const [error, setError] = useState("");
+
+  const handleSubmit = (event) => {
+    event.preventDefault();
+    setError("");
+
+    const email = form.username.trim().toLowerCase();
+
+    if (
+      email === "admin@gmail.com" &&
+      form.password === "admin123"
+    ) {
+      login({
+        userId: 1,
+        name: "System Admin",
+        email,
+        role: "ADMIN",
+      });
+
+      navigate("/admin/dashboard", { replace: true });
+      return;
+    }
+
+    if (
+      email === "customer@gmail.com" &&
+      form.password === "customer123"
+    ) {
+      login({
+        userId: 2,
+        name: "Demo Customer",
+        email,
+        role: "CUSTOMER",
+      });
+
+      navigate("/customer/dashboard", { replace: true });
+      return;
+    }
+
+    setError("Invalid username or password");
+  };
+  const updateForm = (event) => {
+    const { name, value } = event.target;
+
+    setForm((currentForm) => ({
+      ...currentForm,
+      [name]: value,
+    }));
+  };
   return (
     <div className="login-page">
       {/* -------------------------- LEFT SIDE -------------------------- */}
@@ -240,8 +293,12 @@ const Login = () => {
                 <HiOutlineUser className="input-icon" />
                 <input
                   id="username"
+                  name="username"
                   type="text"
                   placeholder="Enter your username or email"
+                  value={form.username}
+                  onChange={updateForm}
+                  required
                 />
               </div>
             </div>
@@ -252,8 +309,12 @@ const Login = () => {
                 <HiOutlineLockClosed className="input-icon" />
                 <input
                   id="password"
+                  name="password"
                   type={showPassword ? "text" : "password"}
                   placeholder="Enter your password"
+                  value={form.password}
+                  onChange={updateForm}
+                  required
                 />
                 <button
                   type="button"
@@ -275,10 +336,14 @@ const Login = () => {
                 Forgot Password?
               </a>
             </div>
-
+            {error && (
+              <p className="login-error">
+                {error}
+              </p>
+            )}
             <button type="submit" className="btn btn-primary">
               <HiArrowRight />
-                Login
+              Login
             </button>
 
             <div className="divider divider-or">
