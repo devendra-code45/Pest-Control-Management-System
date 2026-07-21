@@ -1,132 +1,22 @@
-import { useEffect, useState } from 'react';
-import { NavLink, useLocation } from 'react-router-dom';
+import { useEffect, useState } from "react";
+import { NavLink, useLocation } from "react-router-dom";
 import {
   Leaf,
-  Users,
-  UserPlus,
-  Eye,
-  Pencil,
-  Calendar,
-  CalendarPlus,
-  CalendarDays,
-  ClipboardList,
-  Sprout,
-  Plus,
-  UserCog,
-  User,
-  UserCheck,
-  Clock,
-  MessageSquare,
-  CheckCircle2,
-  CreditCard,
-  Receipt,
-  BarChart3,
-  Settings,
-  LogOut,
   ChevronDown,
   PanelLeftClose,
   PanelLeftOpen,
   X,
-  Lock,
-} from 'lucide-react';
-import './Sidebar.css';
+} from "lucide-react";
+import "./Sidebar.css";
 
 // Every leaf item gets a `path`, matching the convention already used by
 // the Customers submenu (add-customer -> /add-customer, etc).
-const NAV_GROUPS = [
-  {
-    label: 'MAIN',
-    items: [
-      { key: 'dashboard', label: 'Dashboard', icon: Sprout, path: '/dashboard' }, 
-    ]
-  },
-  {
-    label: 'OPERATIONS',
-    items: [
-      {
-        key: 'customers',
-        label: 'Customers',
-        icon: Users,
-        children: [
-          { key: 'add-customer', label: 'Add Customer', icon: UserPlus, path: '/add-customer' },
-          { key: 'edit-customer', label: 'Edit Customer', icon: Pencil, path: '/edit-customer' },
-          { key: 'customer-details', label: 'Customer Details', icon: Eye, path: '/customer-details' },
-        ],
-      },
-      {
-        key: 'bookings',
-        label: 'Bookings',
-        icon: Calendar,
-        children: [
-          { key: 'create-booking', label: 'Create Booking', icon: CalendarPlus, path: '/create-booking' },
-          { key: 'edit-booking', label: 'Edit Booking', icon: Pencil, path: '/edit-booking' },
-          { key: 'bookings-list', label: 'Bookings', icon: ClipboardList, path: '/booking' },
-          { key: 'booking-details', label: 'Booking Details', icon: Eye, path: '/booking-details' },
-        ],
-      },
-      {
-        key: 'services',
-        label: 'Services',
-        icon: Sprout,
-        children: [
-          { key: 'add-service', label: 'Add Service', icon: Plus, path: '/add-service' },
-          { key: 'edit-service', label: 'Edit Service', icon: Pencil, path: '/edit-service' },
-          { key: 'service-details', label: 'Service Details', icon: Eye, path: '/service-details' },
-          { key: 'services-list', label: 'Services', icon: ClipboardList, path: '/services' },
-        ],
-      },
-      {
-        key: 'technicians',
-        label: 'Technicians',
-        icon: UserCog,
-        children: [
-          { key: 'add-technician', label: 'Add Technician', icon: UserPlus, path: '/technician/add-technician' },
-          { key: 'edit-technician', label: 'Edit Technician', icon: Pencil, path: '/edit-technician' },
-          { key: 'technician-profile', label: 'Technician Profile', icon: User, path: '/technician-profile' },
-          { key: 'assign-technician', label: 'Assign Technician', icon: UserCheck, path: '/assign-technician' },
-          { key: 'technicians-list', label: 'Technicians', icon: ClipboardList, path: '/technician-management' },
-        ],
-      },
-      {
-        key: 'complaints',
-        label: 'Complaints',
-        icon: MessageSquare,
-        children: [
-          { key: 'complaints-list', label: 'New Complaint', icon: ClipboardList, path: '/new-complaint' },
-          { key: 'complaint-details', label: 'Complaint Details', icon: Eye, path: '/complaint' },
-        ],
-      },
-    ],
-  },
-  {
-    label: 'FINANCE & INSIGHTS',
-    items: [
-      {
-        key: 'payments',
-        label: 'Payments',
-        icon: CreditCard,
-        children: [
-          { key: 'create-payment', label: 'Create Payment', icon: Plus, path: '/create-payment' },
-          { key: 'payments-list', label: 'Payments', icon: ClipboardList, path: '/payments' },
-          { key: 'invoice', label: 'Invoice', icon: Receipt, path: '/invoice' },
-        ],
-      },
-      { key: 'reports', label: 'Reports', icon: BarChart3, path: '/reports' },
-    ],
-  },
-  {
-    label: 'CONTROLS',
-    items: [
-      { key: 'change-password', label: 'Change Password', icon: Lock, path: '/change-password' },
-      { key: 'profile', label: 'Profile', icon: User, path: '/profile' },
-      { key: 'logout', label: 'Logout', icon: LogOut, danger: true, path: '/'},
-    ],
-  },
-];
+
 
 const cx = (...parts) => parts.filter(Boolean).join(' ');
 
 export default function Sidebar({
+  navGroups = [],
   collapsed = false,
   onToggle,
   mobileOpen = false,
@@ -145,14 +35,18 @@ export default function Sidebar({
   // this is what makes "click the module, it opens, and shows the right
   // submenu item" work, and keeps things in sync on direct/deep links.
   useEffect(() => {
-    const groupForRoute = NAV_GROUPS.flatMap((g) => g.items).find(
-      (item) => item.children?.some((child) => child.path === location.pathname)
-    );
+    const groupForRoute = navGroups
+      .flatMap((group) => group.items)
+      .find((item) =>
+        item.children?.some(
+          (child) => child.path === location.pathname
+        )
+      );
+
     if (groupForRoute && !manuallyClosed.has(groupForRoute.key)) {
       setOpenKey(groupForRoute.key);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [location.pathname]);
+  }, [location.pathname, navGroups, manuallyClosed]);
 
   const toggleGroup = (key) => {
     setOpenKey((prev) => {
@@ -228,7 +122,7 @@ export default function Sidebar({
         </div>
 
         <nav className="sb-nav">
-          {NAV_GROUPS.map((group) => (
+          {navGroups.map((group) => (
             <div key={group.label}>
               {(!collapsed || mobileOpen) && (
                 <div className="sb-group-label">{group.label}</div>
