@@ -74,7 +74,6 @@ const NAV_GROUPS = [
           { key: 'add-technician', label: 'Add Technician', icon: UserPlus },
           { key: 'technician-profile', label: 'Technician Profile', icon: User },
           { key: 'assign-technician', label: 'Assign Technician', icon: UserCheck },
-          { key: 'technician-schedule', label: 'Technician Schedule', icon: Clock },
         ],
       },
       {
