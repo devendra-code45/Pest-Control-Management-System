@@ -278,9 +278,7 @@ const Login = () => {
 
             <button type="submit" className="btn btn-primary">
               <HiArrowRight />
-              <a href="/dashboard" className="login-link">
                 Login
-              </a>
             </button>
 
             <div className="divider divider-or">
