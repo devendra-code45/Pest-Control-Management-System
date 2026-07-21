@@ -12,8 +12,6 @@ import BookingDetails from "../Pages/booking/Booking-details";
 import Booking from "../Pages/booking/Booking";
 import EditBooking from "../Pages/booking/Edit-Booking";
 
-
-
 import NewComplaint from "../Pages/complaint/newcomplaint";
 import ComplaintManagement from "../Pages/complaint/complaintmanagement";
 import TechnicianManagement from "../Pages/technician/technicianmanagement";
@@ -48,7 +46,7 @@ function AppRoutes() {
         <Route path="/register" element={<Registration />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/change-password" element={<ChangePassword />} />
-        <Route path="/login" element={<Navigate to="/login" replace />} />
+        <Route path="/" element={<Navigate to="/login" replace />} />
 
         <Route element={<DashboardLayout />}>
           <Route path="/dashboard" element={<Dashboard />} />
@@ -82,9 +80,7 @@ function AppRoutes() {
           <Route path="/payments-details" element={<PaymentDetail />} />
 
           <Route path="/*" element={<h1>404 - Page Not Found</h1>} />
-
-
-=======
+          
           <Route path="/profile" element={<Profile />} />
           <Route path="/reports" element={<Reports />} />
         </Route>
