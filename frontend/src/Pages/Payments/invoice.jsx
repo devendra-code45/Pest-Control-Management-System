@@ -169,7 +169,7 @@ export default function Invoice() {
                 <span>₹ 5,000</span>
               </div>
               <div className="inv-summary-row">
-                <span>Tax (18%)</span>
+                <span>GST (18%)</span>
                 <span>₹ 900</span>
               </div>
               <div className="inv-summary-row">

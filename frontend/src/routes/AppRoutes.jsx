@@ -5,6 +5,7 @@ import ProtectedRoute from "./ProtectedRoute";
 
 import DashboardLayout from "../components/DashboardLayout/DashboardLayout";
 import Dashboard from "../Pages/dashboard/Dashboard";
+import CustomerDashboard from "../Pages/dashboard/CustomerDashboard";
 
 import AddCustomer from "../Pages/customer/add-customer";
 import EditCustomer from "../Pages/customer/edit-customer";
@@ -32,6 +33,7 @@ import Payment from "../Pages/Payments/Payments";
 import CreatePayment from "../pages/Payments/CreatePayments";
 import Invoice from "../Pages/Payments/invoice";
 import PaymentDetail from "../pages/Payments/PaymentsDetail";
+import CustomerPayment from "../Pages/Payments/CustomerPayments";
 
 import Login from "../Pages/login/Login";
 import Profile from '../Pages/profile/profile';
@@ -93,7 +95,7 @@ function AppRoutes() {
           <Route element={<ProtectedRoute allowedRole="CUSTOMER" />}>
             <Route element={<DashboardLayout />}>
 
-              <Route path="/customer/dashboard" element={<Dashboard />} />
+              <Route path="/customer/dashboard" element={<CustomerDashboard />} />
 
               <Route path="/customer/create-booking" element={<CreateBooking />} />
               <Route path="/customer/bookings" element={<Booking />} />
@@ -103,7 +105,7 @@ function AppRoutes() {
 
               <Route path="/customer/complaints" element={<NewComplaint />} />
 
-              <Route path="/customer/payments" element={<Payment />} />
+              <Route path="/customer/payments" element={<CustomerPayment />} />
               <Route path="/customer/payments/invoice" element={<Invoice />} />
 
               <Route path="/customer/profile" element={<Profile />} />
