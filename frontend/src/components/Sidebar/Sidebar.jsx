@@ -26,10 +26,7 @@ export default function Sidebar({
   const location = useLocation();
   // Accordion: only one submenu open at a time. Change to a Set if you
   // want multiple open together.
-  const [openKey, setOpenKey] = useState(null);
-  // Groups the user manually closed, so navigating to a new page inside
-  // an already-open group doesn't silently force it back open.
-  const [manuallyClosed, setManuallyClosed] = useState(new Set());
+  const [openKeys, setOpenKeys] = useState(new Set());
 
   // Whichever group contains the current route opens automatically --
   // this is what makes "click the module, it opens, and shows the right
@@ -43,24 +40,26 @@ export default function Sidebar({
         )
       );
 
-    if (groupForRoute && !manuallyClosed.has(groupForRoute.key)) {
-      setOpenKey(groupForRoute.key);
+    if (groupForRoute) {
+      setOpenKeys((currentKeys) => {
+        const updatedKeys = new Set(currentKeys);
+        updatedKeys.add(groupForRoute.key);
+        return updatedKeys;
+      });
     }
-  }, [location.pathname, navGroups, manuallyClosed]);
+  }, [location.pathname, navGroups]);
 
   const toggleGroup = (key) => {
-    setOpenKey((prev) => {
-      const next = prev === key ? null : key;
-      setManuallyClosed((prevClosed) => {
-        const updated = new Set(prevClosed);
-        if (next === key) {
-          updated.delete(key);
-        } else {
-          updated.add(key);
-        }
-        return updated;
-      });
-      return next;
+    setOpenKeys((currentKeys) => {
+      const updatedKeys = new Set(currentKeys);
+
+      if (updatedKeys.has(key)) {
+        updatedKeys.delete(key);
+      } else {
+        updatedKeys.add(key);
+      }
+
+      return updatedKeys;
     });
   };
 
@@ -130,7 +129,8 @@ export default function Sidebar({
               {group.items.map((item) => {
                 const Icon = item.icon;
                 const hasChildren = Boolean(item.children && item.children.length);
-                const isOpen = hasChildren && openKey === item.key;
+                const isOpen =
+                  hasChildren && openKeys.has(item.key);
                 // The parent module is "active" if it's open right now,
                 // OR one of its children matches the current route -- so
                 // it stays highlighted even after the submenu is closed
@@ -153,7 +153,12 @@ export default function Sidebar({
                             // Collapsed rail: clicking expands the
                             // sidebar back out so the submenu is visible.
                             onToggle?.();
-                            setOpenKey(item.key);
+
+                            setOpenKeys((currentKeys) => {
+                              const updatedKeys = new Set(currentKeys);
+                              updatedKeys.add(item.key);
+                              return updatedKeys;
+                            });
                           }
                         }}
                         aria-expanded={showLabels ? isOpen : undefined}
