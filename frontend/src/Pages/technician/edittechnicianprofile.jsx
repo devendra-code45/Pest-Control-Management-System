@@ -1,555 +1,508 @@
-import React, { useState, useRef } from 'react';
-import {useNavigate} from 'react-router-dom';
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   ArrowLeft,
   Save,
-  ChevronDown,
-  User,
-  Users,
-  CreditCard,
   Phone,
   Mail,
-  Calendar,
-  Droplet,
-  Building,
-  Award,
-  Home,
   MapPin,
+  Home,
+  Building,
   Hash,
-  Briefcase,
-  Target,
-  Globe,
-  Clock,
-  FileText,
-  Car,
-  Camera,
-  ShieldCheck,
-  CheckCircle2,
-} from 'lucide-react';
-import './edittechnicianprofile.css';
+  User,
+} from "lucide-react";
 
-// ----------------------------------------------------------------------------
-// Reference options (would normally come from an API)
-// ----------------------------------------------------------------------------
+import "./edittechnicianprofile.css";
 
-const GENDERS = ['Male', 'Female', 'Other'];
-const BLOOD_GROUPS = ['A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-'];
-const DEPARTMENTS = ['Operations', 'Sales', 'Customer Support', 'Administration'];
-const DESIGNATIONS = ['Junior Technician', 'Technician', 'Senior Technician', 'Team Lead', 'Supervisor'];
-const MANAGERS = ['Vikram Singh', 'Anita Rao', 'Manoj Verma', 'Kiran Reddy'];
-const SKILLS = ['General Pest Control', 'Termite Treatment', 'Rodent Control', 'Fumigation', 'Bed Bug Treatment', 'Mosquito Control'];
-const REGIONS = ['North Zone', 'South Zone', 'East Zone', 'West Zone', 'Central Zone'];
-const SHIFTS = ['Day Shift', 'Night Shift', 'Rotational'];
-const RELATIONS = ['Father', 'Mother', 'Brother', 'Sister', 'Spouse', 'Friend', 'Other'];
-const STATUSES = ['Active', 'Inactive', 'On Leave', 'Suspended'];
-
-const STATUS_DOT_CLASS = {
-  Active: 'status-dot--active',
-  Inactive: 'status-dot--inactive',
-  'On Leave': 'status-dot--leave',
-  Suspended: 'status-dot--suspended',
-};
-
-const GUIDELINES = [
-  'Ensure all information is accurate and up to date.',
-  'Phone number and email must be valid.',
-  'Update skills and certifications regularly.',
-  'Changes will be reflected in technician assignments.',
-];
-
+/* Initial values can later come from your Spring Boot API */
 const initialForm = {
-  firstName: 'Rahul',
-  lastName: 'Sharma',
-  employeeId: 'EMP-1004',
-  phone: '9876543210',
-  email: 'rahul.sharma@example.com',
-  dob: '1992-08-12',
-  gender: 'Male',
-  bloodGroup: 'O+',
-  joiningDate: '2019-03-15',
-  department: 'Operations',
-  designation: 'Senior Technician',
-  reportingManager: 'Vikram Singh',
-  streetAddress: '123, Green Park',
-  city: 'Pune',
-  state: 'Maharashtra',
-  zip: '411038',
-  experience: '5',
-  primarySkill: 'General Pest Control',
-  secondarySkill: 'Termite Treatment',
-  region: 'North Zone',
-  shift: 'Day Shift',
-  licenseNo: 'PC-2019-MH-1024',
-  licenseExpiry: '2025-12-20',
-  vehicleNumber: 'MH12 AB 1234',
-  emergencyName: 'Ramesh Sharma',
-  emergencyRelation: 'Brother',
-  emergencyPhone: '9876543200',
-  status: 'Active',
-  notes: 'Experienced technician with expertise in general pest control and termite treatment.',
+  phone: "9876543210",
+  email: "rahul.sharma@example.com",
+
+  streetAddress: "123, Green Park",
+  city: "Pune",
+  state: "Maharashtra",
+  zip: "411038",
+
+  emergencyName: "Ramesh Sharma",
+  emergencyPhone: "9876543200",
 };
 
-// ----------------------------------------------------------------------------
-// Small reusable field components
-// ----------------------------------------------------------------------------
+/* Reusable field label */
+const FieldLabel = ({ children, required }) => {
+  return (
+    <label className="field-label">
+      {children}
 
-const FieldLabel = ({ children, required }) => (
-  <label className="field-label">
-    {children}
-    {required && <span className="field-label__required">*</span>}
-  </label>
-);
+      {required && (
+        <span className="field-label__required">
+          *
+        </span>
+      )}
+    </label>
+  );
+};
 
-const IconInput = ({ icon: Icon, ...props }) => (
-  <div className="input-shell">
-    <Icon size={16} className="input-shell__icon" />
-    <input className="input-shell__field" {...props} />
-  </div>
-);
+/* Reusable input with icon */
+const IconInput = ({ icon: Icon, ...props }) => {
+  return (
+    <div className="input-shell">
+      <Icon
+        size={16}
+        className="input-shell__icon"
+      />
 
-const IconSelect = ({ icon: Icon, options, ...props }) => (
-  <div className="input-shell">
-    <Icon size={16} className="input-shell__icon" />
-    <select className="input-shell__field input-shell__field--select" {...props}>
-      {options.map((opt) => (
-        <option key={opt} value={opt}>
-          {opt}
-        </option>
-      ))}
-    </select>
-    <ChevronDown size={15} className="input-shell__chevron" />
-  </div>
-);
+      <input
+        className="input-shell__field"
+        {...props}
+      />
+    </div>
+  );
+};
 
-const SectionHeading = ({ icon: Icon, children }) => (
-  <div className="section-heading">
-    <span className="section-heading__icon">
-      <Icon size={15} />
-    </span>
-    <h2>{children}</h2>
-  </div>
-);
+/* Reusable section heading */
+const SectionHeading = ({ icon: Icon, children }) => {
+  return (
+    <div className="section-heading">
+      <span className="section-heading__icon">
+        <Icon size={15} />
+      </span>
 
-// ----------------------------------------------------------------------------
-// Main component
-// ----------------------------------------------------------------------------
+      <h2>{children}</h2>
+    </div>
+  );
+};
 
 const EditTechnicianProfile = () => {
-  const [form, setForm] = useState(initialForm);
-  const [photoUrl, setPhotoUrl] = useState(null);
-  const fileInputRef = useRef(null);
   const navigate = useNavigate();
 
-  const updateField = (field) => (e) => {
-    setForm((prev) => ({ ...prev, [field]: e.target.value }));
+  const [form, setForm] = useState(initialForm);
+  const [errors, setErrors] = useState({});
+
+  const updateField = (field) => {
+    return (event) => {
+      const { value } = event.target;
+
+      setForm((previousForm) => ({
+        ...previousForm,
+        [field]: value,
+      }));
+
+      setErrors((previousErrors) => ({
+        ...previousErrors,
+        [field]: "",
+      }));
+    };
   };
 
-  const handlePhotoChange = (e) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setPhotoUrl(URL.createObjectURL(file));
+  const validateForm = () => {
+    const newErrors = {};
+
+    const phonePattern = /^[6-9]\d{9}$/;
+    const emailPattern =
+      /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const zipPattern = /^\d{6}$/;
+
+    if (!form.phone.trim()) {
+      newErrors.phone =
+        "Phone number is required.";
+    } else if (!phonePattern.test(form.phone)) {
+      newErrors.phone =
+        "Enter a valid 10-digit phone number.";
     }
-    e.target.value = '';
+
+    if (!form.email.trim()) {
+      newErrors.email =
+        "Email address is required.";
+    } else if (!emailPattern.test(form.email)) {
+      newErrors.email =
+        "Enter a valid email address.";
+    }
+
+    if (!form.streetAddress.trim()) {
+      newErrors.streetAddress =
+        "Address is required.";
+    }
+
+    if (!form.city.trim()) {
+      newErrors.city =
+        "City is required.";
+    }
+
+    if (!form.state.trim()) {
+      newErrors.state =
+        "State is required.";
+    }
+
+    if (!form.zip.trim()) {
+      newErrors.zip =
+        "ZIP code is required.";
+    } else if (!zipPattern.test(form.zip)) {
+      newErrors.zip =
+        "Enter a valid 6-digit ZIP code.";
+    }
+
+    if (!form.emergencyName.trim()) {
+      newErrors.emergencyName =
+        "Emergency contact name is required.";
+    }
+
+    if (!form.emergencyPhone.trim()) {
+      newErrors.emergencyPhone =
+        "Emergency phone number is required.";
+    } else if (
+      !phonePattern.test(form.emergencyPhone)
+    ) {
+      newErrors.emergencyPhone =
+        "Enter a valid 10-digit phone number.";
+    }
+
+    setErrors(newErrors);
+
+    return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    // Wire up to API integration here.
+  const handleSubmit = (event) => {
+    event.preventDefault();
+
+    const isValid = validateForm();
+
+    if (!isValid) {
+      return;
+    }
+
+    console.log(
+      "Updated technician information:",
+      form
+    );
+
+    /*
+      Later connect your Spring Boot API here.
+
+      Example:
+
+      axios.put(
+        `http://localhost:8080/api/technicians/${technicianId}`,
+        form
+      );
+    */
+
+    alert(
+      "Technician information updated successfully."
+    );
+
+    navigate("/admin/technicians/profile");
+  };
+
+  const handleCancel = () => {
+    navigate("/admin/technicians/profile");
   };
 
   return (
     <div className="edit-technician-page">
       {/* Breadcrumb */}
-      <nav className="breadcrumb" aria-label="Breadcrumb">
-        <a href="#home" className="breadcrumb__link">
+      <nav
+        className="breadcrumb"
+        aria-label="Breadcrumb"
+      >
+        <button
+          type="button"
+          className="breadcrumb__link"
+          onClick={() =>
+            navigate("/admin/dashboard")
+          }
+        >
           Home
-        </a>
-        <span className="breadcrumb__separator">/</span>
-        <a href="#technicians" className="breadcrumb__link">
+        </button>
+
+        <span className="breadcrumb__separator">
+          /
+        </span>
+
+        <button
+          type="button"
+          className="breadcrumb__link"
+          onClick={() =>
+            navigate("/admin/technicians")
+          }
+        >
           Technicians
-        </a>
-        <span className="breadcrumb__separator">/</span>
-        <a href="#management" className="breadcrumb__link">
-          Management
-        </a>
-        <span className="breadcrumb__separator">/</span>
-        <span className="breadcrumb__current">Edit Technician Profile</span>
+        </button>
+
+        <span className="breadcrumb__separator">
+          /
+        </span>
+
+        <span className="breadcrumb__current">
+          Edit Technician Profile
+        </span>
       </nav>
 
       {/* Page header */}
       <header className="page-header">
         <div>
-          <h1 className="page-header__title">Edit Technician Profile</h1>
-          <p className="page-header__subtitle">Update technician information and details.</p>
+          <h1 className="page-header__title">
+            Edit Technician Profile
+          </h1>
+
+          <p className="page-header__subtitle">
+            Update technician contact, address and
+            emergency contact information.
+          </p>
         </div>
+
         <div className="page-header__actions">
-          <button type="button" className="btn btn--outline" onClick={() => navigate("/technician-profile")}>
+          <button
+            type="button"
+            className="btn btn--outline"
+            onClick={handleCancel}
+          >
             <ArrowLeft size={16} />
             Back to Profile
           </button>
-          <button type="submit" form="edit-technician-form" className="btn btn--success">
+
+          <button
+            type="submit"
+            form="edit-technician-form"
+            className="btn btn--success"
+          >
             <Save size={16} />
             Save Changes
           </button>
         </div>
       </header>
 
-      <form id="edit-technician-form" className="form-grid" onSubmit={handleSubmit}>
-        {/* Main column */}
-        <div className="form-main">
-          {/* Personal Information */}
+      <form
+        id="edit-technician-form"
+        className="form-grid"
+        onSubmit={handleSubmit}
+      >
+        <div
+          className="form-main"
+          style={{ gridColumn: "1 / -1" }}
+        >
+          {/* Contact Information */}
           <section className="form-card">
-            <SectionHeading icon={User}>Personal Information</SectionHeading>
+            <SectionHeading icon={Phone}>
+              Contact Information
+            </SectionHeading>
 
-            <div className="field-grid field-grid--4">
+            <div className="field-grid field-grid--2">
               <div className="form-field">
-                <FieldLabel required>First Name</FieldLabel>
-                <IconInput
-                  icon={User}
-                  type="text"
-                  value={form.firstName}
-                  onChange={updateField('firstName')}
-                />
-              </div>
-              <div className="form-field">
-                <FieldLabel required>Last Name</FieldLabel>
-                <IconInput
-                  icon={User}
-                  type="text"
-                  value={form.lastName}
-                  onChange={updateField('lastName')}
-                />
-              </div>
-              <div className="form-field">
-                <FieldLabel required>Employee ID</FieldLabel>
-                <IconInput
-                  icon={CreditCard}
-                  type="text"
-                  value={form.employeeId}
-                  onChange={updateField('employeeId')}
-                />
-              </div>
-              <div className="form-field">
-                <FieldLabel required>Phone Number</FieldLabel>
+                <FieldLabel required>
+                  Phone Number
+                </FieldLabel>
+
                 <IconInput
                   icon={Phone}
                   type="tel"
+                  name="phone"
+                  placeholder="Enter phone number"
                   value={form.phone}
-                  onChange={updateField('phone')}
+                  onChange={updateField("phone")}
+                  maxLength={10}
                 />
-              </div>
-            </div>
 
-            <div className="field-grid field-grid--4">
-              <div className="form-field">
-                <FieldLabel required>Email Address</FieldLabel>
+                {errors.phone && (
+                  <span className="field-error">
+                    {errors.phone}
+                  </span>
+                )}
+              </div>
+
+              <div className="form-field form-field--last">
+                <FieldLabel required>
+                  Email Address
+                </FieldLabel>
+
                 <IconInput
                   icon={Mail}
                   type="email"
+                  name="email"
+                  placeholder="Enter email address"
                   value={form.email}
-                  onChange={updateField('email')}
+                  onChange={updateField("email")}
                 />
-              </div>
-              <div className="form-field">
-                <FieldLabel required>Date of Birth</FieldLabel>
-                <IconInput
-                  icon={Calendar}
-                  type="date"
-                  value={form.dob}
-                  onChange={updateField('dob')}
-                />
-              </div>
-              <div className="form-field">
-                <FieldLabel required>Gender</FieldLabel>
-                <IconSelect icon={User} options={GENDERS} value={form.gender} onChange={updateField('gender')} />
-              </div>
-              <div className="form-field">
-                <FieldLabel>Blood Group</FieldLabel>
-                <IconSelect
-                  icon={Droplet}
-                  options={BLOOD_GROUPS}
-                  value={form.bloodGroup}
-                  onChange={updateField('bloodGroup')}
-                />
-              </div>
-            </div>
 
-            <div className="field-grid field-grid--4">
-              <div className="form-field">
-                <FieldLabel required>Joining Date</FieldLabel>
-                <IconInput
-                  icon={Calendar}
-                  type="date"
-                  value={form.joiningDate}
-                  onChange={updateField('joiningDate')}
-                />
-              </div>
-              <div className="form-field">
-                <FieldLabel required>Department</FieldLabel>
-                <IconSelect
-                  icon={Building}
-                  options={DEPARTMENTS}
-                  value={form.department}
-                  onChange={updateField('department')}
-                />
-              </div>
-              <div className="form-field">
-                <FieldLabel required>Designation</FieldLabel>
-                <IconSelect
-                  icon={Award}
-                  options={DESIGNATIONS}
-                  value={form.designation}
-                  onChange={updateField('designation')}
-                />
-              </div>
-              <div className="form-field form-field--last">
-                <FieldLabel>Reporting Manager</FieldLabel>
-                <IconSelect
-                  icon={Users}
-                  options={MANAGERS}
-                  value={form.reportingManager}
-                  onChange={updateField('reportingManager')}
-                />
+                {errors.email && (
+                  <span className="field-error">
+                    {errors.email}
+                  </span>
+                )}
               </div>
             </div>
           </section>
 
           {/* Address Information */}
           <section className="form-card">
-            <SectionHeading icon={MapPin}>Address Information</SectionHeading>
+            <SectionHeading icon={MapPin}>
+              Address Information
+            </SectionHeading>
 
             <div className="form-field">
-              <FieldLabel required>Street Address</FieldLabel>
+              <FieldLabel required>
+                Street Address
+              </FieldLabel>
+
               <IconInput
                 icon={Home}
                 type="text"
+                name="streetAddress"
+                placeholder="Enter street address"
                 value={form.streetAddress}
-                onChange={updateField('streetAddress')}
+                onChange={updateField(
+                  "streetAddress"
+                )}
               />
+
+              {errors.streetAddress && (
+                <span className="field-error">
+                  {errors.streetAddress}
+                </span>
+              )}
             </div>
 
             <div className="field-grid field-grid--3">
               <div className="form-field">
-                <FieldLabel required>City</FieldLabel>
-                <IconInput icon={Building} type="text" value={form.city} onChange={updateField('city')} />
-              </div>
-              <div className="form-field">
-                <FieldLabel required>State</FieldLabel>
-                <IconInput icon={MapPin} type="text" value={form.state} onChange={updateField('state')} />
-              </div>
-              <div className="form-field form-field--last">
-                <FieldLabel required>ZIP / Postal Code</FieldLabel>
-                <IconInput icon={Hash} type="text" value={form.zip} onChange={updateField('zip')} />
-              </div>
-            </div>
-          </section>
+                <FieldLabel required>
+                  City
+                </FieldLabel>
 
-          {/* Professional Details */}
-          <section className="form-card">
-            <SectionHeading icon={Briefcase}>Professional Details</SectionHeading>
-
-            <div className="field-grid field-grid--4">
-              <div className="form-field">
-                <FieldLabel required>Experience (Years)</FieldLabel>
                 <IconInput
-                  icon={Briefcase}
-                  type="number"
-                  min="0"
-                  value={form.experience}
-                  onChange={updateField('experience')}
-                />
-              </div>
-              <div className="form-field">
-                <FieldLabel required>Primary Skill</FieldLabel>
-                <IconSelect
-                  icon={Target}
-                  options={SKILLS}
-                  value={form.primarySkill}
-                  onChange={updateField('primarySkill')}
-                />
-              </div>
-              <div className="form-field">
-                <FieldLabel>Secondary Skill</FieldLabel>
-                <IconSelect
-                  icon={Target}
-                  options={SKILLS}
-                  value={form.secondarySkill}
-                  onChange={updateField('secondarySkill')}
-                />
-              </div>
-              <div className="form-field">
-                <FieldLabel required>Region</FieldLabel>
-                <IconSelect icon={Globe} options={REGIONS} value={form.region} onChange={updateField('region')} />
-              </div>
-            </div>
-
-            <div className="field-grid field-grid--4">
-              <div className="form-field">
-                <FieldLabel required>Shift</FieldLabel>
-                <IconSelect icon={Clock} options={SHIFTS} value={form.shift} onChange={updateField('shift')} />
-              </div>
-              <div className="form-field">
-                <FieldLabel>License / Certification No.</FieldLabel>
-                <IconInput
-                  icon={FileText}
+                  icon={Building}
                   type="text"
-                  value={form.licenseNo}
-                  onChange={updateField('licenseNo')}
+                  name="city"
+                  placeholder="Enter city"
+                  value={form.city}
+                  onChange={updateField("city")}
                 />
+
+                {errors.city && (
+                  <span className="field-error">
+                    {errors.city}
+                  </span>
+                )}
               </div>
+
               <div className="form-field">
-                <FieldLabel>License Expiry Date</FieldLabel>
+                <FieldLabel required>
+                  State
+                </FieldLabel>
+
                 <IconInput
-                  icon={Calendar}
-                  type="date"
-                  value={form.licenseExpiry}
-                  onChange={updateField('licenseExpiry')}
-                />
-              </div>
-              <div className="form-field form-field--last">
-                <FieldLabel>Vehicle Number</FieldLabel>
-                <IconInput
-                  icon={Car}
+                  icon={MapPin}
                   type="text"
-                  value={form.vehicleNumber}
-                  onChange={updateField('vehicleNumber')}
+                  name="state"
+                  placeholder="Enter state"
+                  value={form.state}
+                  onChange={updateField("state")}
                 />
+
+                {errors.state && (
+                  <span className="field-error">
+                    {errors.state}
+                  </span>
+                )}
+              </div>
+
+              <div className="form-field form-field--last">
+                <FieldLabel required>
+                  ZIP / Postal Code
+                </FieldLabel>
+
+                <IconInput
+                  icon={Hash}
+                  type="text"
+                  name="zip"
+                  placeholder="Enter ZIP code"
+                  value={form.zip}
+                  onChange={updateField("zip")}
+                  maxLength={6}
+                />
+
+                {errors.zip && (
+                  <span className="field-error">
+                    {errors.zip}
+                  </span>
+                )}
               </div>
             </div>
           </section>
 
           {/* Emergency Contact */}
           <section className="form-card">
-            <SectionHeading icon={Phone}>Emergency Contact</SectionHeading>
+            <SectionHeading icon={Phone}>
+              Emergency Contact
+            </SectionHeading>
 
-            <div className="field-grid field-grid--3">
+            <div className="field-grid field-grid--2">
               <div className="form-field">
-                <FieldLabel required>Contact Name</FieldLabel>
+                <FieldLabel required>
+                  Contact Name
+                </FieldLabel>
+
                 <IconInput
                   icon={User}
                   type="text"
+                  name="emergencyName"
+                  placeholder="Enter contact name"
                   value={form.emergencyName}
-                  onChange={updateField('emergencyName')}
+                  onChange={updateField(
+                    "emergencyName"
+                  )}
                 />
+
+                {errors.emergencyName && (
+                  <span className="field-error">
+                    {errors.emergencyName}
+                  </span>
+                )}
               </div>
-              <div className="form-field">
-                <FieldLabel required>Relation</FieldLabel>
-                <IconSelect
-                  icon={Users}
-                  options={RELATIONS}
-                  value={form.emergencyRelation}
-                  onChange={updateField('emergencyRelation')}
-                />
-              </div>
+
               <div className="form-field form-field--last">
-                <FieldLabel required>Phone Number</FieldLabel>
+                <FieldLabel required>
+                  Phone Number
+                </FieldLabel>
+
                 <IconInput
                   icon={Phone}
                   type="tel"
+                  name="emergencyPhone"
+                  placeholder="Enter emergency phone number"
                   value={form.emergencyPhone}
-                  onChange={updateField('emergencyPhone')}
+                  onChange={updateField(
+                    "emergencyPhone"
+                  )}
+                  maxLength={10}
                 />
+
+                {errors.emergencyPhone && (
+                  <span className="field-error">
+                    {errors.emergencyPhone}
+                  </span>
+                )}
               </div>
             </div>
           </section>
         </div>
 
-        {/* Sidebar column */}
-        <aside className="form-sidebar">
-          {/* Profile Photo */}
-          <section className="form-card">
-            <SectionHeading icon={FileText}>Profile Photo</SectionHeading>
-
-            <div className="photo-upload">
-              <button
-                type="button"
-                className="photo-upload__avatar"
-                onClick={() => fileInputRef.current?.click()}
-                aria-label="Change profile photo"
-              >
-                {photoUrl ? (
-                  <img src={photoUrl} alt="Technician" />
-                ) : (
-                  <span className="photo-upload__placeholder">
-                    <User size={30} />
-                  </span>
-                )}
-                <span className="photo-upload__badge">
-                  <Camera size={13} />
-                </span>
-              </button>
-              <p className="photo-upload__hint-title">Click image to change</p>
-              <p className="photo-upload__hint">JPG, PNG or JPEG (Max. 2MB)</p>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/jpeg,image/jpg,image/png"
-                hidden
-                onChange={handlePhotoChange}
-              />
-            </div>
-          </section>
-
-          {/* Current Status */}
-          <section className="form-card">
-            <SectionHeading icon={ShieldCheck}>Current Status</SectionHeading>
-
-            <div className="form-field form-field--last">
-              <FieldLabel required>Status</FieldLabel>
-              <div className="input-shell input-shell--status">
-                <span className={`status-dot ${STATUS_DOT_CLASS[form.status]}`} />
-                <select
-                  className="input-shell__field input-shell__field--select"
-                  value={form.status}
-                  onChange={updateField('status')}
-                >
-                  {STATUSES.map((s) => (
-                    <option key={s} value={s}>
-                      {s}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown size={15} className="input-shell__chevron" />
-              </div>
-            </div>
-          </section>
-
-          {/* Additional Information */}
-          <section className="form-card">
-            <SectionHeading icon={FileText}>Additional Information</SectionHeading>
-
-            <div className="form-field form-field--last">
-              <FieldLabel>Notes</FieldLabel>
-              <textarea
-                className="textarea-field"
-                rows={4}
-                value={form.notes}
-                onChange={updateField('notes')}
-              />
-            </div>
-          </section>
-
-          {/* Quick Guidelines */}
-          <section className="form-card guidelines-card">
-            <SectionHeading icon={ShieldCheck}>Quick Guidelines</SectionHeading>
-
-            <ul className="guidelines-list">
-              {GUIDELINES.map((tip) => (
-                <li key={tip}>
-                  <CheckCircle2 size={15} />
-                  <span>{tip}</span>
-                </li>
-              ))}
-            </ul>
-          </section>
-        </aside>
-
-        {/* Bottom actions */}
-        <div className="form-footer">
-          <button type="button" className="btn btn--outline">
+        {/* Bottom buttons */}
+        <div
+          className="form-footer"
+          style={{ gridColumn: "1 / -1" }}
+        >
+          <button
+            type="button"
+            className="btn btn--outline"
+            onClick={handleCancel}
+          >
             Cancel
           </button>
-          <button type="submit" className="btn btn--success">
+
+          <button
+            type="submit"
+            className="btn btn--success"
+          >
             <Save size={16} />
             Save Changes
           </button>

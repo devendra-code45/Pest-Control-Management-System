@@ -88,7 +88,7 @@ export const ADMIN_NAV_GROUPS = [
                 key: "technicians",
                 label: "Technicians",
                 icon: UserCog,
-                path: "/admin/bookings/assign-technician",
+                path: "/admin/technicians",
             },
 
             {
