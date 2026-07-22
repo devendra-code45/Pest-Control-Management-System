@@ -228,7 +228,7 @@ export default function TechniciansManagement() {
           </p>
         </div>
         <div className="tm-header-actions">
-          <button type="button" className="tm-btn tm-btn-primary" onClick={() => navigate("/technician/add-technician")}>
+          <button type="button" className="tm-btn tm-btn-primary" onClick={() => navigate("/admin/technicians/add")}>
             <Plus size={16} />
             Add Technician
           </button>
