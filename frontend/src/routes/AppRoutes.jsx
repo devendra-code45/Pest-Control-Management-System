@@ -1,4 +1,9 @@
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+  Navigate,
+} from "react-router-dom";
 
 import { AuthProvider } from "../context/AuthContext";
 import ProtectedRoute from "./ProtectedRoute";
@@ -6,111 +11,273 @@ import ProtectedRoute from "./ProtectedRoute";
 import DashboardLayout from "../components/DashboardLayout/DashboardLayout";
 import Dashboard from "../Pages/dashboard/Dashboard";
 
+// Customer management
 import AddCustomer from "../Pages/customer/add-customer";
 import EditCustomer from "../Pages/customer/edit-customer";
 import CustomerDetails from "../Pages/customer/customer-details";
 
+// Booking management
 import CreateBooking from "../Pages/booking/Create-Booking";
 import BookingDetails from "../Pages/booking/Booking-details";
 import Booking from "../Pages/booking/Booking";
 import EditBooking from "../Pages/booking/Edit-Booking";
 
+// Complaints
 import NewComplaint from "../Pages/complaint/newcomplaint";
 import ComplaintManagement from "../Pages/complaint/complaintmanagement";
+
+// Technicians
 import TechnicianManagement from "../Pages/technician/technicianmanagement";
 import AddTechnician from "../Pages/technician/addtechnician";
 import AssignTechnician from "../Pages/technician/assigntechnician";
 import EditTechnician from "../Pages/technician/edittechnicianprofile";
 import TechnicianProfile from "../Pages/technician/technicianprofile";
 
+// Services
 import AddService from "../Pages/service/add-service";
 import EditService from "../Pages/service/edit-service";
 import ServiceDetails from "../Pages/service/service-details";
 import Services from "../Pages/service/services";
 
+// Payments
 import Payment from "../Pages/Payments/Payments";
-import CreatePayment from "../pages/Payments/CreatePayments";
+import CreatePayment from "../Pages/Payments/CreatePayments";
 import Invoice from "../Pages/Payments/invoice";
-import PaymentDetail from "../pages/Payments/PaymentsDetail";
+import PaymentDetail from "../Pages/Payments/PaymentsDetail";
 
+// Other pages
 import Login from "../Pages/login/Login";
-import Profile from '../Pages/profile/profile';
-import Reports from "../Pages/reports/Reports";
-
 import Registration from "../Pages/login/Registration";
 import ChangePassword from "../Pages/login/ChangePassword";
 import ForgotPassword from "../Pages/login/ForgotPassword";
+import Profile from "../Pages/profile/profile";
+import Reports from "../Pages/reports/Reports";
 
 function AppRoutes() {
   return (
     <BrowserRouter>
       <AuthProvider>
         <Routes>
+          {/* Public routes */}
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Registration />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="/change-password" element={<ChangePassword />} />
-          <Route path="/" element={<Navigate to="/login" replace />} />
+          <Route
+            path="/forgot-password"
+            element={<ForgotPassword />}
+          />
 
-          <Route element={<ProtectedRoute allowedRole="ADMIN" />}>
+          <Route
+            path="/"
+            element={<Navigate to="/login" replace />}
+          />
+
+          {/* Admin routes */}
+          <Route
+            element={<ProtectedRoute allowedRole="ADMIN" />}
+          >
             <Route element={<DashboardLayout />}>
+              <Route
+                path="/admin"
+                element={
+                  <Navigate
+                    to="/admin/dashboard"
+                    replace
+                  />
+                }
+              />
 
               <Route path="/admin/dashboard" element={<Dashboard />} />
 
-              <Route path="/admin/customers" element={<CustomerDetails />} />
+              {/* Customers */}
+              <Route path="/admin/customer-details" element={<CustomerDetails />} />
+
               <Route path="/admin/customers/add" element={<AddCustomer />} />
+
               <Route path="/admin/customers/edit" element={<EditCustomer />} />
 
+              {/* Bookings */}
               <Route path="/admin/bookings" element={<Booking />} />
+
               <Route path="/admin/bookings/pending" element={<Booking />} />
+
+              <Route path="/admin/bookings/accepted" element={<Booking />} />
+
+              <Route path="/admin/bookings/rejected" element={<Booking />} />
+
               <Route path="/admin/bookings/details" element={<BookingDetails />} />
+
               <Route path="/admin/bookings/edit" element={<EditBooking />} />
-              <Route path="/admin/bookings/assign-technician" element={<AssignTechnician />} />
 
-              <Route path="/admin/technicians" element={<TechnicianManagement />} />
-              <Route path="/admin/technicians/add" element={<AddTechnician />} />
-              <Route path="/admin/technicians/edit" element={<EditTechnician />} />
-              <Route path="/admin/technicians/profile" element={<TechnicianProfile />} />
+              <Route
+                path="/admin/bookings/assign-technician"
+                element={<AssignTechnician />}
+              />
 
-              <Route path="/admin/services" element={<Services />} />
-              <Route path="/admin/services/add" element={<AddService />} />
-              <Route path="/admin/services/edit" element={<EditService />} />
-              <Route path="/admin/services/details" element={<ServiceDetails />} />
+              {/* Technicians */}
+              <Route
+                path="/admin/technicians"
+                element={<TechnicianManagement />}
+              />
 
-              <Route path="/admin/complaints" element={<ComplaintManagement />} />
+              <Route
+                path="/admin/technicians/add"
+                element={<AddTechnician />}
+              />
 
-              <Route path="/admin/payments" element={<Payment />} />
-              <Route path="/admin/payments/create" element={<CreatePayment />} />
-              <Route path="/admin/payments/invoice" element={<Invoice />} />
-              <Route path="/admin/payments/details" element={<PaymentDetail />} />
+              <Route
+                path="/admin/technicians/edit"
+                element={<EditTechnician />}
+              />
 
-              <Route path="/admin/reports" element={<Reports />} />
-              <Route path="/admin/profile" element={<Profile />} />
-              <Route path="*" element={<h1>404 - Page Not Found</h1>} />
+              <Route
+                path="/admin/technicians/profile"
+                element={<TechnicianProfile />}
+              />
 
+              {/* Services */}
+              <Route
+                path="/admin/services"
+                element={<Services />}
+              />
+
+              <Route
+                path="/admin/services/add"
+                element={<AddService />}
+              />
+
+              <Route
+                path="/admin/services/edit"
+                element={<EditService />}
+              />
+
+              <Route
+                path="/admin/services/details"
+                element={<ServiceDetails />}
+              />
+
+              {/* Complaints */}
+              <Route
+                path="/admin/complaints"
+                element={<ComplaintManagement />}
+              />
+
+              {/* Payments */}
+              <Route
+                path="/admin/payments"
+                element={<Payment />}
+              />
+
+              <Route
+                path="/admin/payments/create"
+                element={<CreatePayment />}
+              />
+
+              <Route
+                path="/admin/payments/invoice"
+                element={<Invoice />}
+              />
+
+              <Route
+                path="/admin/payments/details"
+                element={<PaymentDetail />}
+              />
+
+              {/* Reports and account */}
+              <Route
+                path="/admin/reports"
+                element={<Reports />}
+              />
+
+              <Route
+                path="/admin/profile"
+                element={<Profile />}
+              />
+
+              <Route
+                path="/change-password"
+                element={<ChangePassword />}
+              />
             </Route>
           </Route>
-          <Route element={<ProtectedRoute allowedRole="CUSTOMER" />}>
+
+          {/* Customer routes */}
+          <Route
+            element={
+              <ProtectedRoute allowedRole="CUSTOMER" />
+            }
+          >
             <Route element={<DashboardLayout />}>
+              <Route
+                path="/customer"
+                element={
+                  <Navigate
+                    to="/customer/dashboard"
+                    replace
+                  />
+                }
+              />
 
-              <Route path="/customer/dashboard" element={<Dashboard />} />
+              <Route
+                path="/customer/dashboard"
+                element={<Dashboard />}
+              />
 
-              <Route path="/customer/create-booking" element={<CreateBooking />} />
-              <Route path="/customer/bookings" element={<Booking />} />
-              <Route path="/customer/bookings/details" element={<BookingDetails />} />
+              {/* Services and bookings */}
+              <Route
+                path="/customer/services"
+                element={<ServiceDetails />}
+              />
 
-              <Route path="/customer/services" element={<Services />} />
+              <Route
+                path="/customer/create-booking"
+                element={<CreateBooking />}
+              />
 
-              <Route path="/customer/complaints" element={<NewComplaint />} />
+              <Route
+                path="/customer/bookings"
+                element={<Booking />}
+              />
 
-              <Route path="/customer/payments" element={<Payment />} />
-              <Route path="/customer/payments/invoice" element={<Invoice />} />
+              <Route
+                path="/customer/bookings/details"
+                element={<BookingDetails />}
+              />
 
-              <Route path="/customer/profile" element={<Profile />} />
-              <Route path="*" element={<h1>404 - Page Not Found</h1>} />
+              {/* Complaints */}
+              <Route
+                path="/customer/complaints"
+                element={<NewComplaint />}
+              />
 
+              {/* Payments */}
+              <Route
+                path="/customer/payments"
+                element={<Payment />}
+              />
+
+              <Route
+                path="/customer/payments/invoice"
+                element={<Invoice />}
+              />
+
+              {/* Account */}
+              <Route
+                path="/customer/profile"
+                element={<Profile />}
+              />
+
+              <Route
+                path="/change-password"
+                element={<ChangePassword />}
+              />
             </Route>
           </Route>
+
+          {/* Global 404 */}
+          <Route
+            path="*"
+            element={<h1>404 - Page Not Found</h1>}
+          />
         </Routes>
       </AuthProvider>
     </BrowserRouter>
