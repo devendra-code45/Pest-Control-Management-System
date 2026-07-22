@@ -1,0 +1,610 @@
+/* ==========================================================================
+   Reject Booking — Pest Control Management System
+   ========================================================================== */
+
+.rb-page {
+  --rb-primary: #15803d;
+  --rb-secondary: #166534;
+  --rb-accent: #22c55e;
+  --rb-bg: #f7faf8;
+  --rb-card: #ffffff;
+  --rb-text: #1f2937;
+  --rb-text-muted: #6b7280;
+  --rb-border: #e5e7eb;
+  --rb-success: #16a34a;
+  --rb-warning: #f59e0b;
+  --rb-danger: #dc2626;
+  --rb-accent-soft: #ecfdf3;
+  --rb-danger-soft: #fef2f2;
+  --rb-danger-soft-border: #fecaca;
+  --rb-neutral-soft: #f3f4f6;
+  --rb-radius: 12px;
+
+  font-family: "Poppins", -apple-system, BlinkMacSystemFont, sans-serif;
+  color: var(--rb-text);
+  background-color: var(--rb-bg);
+  max-width: 1224px;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+.rb-page * {
+  box-sizing: border-box;
+}
+
+/* Breadcrumb ---------------------------------------------------------------- */
+
+.rb-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  margin-bottom: 18px;
+}
+
+.rb-breadcrumb-link {
+  color: var(--rb-primary);
+  text-decoration: none;
+}
+
+.rb-breadcrumb-link:hover {
+  text-decoration: underline;
+}
+
+.rb-breadcrumb-sep {
+  color: #9ca3af;
+}
+
+.rb-breadcrumb-current {
+  color: var(--rb-text-muted);
+}
+
+/* Header ---------------------------------------------------------------------- */
+
+.rb-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 24px;
+  gap: 24px;
+}
+
+.rb-title {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--rb-text);
+  margin: 0 0 6px;
+  letter-spacing: -0.01em;
+}
+
+.rb-subtitle {
+  font-size: 14px;
+  color: var(--rb-text-muted);
+  margin: 0;
+  font-weight: 400;
+  max-width: 640px;
+}
+
+/* Buttons ---------------------------------------------------------------------- */
+
+.rb-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 10px 18px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease, opacity 0.15s ease;
+  border: 1.5px solid transparent;
+  white-space: nowrap;
+}
+
+.rb-btn-outline {
+  background-color: var(--rb-card);
+  border-color: var(--rb-border);
+  color: var(--rb-text);
+}
+
+.rb-btn-outline:hover {
+  background-color: var(--rb-neutral-soft);
+}
+
+.rb-btn-danger {
+  background-color: var(--rb-danger);
+  border-color: var(--rb-danger);
+  color: #ffffff;
+}
+
+.rb-btn-danger:hover {
+  background-color: #b91c1c;
+}
+
+.rb-btn-danger:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Layout ---------------------------------------------------------------------- */
+
+.rb-layout {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 24px;
+  align-items: start;
+}
+
+.rb-main-col {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  min-width: 0;
+}
+
+.rb-side-col {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Card ---------------------------------------------------------------------- */
+
+.rb-card {
+  background-color: var(--rb-card);
+  border: 1px solid var(--rb-border);
+  border-radius: var(--rb-radius);
+  padding: 24px;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
+}
+
+.rb-card-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.rb-card-header-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.rb-icon-accent {
+  background-color: var(--rb-accent-soft);
+  color: var(--rb-primary);
+}
+
+.rb-icon-danger {
+  background-color: var(--rb-danger-soft);
+  color: var(--rb-danger);
+}
+
+.rb-card-title {
+  font-size: 17px;
+  font-weight: 600;
+  margin: 0;
+  color: var(--rb-text);
+}
+
+/* Booking summary ---------------------------------------------------------------------- */
+
+.rb-booking-summary {
+  display: grid;
+  grid-template-columns: 1.6fr 1fr 1.2fr 1fr 0.8fr 1fr;
+  gap: 20px;
+  align-items: start;
+  border: 1px solid var(--rb-border);
+  border-radius: 10px;
+  padding: 20px 24px;
+  background-color: var(--rb-bg);
+}
+
+.rb-property-block {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.rb-property-icon {
+  width: 52px;
+  height: 52px;
+  min-width: 52px;
+  border-radius: 50%;
+  background-color: var(--rb-accent-soft);
+  color: var(--rb-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.rb-property-text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.rb-property-name {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--rb-text);
+}
+
+.rb-property-location {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 13px;
+  color: var(--rb-text-muted);
+}
+
+.rb-summary-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.rb-summary-label {
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--rb-text-muted);
+}
+
+.rb-summary-value {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--rb-text);
+}
+
+.rb-summary-value svg {
+  color: var(--rb-primary);
+}
+
+.rb-summary-stacked {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+.rb-summary-line {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.rb-summary-muted svg {
+  color: #9ca3af;
+}
+
+.rb-priority-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  width: fit-content;
+  background-color: var(--rb-danger-soft);
+  color: var(--rb-danger);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 5px 12px;
+  border-radius: 999px;
+}
+
+/* Rejection reason card ---------------------------------------------------------------------- */
+
+.rb-reason-card {
+  overflow: visible;
+}
+
+.rb-reason-desc {
+  font-size: 13.5px;
+  color: var(--rb-text-muted);
+  margin: -8px 0 20px;
+  line-height: 1.6;
+}
+
+.rb-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+.rb-form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  position: relative;
+}
+
+.rb-form-label {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--rb-text);
+}
+
+.rb-required {
+  color: var(--rb-danger);
+}
+
+/* Dropdown ---------------------------------------------------------------------- */
+
+/* This wrapper is the ONLY positioning context for the menu. Keeping it
+   separate from .rb-form-field (which also holds the label) guarantees the
+   menu's "top: 100%" is always measured from the trigger button itself,
+   never from a taller ancestor — that mismatch is what causes the menu to
+   render far down the page instead of right under the input. */
+.rb-dropdown-field {
+  position: relative;
+  isolation: isolate;
+  z-index: 5;
+}
+
+.rb-dropdown-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  font-family: inherit;
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--rb-text);
+  background-color: var(--rb-card);
+  border: 1.5px solid var(--rb-primary);
+  border-radius: 8px;
+  padding: 12px 14px;
+  cursor: pointer;
+}
+
+.rb-dropdown-placeholder {
+  color: #9ca3af;
+}
+
+.rb-dropdown-caret {
+  color: var(--rb-text-muted);
+  transition: transform 0.15s ease;
+  flex-shrink: 0;
+}
+
+.rb-caret-open {
+  transform: rotate(180deg);
+}
+
+.rb-dropdown-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  margin: 6px 0 0;
+  background-color: var(--rb-card);
+  border: 1px solid var(--rb-border);
+  border-radius: 10px;
+  box-shadow: 0 12px 28px rgba(16, 24, 40, 0.14);
+  list-style: none;
+  padding: 6px;
+  z-index: 20;
+  max-height: 360px;
+  overflow-y: auto;
+}
+
+.rb-dropdown-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  width: 100%;
+  text-align: left;
+  font-family: inherit;
+  background: none;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 12px;
+  cursor: pointer;
+}
+
+.rb-dropdown-option:hover {
+  background-color: var(--rb-bg);
+}
+
+.rb-option-selected {
+  background-color: var(--rb-accent-soft);
+}
+
+.rb-option-icon {
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  border-radius: 8px;
+  background-color: var(--rb-neutral-soft);
+  color: var(--rb-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 1px;
+}
+
+.rb-option-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.rb-option-title {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--rb-text);
+}
+
+.rb-option-desc {
+  font-size: 12.5px;
+  color: var(--rb-text-muted);
+  line-height: 1.4;
+}
+
+/* Textarea ---------------------------------------------------------------------- */
+
+.rb-textarea {
+  width: 100%;
+  min-height: 168px;
+  font-family: inherit;
+  font-size: 13.5px;
+  color: var(--rb-text);
+  padding: 12px 14px;
+  border: 1px solid var(--rb-border);
+  border-radius: 8px;
+  background-color: var(--rb-card);
+  resize: vertical;
+}
+
+.rb-textarea::placeholder {
+  color: #9ca3af;
+}
+
+.rb-textarea:focus {
+  outline: none;
+  border-color: var(--rb-primary);
+}
+
+.rb-char-count {
+  align-self: flex-end;
+  font-size: 12px;
+  color: #9ca3af;
+}
+
+/* Form actions ---------------------------------------------------------------------- */
+
+.rb-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding-top: 20px;
+  border-top: 1px solid var(--rb-border);
+}
+
+/* Sidebar notice cards ---------------------------------------------------------------------- */
+
+.rb-notice-card {
+  border-radius: var(--rb-radius);
+  padding: 20px;
+  border: 1px solid transparent;
+}
+
+.rb-notice-danger {
+  background-color: var(--rb-danger-soft);
+  border-color: var(--rb-danger-soft-border);
+}
+
+.rb-notice-success {
+  background-color: var(--rb-accent-soft);
+  border-color: #bbf7d0;
+}
+
+.rb-notice-neutral {
+  background-color: var(--rb-neutral-soft);
+  border-color: var(--rb-border);
+}
+
+.rb-notice-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.rb-notice-danger .rb-notice-icon {
+  color: var(--rb-danger);
+}
+
+.rb-notice-success .rb-notice-icon {
+  color: var(--rb-primary);
+}
+
+.rb-notice-neutral .rb-notice-icon {
+  color: var(--rb-text);
+}
+
+.rb-notice-title {
+  font-size: 14.5px;
+  font-weight: 700;
+  color: var(--rb-text);
+  margin: 0;
+}
+
+.rb-notice-text {
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--rb-text);
+  opacity: 0.85;
+  margin: 0;
+}
+
+.rb-policy-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.rb-policy-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 13px;
+  color: var(--rb-text);
+  line-height: 1.5;
+}
+
+.rb-policy-check {
+  color: var(--rb-success);
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.rb-support-btn {
+  width: 100%;
+  justify-content: center;
+  margin-top: 14px;
+}
+
+/* Responsive breakpoints ---------------------------------------------------------------------- */
+
+@media (max-width: 1600px) {
+  .rb-layout {
+    grid-template-columns: 1fr 320px;
+  }
+}
+
+@media (max-width: 1440px) {
+  .rb-page {
+    padding: 24px 24px 40px;
+  }
+
+  .rb-booking-summary {
+    grid-template-columns: 1.6fr 1fr 1.2fr 1fr 1fr;
+    row-gap: 20px;
+  }
+
+  .rb-property-block {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 1366px) {
+  .rb-layout {
+    grid-template-columns: 1fr 300px;
+    gap: 20px;
+  }
+
+  .rb-form-grid {
+    gap: 16px;
+  }
+}

@@ -382,17 +382,11 @@ export default function TechniciansManagement() {
                   </td>
                   <td>
                     <div className="tm-actions">
-                      <button type="button" className="tm-icon-btn" title="View">
+                      <button type="button" className="tm-icon-btn" title="View" onClick={() => navigate("/admin/technicians/profile/")}>
                         <Eye size={16} />
                       </button>
-                      <button type="button" className="tm-icon-btn" title="Edit">
+                      <button type="button" className="tm-icon-btn" title="Edit" onClick={() => navigate("/admin/technicians/edit/")}>
                         <Pencil size={16} />
-                      </button>
-                      <button type="button" className="tm-icon-btn" title="Schedule">
-                        <CalendarClock size={16} />
-                      </button>
-                      <button type="button" className="tm-icon-btn" title="More">
-                        <MoreVertical size={16} />
                       </button>
                     </div>
                   </td>

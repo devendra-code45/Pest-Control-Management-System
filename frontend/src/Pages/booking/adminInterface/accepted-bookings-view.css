@@ -1,0 +1,463 @@
+/* ==========================================================================
+   Booking Details — Pest Control Management System
+   ========================================================================== */
+
+.bd-page {
+  --bd-primary: #15803d;
+  --bd-secondary: #166534;
+  --bd-accent: #22c55e;
+  --bd-bg: #f7faf8;
+  --bd-card: #ffffff;
+  --bd-text: #1f2937;
+  --bd-text-muted: #6b7280;
+  --bd-border: #e5e7eb;
+  --bd-success: #16a34a;
+  --bd-warning: #f59e0b;
+  --bd-danger: #dc2626;
+  --bd-accent-soft: #ecfdf3;
+  --bd-danger-soft: #fee2e2;
+  --bd-radius: 12px;
+
+  font-family: "Poppins", -apple-system, BlinkMacSystemFont, sans-serif;
+  color: var(--bd-text);
+  background-color: var(--bd-bg);
+  max-width: 1224px;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+.bd-page * {
+  box-sizing: border-box;
+}
+
+/* Breadcrumb ---------------------------------------------------------------- */
+
+.bd-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  margin-bottom: 18px;
+}
+
+.bd-breadcrumb-link {
+  color: var(--bd-primary);
+  text-decoration: none;
+}
+
+.bd-breadcrumb-link:hover {
+  text-decoration: underline;
+}
+
+.bd-breadcrumb-sep {
+  color: #9ca3af;
+}
+
+.bd-breadcrumb-current {
+  color: var(--bd-text-muted);
+}
+
+/* Header ---------------------------------------------------------------------- */
+
+.bd-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+
+/* Buttons ---------------------------------------------------------------------- */
+
+.bd-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 10px 18px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+  border: 1.5px solid transparent;
+  white-space: nowrap;
+}
+
+.bd-btn-outline {
+  background-color: var(--bd-card);
+  border-color: var(--bd-primary);
+  color: var(--bd-primary);
+}
+
+.bd-btn-outline:hover {
+  background-color: var(--bd-accent-soft);
+}
+
+/* Summary card ---------------------------------------------------------------------- */
+
+.bd-summary-card {
+  background-color: var(--bd-card);
+  border: 1px solid var(--bd-border);
+  border-radius: var(--bd-radius);
+  padding: 24px;
+  margin-bottom: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
+}
+
+.bd-summary-left {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.bd-summary-icon {
+  width: 60px;
+  height: 60px;
+  min-width: 60px;
+  border-radius: 14px;
+  background-color: var(--bd-primary);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 10px rgba(21, 128, 61, 0.25);
+}
+
+.bd-summary-text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.bd-summary-label {
+  font-size: 12.5px;
+  color: var(--bd-text-muted);
+  font-weight: 500;
+}
+
+.bd-summary-id-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.bd-summary-id {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--bd-primary);
+}
+
+.bd-summary-meta {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  margin-top: 6px;
+}
+
+.bd-summary-meta-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--bd-text-muted);
+}
+
+.bd-summary-right {
+  display: flex;
+  align-items: center;
+  gap: 32px;
+}
+
+.bd-summary-stat {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.bd-summary-stat-icon {
+  width: 34px;
+  height: 34px;
+  min-width: 34px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bd-stat-icon-danger {
+  background-color: var(--bd-danger-soft);
+  color: var(--bd-danger);
+}
+
+.bd-stat-icon-accent {
+  background-color: var(--bd-accent-soft);
+  color: var(--bd-primary);
+}
+
+.bd-summary-stat-text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.bd-summary-stat-label {
+  font-size: 12.5px;
+  color: var(--bd-text-muted);
+  font-weight: 500;
+}
+
+/* Badges ---------------------------------------------------------------------- */
+
+.bd-badge {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.bd-badge-success {
+  background-color: var(--bd-accent-soft);
+  color: var(--bd-secondary);
+}
+
+.bd-badge-danger {
+  background-color: var(--bd-danger-soft);
+  color: var(--bd-danger);
+}
+
+/* Grid + cards ---------------------------------------------------------------------- */
+
+.bd-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.bd-card {
+  background-color: var(--bd-card);
+  border: 1px solid var(--bd-border);
+  border-radius: var(--bd-radius);
+  padding: 24px;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
+}
+
+.bd-card-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.bd-card-header-icon {
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  border-radius: 8px;
+  background-color: var(--bd-accent-soft);
+  color: var(--bd-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bd-card-title {
+  font-size: 15.5px;
+  font-weight: 600;
+  margin: 0;
+  color: var(--bd-text);
+}
+
+/* Info rows ---------------------------------------------------------------------- */
+
+.bd-info-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.bd-info-row {
+  display: grid;
+  grid-template-columns: 132px 10px 1fr;
+  gap: 4px;
+  font-size: 13.5px;
+}
+
+.bd-info-label {
+  color: var(--bd-text-muted);
+  font-weight: 500;
+}
+
+.bd-info-colon {
+  color: var(--bd-text-muted);
+}
+
+.bd-info-value {
+  color: var(--bd-text);
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.bd-value-with-icon {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.bd-value-icon {
+  color: var(--bd-primary);
+}
+
+.bd-info-list-divided {
+  margin-top: 18px;
+  padding-top: 18px;
+  border-top: 1px solid var(--bd-border);
+}
+
+.bd-notes-list .bd-info-row {
+  grid-template-columns: 118px 10px 1fr;
+}
+
+/* Assigned technician block ---------------------------------------------------------------------- */
+
+.bd-technician-block {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--bd-border);
+}
+
+.bd-technician-avatar {
+  width: 64px;
+  height: 64px;
+  min-width: 64px;
+  border-radius: 50%;
+  background-color: var(--bd-accent-soft);
+  color: var(--bd-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bd-technician-text {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.bd-technician-name {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--bd-text);
+}
+
+.bd-technician-id {
+  align-self: flex-start;
+}
+
+.bd-technician-phone {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--bd-text-muted);
+  font-weight: 500;
+}
+
+/* Timeline ---------------------------------------------------------------------- */
+
+.bd-timeline-card {
+  margin-bottom: 24px;
+}
+
+.bd-timeline {
+  display: flex;
+  align-items: flex-start;
+  padding: 12px 40px 0;
+}
+
+.bd-timeline-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 6px;
+  min-width: 160px;
+}
+
+.bd-timeline-dot {
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  border-radius: 50%;
+  background-color: var(--bd-primary);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 8px;
+}
+
+.bd-timeline-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--bd-text);
+}
+
+.bd-timeline-date {
+  font-size: 12.5px;
+  color: var(--bd-text-muted);
+}
+
+.bd-timeline-by {
+  font-size: 12px;
+  color: #9ca3af;
+}
+
+.bd-timeline-connector {
+  flex: 1;
+  height: 2px;
+  background-color: var(--bd-primary);
+  margin-top: 18px;
+}
+
+/* Responsive breakpoints ---------------------------------------------------------------------- */
+
+@media (max-width: 1600px) {
+  .bd-summary-right {
+    gap: 24px;
+  }
+}
+
+@media (max-width: 1440px) {
+  .bd-page {
+    padding: 24px 24px 40px;
+  }
+
+  .bd-grid {
+    gap: 16px;
+  }
+
+  .bd-timeline {
+    padding: 12px 16px 0;
+  }
+}
+
+@media (max-width: 1366px) {
+  .bd-info-row {
+    grid-template-columns: 116px 10px 1fr;
+  }
+
+  .bd-summary-card {
+    flex-wrap: wrap;
+    gap: 20px;
+  }
+}

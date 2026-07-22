@@ -1,8 +1,10 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import {
+  ChevronRight,
   Pencil,
   IdCard,
-  CalendarDays,
+  Calendar,
   ShieldCheck,
   MapPin,
   User,
@@ -12,7 +14,7 @@ import {
   Users,
   Info,
 } from "lucide-react";
-import "./TechnicianProfile.css";
+import "./technicianprofile.css";
 
 const technician = {
   name: "Amit Kumar",
@@ -37,44 +39,83 @@ const emergencyContact = {
   relationship: "Brother",
 };
 
-const TechnicianProfile = () => {
+const DetailRow = ({ icon: Icon, label, value }) => (
+  <div className="tp-detail-row">
+    <span className="tp-detail-icon">
+      <Icon size={16} strokeWidth={2} />
+    </span>
+    <div className="tp-detail-text">
+      <span className="tp-detail-label">{label}</span>
+      <span className="tp-detail-value">{value}</span>
+    </div>
+  </div>
+);
+
+const InfoRow = ({ icon: Icon, label, value }) => (
+  <div className="tp-info-row">
+    <span className="tp-info-icon">
+      <Icon size={16} strokeWidth={2} />
+    </span>
+    <div className="tp-info-text">
+      <span className="tp-info-label">{label}</span>
+      <span className="tp-info-value">{value}</span>
+    </div>
+  </div>
+);
+
+const EmergencyItem = ({ icon: Icon, label, value }) => (
+  <div className="tp-emergency-item">
+    <span className="tp-emergency-icon">
+      <Icon size={18} strokeWidth={2} />
+    </span>
+    <div className="tp-emergency-text">
+      <span className="tp-emergency-label">{label}</span>
+      <span className="tp-emergency-value">{value}</span>
+    </div>
+  </div>
+);
+
+export default function TechnicianProfile() {
+  const navigate = useNavigate();
   return (
     <div className="tp-page">
-      {/* Breadcrumb */}
       <nav className="tp-breadcrumb" aria-label="Breadcrumb">
-        <span>Dashboard</span>
-        <span className="tp-breadcrumb-sep">›</span>
-        <span>Technicians</span>
-        <span className="tp-breadcrumb-sep">›</span>
+        <a href="#" className="tp-breadcrumb-link">
+          Dashboard
+        </a>
+        <ChevronRight size={14} className="tp-breadcrumb-sep" />
+        <a href="#" className="tp-breadcrumb-link">
+          Technicians
+        </a>
+        <ChevronRight size={14} className="tp-breadcrumb-sep" />
         <span className="tp-breadcrumb-current">Profile</span>
       </nav>
 
-      {/* Page Header */}
-      <div className="tp-header">
+      <header className="tp-header">
         <div>
           <h1 className="tp-title">Technician Profile</h1>
           <p className="tp-subtitle">
             View your personal information and emergency contact details
           </p>
         </div>
-        <button type="button" className="tp-btn tp-btn-outline">
-          <Pencil size={16} />
-          <span>Edit Profile</span>
+        <button type="button" className="tp-btn tp-btn-outline" onClick={() => navigate("/admin/technicians/edit")}>
+          <Pencil size={16} strokeWidth={2} />
+          Edit Profile
         </button>
-      </div>
+      </header>
 
-      {/* Technician Details Card */}
       <section className="tp-card">
         <div className="tp-card-header">
-          <IdCard size={18} className="tp-card-header-icon" />
-          <h2>Technician Details</h2>
+          <span className="tp-card-header-icon">
+            <IdCard size={18} strokeWidth={2} />
+          </span>
+          <h2 className="tp-card-title">Technician Details</h2>
         </div>
 
-        <div className="tp-details-grid">
-          {/* Avatar column */}
-          <div className="tp-avatar-col">
+        <div className="tp-card-body">
+          <div className="tp-profile-col">
             <div className="tp-avatar">
-              <User size={48} />
+              <User size={48} strokeWidth={1.5} />
             </div>
             <span className="tp-status-badge">
               <span className="tp-status-dot" />
@@ -82,127 +123,51 @@ const TechnicianProfile = () => {
             </span>
           </div>
 
-          {/* Info list column */}
-          <div className="tp-info-col">
+          <div className="tp-identity-col">
             <h3 className="tp-name">{technician.name}</h3>
             <p className="tp-role">{technician.role}</p>
 
-            <ul className="tp-meta-list">
-              <li>
-                <IdCard size={16} className="tp-meta-icon" />
-                <span className="tp-meta-label">Employee ID</span>
-                <span className="tp-meta-value">{technician.employeeId}</span>
-              </li>
-              <li>
-                <CalendarDays size={16} className="tp-meta-icon" />
-                <span className="tp-meta-label">Date of Joining</span>
-                <span className="tp-meta-value">{technician.dateOfJoining}</span>
-              </li>
-              <li>
-                <ShieldCheck size={16} className="tp-meta-icon" />
-                <span className="tp-meta-label">Experience</span>
-                <span className="tp-meta-value">{technician.experience}</span>
-              </li>
-              <li>
-                <CalendarDays size={16} className="tp-meta-icon" />
-                <span className="tp-meta-label">License No.</span>
-                <span className="tp-meta-value">{technician.licenseNo}</span>
-              </li>
-              <li>
-                <MapPin size={16} className="tp-meta-icon" />
-                <span className="tp-meta-label">Service Area</span>
-                <span className="tp-meta-value">{technician.serviceArea}</span>
-              </li>
-            </ul>
+            <div className="tp-detail-list">
+              <DetailRow icon={IdCard} label="Employee ID" value={technician.employeeId} />
+              <DetailRow icon={Calendar} label="Date of Joining" value={technician.dateOfJoining} />
+              <DetailRow icon={ShieldCheck} label="Experience" value={technician.experience} />
+              <DetailRow icon={Calendar} label="License No." value={technician.licenseNo} />
+              <DetailRow icon={MapPin} label="Service Area" value={technician.serviceArea} />
+            </div>
           </div>
 
-          {/* Contact details column */}
-          <div className="tp-contact-col">
-            <ul className="tp-field-list">
-              <li>
-                <User size={16} className="tp-meta-icon" />
-                <span className="tp-field-label">Full Name</span>
-                <span className="tp-field-value">{technician.fullName}</span>
-              </li>
-              <li>
-                <Phone size={16} className="tp-meta-icon" />
-                <span className="tp-field-label">Phone Number</span>
-                <span className="tp-field-value">{technician.phone}</span>
-              </li>
-              <li>
-                <Mail size={16} className="tp-meta-icon" />
-                <span className="tp-field-label">Email Address</span>
-                <span className="tp-field-value">{technician.email}</span>
-              </li>
-              <li>
-                <CalendarDays size={16} className="tp-meta-icon" />
-                <span className="tp-field-label">Date of Birth</span>
-                <span className="tp-field-value">{technician.dob}</span>
-              </li>
-              <li>
-                <User size={16} className="tp-meta-icon" />
-                <span className="tp-field-label">Gender</span>
-                <span className="tp-field-value">{technician.gender}</span>
-              </li>
-              <li>
-                <Home size={16} className="tp-meta-icon" />
-                <span className="tp-field-label">Address</span>
-                <span className="tp-field-value">{technician.address}</span>
-              </li>
-            </ul>
+          <div className="tp-info-col">
+            <InfoRow icon={User} label="Full Name" value={technician.fullName} />
+            <InfoRow icon={Phone} label="Phone Number" value={technician.phone} />
+            <InfoRow icon={Mail} label="Email Address" value={technician.email} />
+            <InfoRow icon={Calendar} label="Date of Birth" value={technician.dob} />
+            <InfoRow icon={User} label="Gender" value={technician.gender} />
+            <InfoRow icon={Home} label="Address" value={technician.address} />
           </div>
         </div>
       </section>
 
-      {/* Emergency Contact Card */}
       <section className="tp-card">
         <div className="tp-card-header">
-          <Phone size={18} className="tp-card-header-icon" />
-          <h2>Emergency Contact</h2>
-        </div>
-
-        <div className="tp-emergency-grid">
-          <div className="tp-emergency-item">
-            <span className="tp-emergency-icon">
-              <User size={18} />
-            </span>
-            <div>
-              <p className="tp-emergency-label">Contact Name</p>
-              <p className="tp-emergency-value">{emergencyContact.name}</p>
-            </div>
-          </div>
-
-          <div className="tp-emergency-item">
-            <span className="tp-emergency-icon">
-              <Phone size={18} />
-            </span>
-            <div>
-              <p className="tp-emergency-label">Phone Number</p>
-              <p className="tp-emergency-value">{emergencyContact.phone}</p>
-            </div>
-          </div>
-
-          <div className="tp-emergency-item">
-            <span className="tp-emergency-icon">
-              <Users size={18} />
-            </span>
-            <div>
-              <p className="tp-emergency-label">Relationship</p>
-              <p className="tp-emergency-value">{emergencyContact.relationship}</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="tp-info-banner">
-          <Info size={16} className="tp-info-banner-icon" />
-          <span>
-            This contact will be notified in case of any emergency during field
-            service.
+          <span className="tp-card-header-icon">
+            <Phone size={18} strokeWidth={2} />
           </span>
+          <h2 className="tp-card-title">Emergency Contact</h2>
+        </div>
+
+        <div className="tp-emergency-body">
+          <EmergencyItem icon={User} label="Contact Name" value={emergencyContact.name} />
+          <span className="tp-emergency-divider" />
+          <EmergencyItem icon={Phone} label="Phone Number" value={emergencyContact.phone} />
+          <span className="tp-emergency-divider" />
+          <EmergencyItem icon={Users} label="Relationship" value={emergencyContact.relationship} />
+        </div>
+
+        <div className="tp-notice">
+          <Info size={16} strokeWidth={2} />
+          <span>This contact will be notified in case of any emergency during field service.</span>
         </div>
       </section>
     </div>
   );
-};
-
-export default TechnicianProfile;
+}

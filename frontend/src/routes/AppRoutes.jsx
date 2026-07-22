@@ -19,8 +19,11 @@ import CustomerDetails from "../Pages/customer/customer-details";
 // Booking management
 import CreateBooking from "../Pages/booking/Create-Booking";
 import BookingDetails from "../Pages/booking/Booking-details";
-import Booking from "../Pages/booking/Booking";
+import PendingBooking from "../Pages/booking/adminInterface/PendingBookings";
 import EditBooking from "../Pages/booking/Edit-Booking";
+import AcceptedBookings from "../Pages/booking/adminInterface/accepted-bookings";
+import RBPage from "../Pages/booking/adminInterface/RBPage";
+import ViewAcceptedBookings from "../pages/booking/adminInterface/accepted-bookings-view"
 
 // Complaints
 import NewComplaint from "../Pages/complaint/newcomplaint";
@@ -96,22 +99,23 @@ function AppRoutes() {
               <Route path="/admin/customers/edit" element={<EditCustomer />} />
 
               {/* Bookings */}
-              <Route path="/admin/bookings" element={<Booking />} />
+              <Route path="/admin/bookings" element={<PendingBooking />} />
 
-              <Route path="/admin/bookings/pending" element={<Booking />} />
+              <Route path="/admin/bookings/pending" element={<PendingBooking />} />
 
-              <Route path="/admin/bookings/accepted" element={<Booking />} />
+              <Route path="/admin/bookings/accepted" element={<AcceptedBookings />} />
 
-              <Route path="/admin/bookings/rejected" element={<Booking />} />
+              <Route path="/admin/bookings/assigned-bookings-view" element={<ViewAcceptedBookings />} />
+
+              <Route path="/admin/bookings/rejection-reason" element={<RBPage />} />
+
+              <Route path="/admin/bookings/rejected" element={<PendingBooking />} />
 
               <Route path="/admin/bookings/details" element={<BookingDetails />} />
 
               <Route path="/admin/bookings/edit" element={<EditBooking />} />
 
-              <Route
-                path="/admin/bookings/assign-technician"
-                element={<AssignTechnician />}
-              />
+              <Route path="/admin/bookings/assign-technician" element={<AssignTechnician />} />
 
               {/* Technicians */}
               <Route
@@ -235,7 +239,7 @@ function AppRoutes() {
 
               <Route
                 path="/customer/bookings"
-                element={<Booking />}
+                element={<PendingBooking />}
               />
 
               <Route
