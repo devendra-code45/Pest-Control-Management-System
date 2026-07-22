@@ -1,11 +1,10 @@
 /* ==========================================================================
-   Technician Profile — Page Styles
-   Pest Control Management System
+   Technician Profile — Pest Control Management System
    ========================================================================== */
 
 .tp-page {
   --tp-primary: #15803d;
-  --tp-primary-dark: #166534;
+  --tp-secondary: #166534;
   --tp-accent: #22c55e;
   --tp-bg: #f7faf8;
   --tp-card: #ffffff;
@@ -15,11 +14,10 @@
   --tp-success: #16a34a;
   --tp-warning: #f59e0b;
   --tp-danger: #dc2626;
+  --tp-accent-soft: #ecfdf3;
   --tp-radius: 12px;
-  --tp-radius-sm: 8px;
 
-  font-family: "Poppins", -apple-system, BlinkMacSystemFont, "Segoe UI",
-    sans-serif;
+  font-family: "Poppins", -apple-system, BlinkMacSystemFont, sans-serif;
   color: var(--tp-text);
   background-color: var(--tp-bg);
   max-width: 1224px;
@@ -31,597 +29,363 @@
   box-sizing: border-box;
 }
 
-/* ---------------- Breadcrumb ---------------- */
+/* Breadcrumb ------------------------------------------------------------- */
+
 .tp-breadcrumb {
   display: flex;
   align-items: center;
   gap: 6px;
   font-size: 13px;
-  color: var(--tp-text-muted);
-  margin-bottom: 16px;
-}
-
-.tp-crumb-sep {
-  color: #c9d1cd;
-}
-
-.tp-crumb-active {
-  color: var(--tp-text);
   font-weight: 500;
+  margin-bottom: 18px;
 }
 
-/* ---------------- Page Header ---------------- */
-.tp-page-header {
+.tp-breadcrumb-link {
+  color: var(--tp-primary);
+  text-decoration: none;
+}
+
+.tp-breadcrumb-link:hover {
+  text-decoration: underline;
+}
+
+.tp-breadcrumb-sep {
+  color: #9ca3af;
+}
+
+.tp-breadcrumb-current {
+  color: var(--tp-text-muted);
+}
+
+/* Header ------------------------------------------------------------------ */
+
+.tp-header {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 16px;
-  margin-bottom: 20px;
+  margin-bottom: 24px;
 }
 
 .tp-title {
   font-size: 28px;
   font-weight: 700;
-  margin: 0 0 4px;
-  letter-spacing: -0.3px;
+  color: var(--tp-text);
+  margin: 0 0 6px;
+  letter-spacing: -0.01em;
 }
 
 .tp-subtitle {
   font-size: 14px;
   color: var(--tp-text-muted);
   margin: 0;
+  font-weight: 400;
 }
 
-.tp-header-actions {
-  display: flex;
-  gap: 12px;
-  flex-shrink: 0;
-}
+/* Buttons ------------------------------------------------------------------ */
 
-/* ---------------- Buttons ---------------- */
 .tp-btn {
   display: inline-flex;
   align-items: center;
   gap: 8px;
   font-family: inherit;
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 600;
   padding: 10px 18px;
   border-radius: 8px;
-  border: 1px solid transparent;
   cursor: pointer;
-  white-space: nowrap;
-  transition: background-color 0.15s ease, border-color 0.15s ease,
-    box-shadow 0.15s ease, transform 0.05s ease;
-}
-
-.tp-btn:active {
-  transform: translateY(1px);
-}
-
-.tp-btn-primary {
-  background-color: var(--tp-primary);
-  color: #ffffff;
-  box-shadow: 0 1px 2px rgba(21, 128, 61, 0.15);
-}
-
-.tp-btn-primary:hover {
-  background-color: var(--tp-primary-dark);
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+  border: 1.5px solid transparent;
 }
 
 .tp-btn-outline {
-  background-color: #ffffff;
-  color: var(--tp-text);
-  border-color: var(--tp-border);
+  background-color: var(--tp-card);
+  border-color: var(--tp-primary);
+  color: var(--tp-primary);
 }
 
 .tp-btn-outline:hover {
-  background-color: #f3f5f4;
-  border-color: #d1d9d5;
+  background-color: var(--tp-accent-soft);
 }
 
-/* ---------------- Cards ---------------- */
+/* Card ---------------------------------------------------------------------- */
+
 .tp-card {
   background-color: var(--tp-card);
   border: 1px solid var(--tp-border);
   border-radius: var(--tp-radius);
   padding: 24px;
-  box-shadow: 0 1px 3px rgba(16, 24, 40, 0.04);
+  margin-bottom: 24px;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
 }
 
-.tp-section-header {
+.tp-card-header {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding-bottom: 14px;
-  margin-bottom: 16px;
-  border-bottom: 1px solid var(--tp-border);
+  margin-bottom: 20px;
 }
 
-.tp-section-header h3 {
-  font-size: 15px;
-  font-weight: 600;
-  color: var(--tp-primary-dark);
-  margin: 0;
-}
-
-.tp-section-icon {
+.tp-card-header-icon {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
-  border-radius: 8px;
-  background-color: #dcfce7;
   color: var(--tp-primary);
-  flex-shrink: 0;
 }
 
-/* ---------------- Profile Summary Card ---------------- */
-.tp-profile-card {
-  margin-bottom: 20px;
-  padding: 24px;
+.tp-card-title {
+  font-size: 17px;
+  font-weight: 600;
+  margin: 0;
+  color: var(--tp-text);
 }
 
-.tp-profile-main {
+/* Technician details body -------------------------------------------------- */
+
+.tp-card-body {
+  display: grid;
+  grid-template-columns: 220px 1fr 1fr;
+  gap: 0;
+  border: 1px solid var(--tp-border);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.tp-profile-col {
   display: flex;
-  align-items: flex-start;
-  gap: 28px;
-  padding-bottom: 22px;
-  border-bottom: 1px solid var(--tp-border);
-  flex-wrap: wrap;
-}
-
-.tp-avatar-wrap {
-  position: relative;
-  flex-shrink: 0;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 32px 20px;
+  border-right: 1px solid var(--tp-border);
+  gap: 16px;
 }
 
 .tp-avatar {
-  width: 88px;
-  height: 88px;
+  width: 116px;
+  height: 116px;
   border-radius: 50%;
-  background-color: #eef2f0;
-  color: #9ca3af;
+  background-color: var(--tp-accent-soft);
+  color: var(--tp-primary);
   display: flex;
   align-items: center;
   justify-content: center;
-  overflow: hidden;
-  border: 1px solid var(--tp-border);
 }
 
-.tp-avatar img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+.tp-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background-color: var(--tp-accent-soft);
+  color: var(--tp-secondary);
+  font-size: 13px;
+  font-weight: 600;
+  padding: 6px 14px;
+  border-radius: 999px;
 }
 
-.tp-avatar-status {
-  position: absolute;
-  bottom: 4px;
-  right: 4px;
-  width: 14px;
-  height: 14px;
+.tp-status-dot {
+  width: 7px;
+  height: 7px;
   border-radius: 50%;
   background-color: var(--tp-success);
-  border: 2.5px solid #ffffff;
+  display: inline-block;
 }
 
-.tp-profile-identity {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  min-width: 190px;
-  flex-shrink: 0;
+.tp-identity-col {
+  padding: 28px 28px 28px 32px;
+  border-right: 1px solid var(--tp-border);
 }
 
-.tp-name-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.tp-name-row h2 {
-  font-size: 20px;
+.tp-name {
+  font-size: 22px;
   font-weight: 700;
-  margin: 0;
+  margin: 0 0 4px;
   color: var(--tp-text);
 }
 
 .tp-role {
-  font-size: 13.5px;
-  color: var(--tp-text-muted);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--tp-primary);
+  margin: 0 0 20px;
 }
 
-.tp-rating {
+.tp-detail-list {
   display: flex;
-  align-items: center;
-  gap: 3px;
-  margin-top: 4px;
+  flex-direction: column;
 }
 
-.tp-star-filled {
-  color: #f59e0b;
-}
-
-.tp-star-half {
-  color: #f59e0b;
-}
-
-.tp-rating-value {
-  margin-left: 6px;
-  font-size: 12.5px;
-  color: var(--tp-text-muted);
-}
-
-.tp-profile-meta {
+.tp-detail-row {
   display: grid;
-  grid-template-columns: repeat(3, minmax(180px, 1fr));
-  gap: 14px 32px;
-  flex: 1;
-  min-width: 420px;
-}
-
-.tp-meta-item {
-  display: flex;
-  align-items: flex-start;
+  grid-template-columns: 24px 132px 1fr;
+  align-items: center;
   gap: 10px;
-}
-
-.tp-meta-item svg {
-  color: var(--tp-primary);
-  margin-top: 2px;
-  flex-shrink: 0;
-}
-
-.tp-meta-item div {
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-  min-width: 0;
-}
-
-.tp-meta-label {
-  font-size: 11.5px;
-  color: var(--tp-text-muted);
-}
-
-.tp-meta-value {
-  font-size: 13.5px;
-  font-weight: 600;
-  color: var(--tp-text);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-/* Stat strip */
-.tp-stat-strip {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 16px;
-  padding-top: 20px;
-}
-
-.tp-stat-box {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  text-align: center;
-  padding: 16px 12px;
-  background-color: #f7faf8;
-  border: 1px solid var(--tp-border);
-  border-radius: var(--tp-radius-sm);
-}
-
-.tp-stat-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background-color: #dcfce7;
-  color: var(--tp-primary);
-}
-
-.tp-stat-value {
-  font-size: 20px;
-  font-weight: 700;
-  color: var(--tp-text);
-}
-
-.tp-stat-label {
-  font-size: 12px;
-  color: var(--tp-text-muted);
-}
-
-/* ---------------- Tabs ---------------- */
-.tp-tabs {
-  display: flex;
-  align-items: center;
-  gap: 4px;
+  padding: 12px 0;
   border-bottom: 1px solid var(--tp-border);
-  margin-bottom: 20px;
-  overflow-x: auto;
 }
 
-.tp-tab {
-  display: inline-flex;
+.tp-detail-row:last-child {
+  border-bottom: none;
+}
+
+.tp-detail-icon {
+  display: flex;
   align-items: center;
-  gap: 8px;
-  font-family: inherit;
-  font-size: 13.5px;
-  font-weight: 500;
-  color: var(--tp-text-muted);
-  background: none;
-  border: none;
-  border-bottom: 2.5px solid transparent;
-  padding: 12px 18px;
-  cursor: pointer;
-  white-space: nowrap;
-  transition: color 0.15s ease, border-color 0.15s ease;
-}
-
-.tp-tab:hover {
-  color: var(--tp-primary-dark);
-}
-
-.tp-tab.is-active {
   color: var(--tp-primary);
-  border-bottom-color: var(--tp-primary);
-  font-weight: 600;
 }
 
-/* ---------------- Content Grid ---------------- */
-.tp-content-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 20px;
+.tp-detail-text {
+  display: contents;
 }
 
-/* ---------------- Info Rows ---------------- */
-.tp-info-list {
+.tp-detail-label {
+  font-size: 13.5px;
+  color: var(--tp-text-muted);
+  font-weight: 500;
+}
+
+.tp-detail-value {
+  font-size: 13.5px;
+  color: var(--tp-text);
+  font-weight: 500;
+}
+
+.tp-info-col {
+  padding: 28px 32px;
   display: flex;
   flex-direction: column;
-  gap: 14px;
-}
-
-.tp-info-list-tight {
-  margin-top: 18px;
-  gap: 12px;
 }
 
 .tp-info-row {
+  display: grid;
+  grid-template-columns: 24px 150px 1fr;
+  align-items: start;
+  gap: 10px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--tp-border);
+}
+
+.tp-info-row:last-child {
+  border-bottom: none;
+}
+
+.tp-info-icon {
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 16px;
+  align-items: center;
+  color: var(--tp-primary);
+  padding-top: 1px;
+}
+
+.tp-info-text {
+  display: contents;
 }
 
 .tp-info-label {
-  font-size: 13px;
+  font-size: 13.5px;
   color: var(--tp-text-muted);
-  flex-shrink: 0;
+  font-weight: 500;
 }
 
 .tp-info-value {
   font-size: 13.5px;
-  font-weight: 600;
   color: var(--tp-text);
-  text-align: right;
+  font-weight: 600;
+  line-height: 1.5;
 }
 
-.tp-info-tags {
-  display: flex;
-  gap: 6px;
-  flex-wrap: wrap;
-  justify-content: flex-end;
+/* Emergency contact ---------------------------------------------------------- */
+
+.tp-emergency-body {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr auto 1fr;
+  align-items: center;
+  border: 1px solid var(--tp-border);
+  border-radius: 10px;
+  padding: 20px 28px;
+  margin-bottom: 16px;
 }
 
-.tp-tag {
-  font-size: 11.5px;
-  font-weight: 500;
-  padding: 4px 10px;
-  border-radius: 20px;
-  background-color: #dcfce7;
-  color: var(--tp-primary-dark);
-  white-space: nowrap;
-}
-
-/* ---------------- Status Banner ---------------- */
-.tp-status-banner {
+.tp-emergency-item {
   display: flex;
   align-items: center;
-  gap: 12px;
-  background-color: #f0fdf4;
-  border: 1px solid #d3f0dd;
-  border-radius: var(--tp-radius-sm);
-  padding: 14px 16px;
+  gap: 14px;
 }
 
-.tp-status-icon {
+.tp-emergency-icon {
+  width: 42px;
+  height: 42px;
+  min-width: 42px;
+  border-radius: 50%;
+  background-color: var(--tp-accent-soft);
+  color: var(--tp-primary);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--tp-success);
-  flex-shrink: 0;
 }
 
-.tp-status-title {
-  display: block;
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--tp-success);
-}
-
-.tp-status-sub {
-  display: block;
-  font-size: 12.5px;
-  color: var(--tp-text-muted);
-}
-
-/* ---------------- Badges ---------------- */
-.tp-badge {
-  display: inline-flex;
-  align-items: center;
-  font-size: 12px;
-  font-weight: 500;
-  padding: 4px 12px;
-  border-radius: 20px;
-  white-space: nowrap;
-}
-
-.tp-badge-sm {
-  font-size: 11px;
-  padding: 3px 10px;
-}
-
-.tp-badge-success {
-  background-color: #dcfce7;
-  color: var(--tp-success);
-}
-
-/* ---------------- Skills / Progress ---------------- */
-.tp-skill-bars {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.tp-skill-row {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.tp-skill-top {
-  display: flex;
-  justify-content: space-between;
-  font-size: 13px;
-  color: var(--tp-text);
-}
-
-.tp-skill-percent {
-  font-weight: 600;
-  color: var(--tp-primary-dark);
-}
-
-.tp-progress-track {
-  width: 100%;
-  height: 8px;
-  border-radius: 20px;
-  background-color: #e5e7eb;
-  overflow: hidden;
-}
-
-.tp-progress-fill {
-  height: 100%;
-  border-radius: 20px;
-  background-color: var(--tp-primary);
-}
-
-/* ---------------- Certifications Table ---------------- */
-.tp-cert-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.tp-cert-table thead th {
-  text-align: left;
-  font-size: 11.5px;
-  font-weight: 600;
-  color: var(--tp-text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.02em;
-  padding: 0 0 10px;
-  border-bottom: 1px solid var(--tp-border);
-}
-
-.tp-cert-table tbody td {
-  padding: 12px 0;
-  font-size: 13px;
-  color: var(--tp-text);
-  border-bottom: 1px solid var(--tp-border);
-  vertical-align: middle;
-}
-
-.tp-cert-table tbody tr:last-child td {
-  border-bottom: none;
-}
-
-.tp-cert-table .tp-muted {
-  color: var(--tp-text-muted);
-}
-
-/* ---------------- Recent Activity ---------------- */
-.tp-activity-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.tp-activity-list li {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  position: relative;
-}
-
-.tp-activity-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background-color: var(--tp-primary);
-  margin-top: 5px;
-  flex-shrink: 0;
-}
-
-.tp-activity-body {
+.tp-emergency-text {
   display: flex;
   flex-direction: column;
   gap: 2px;
 }
 
-.tp-activity-time {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--tp-text-muted);
-}
-
-.tp-activity-text {
+.tp-emergency-label {
   font-size: 13px;
-  color: var(--tp-text);
+  color: var(--tp-text-muted);
+  font-weight: 500;
 }
 
-/* ---------------- Responsive breakpoints ---------------- */
+.tp-emergency-value {
+  font-size: 15px;
+  color: var(--tp-text);
+  font-weight: 600;
+}
+
+.tp-emergency-divider {
+  width: 1px;
+  height: 40px;
+  background-color: var(--tp-border);
+  justify-self: center;
+}
+
+.tp-notice {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background-color: var(--tp-accent-soft);
+  color: var(--tp-secondary);
+  font-size: 13.5px;
+  font-weight: 500;
+  padding: 14px 18px;
+  border-radius: 8px;
+}
+
+/* Responsive breakpoints ------------------------------------------------------ */
+
 @media (max-width: 1600px) {
-  .tp-profile-meta {
-    grid-template-columns: repeat(2, 1fr);
+  .tp-card-body {
+    grid-template-columns: 200px 1fr 1fr;
   }
 }
 
 @media (max-width: 1440px) {
   .tp-page {
-    padding: 24px;
+    padding: 24px 24px 40px;
   }
 
-  .tp-content-grid {
-    grid-template-columns: repeat(2, 1fr);
+  .tp-identity-col,
+  .tp-info-col {
+    padding: 24px;
   }
 }
 
 @media (max-width: 1366px) {
-  .tp-stat-strip {
-    grid-template-columns: repeat(2, 1fr);
+  .tp-card-body {
+    grid-template-columns: 180px 1fr 1fr;
   }
 
-  .tp-content-grid {
-    grid-template-columns: 1fr;
+  .tp-detail-row,
+  .tp-info-row {
+    grid-template-columns: 22px 118px 1fr;
   }
 }
