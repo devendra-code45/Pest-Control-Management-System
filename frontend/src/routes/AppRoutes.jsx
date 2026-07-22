@@ -10,6 +10,7 @@ import ProtectedRoute from "./ProtectedRoute";
 
 import DashboardLayout from "../components/DashboardLayout/DashboardLayout";
 import Dashboard from "../Pages/dashboard/Dashboard";
+import CustomerDashboard from "../Pages/dashboard/CustomerDashboard";
 
 // Customer management
 import AddCustomer from "../Pages/customer/add-customer";
@@ -46,7 +47,9 @@ import Services from "../Pages/service/services";
 import Payment from "../Pages/Payments/Payments";
 import CreatePayment from "../Pages/Payments/CreatePayments";
 import Invoice from "../Pages/Payments/invoice";
-import PaymentDetail from "../Pages/Payments/PaymentsDetail";
+import PaymentDetail from "../pages/Payments/PaymentsDetail";
+import CustomerPayment from "../Pages/Payments/CustomerPayments";
+
 
 // Other pages
 import Login from "../Pages/login/Login";
@@ -225,7 +228,7 @@ function AppRoutes() {
                 path="/customer/dashboard"
                 element={<Dashboard />}
               />
-
+              <Route path="/customer/dashboard" element={<CustomerDashboard />} />
               {/* Services and bookings */}
               <Route
                 path="/customer/services"
@@ -247,6 +250,8 @@ function AppRoutes() {
                 element={<BookingDetails />}
               />
 
+              <Route path="/customer/payments" element={<CustomerPayment />} />
+              <Route path="/customer/payments/invoice" element={<Invoice />} />
               {/* Complaints */}
               <Route
                 path="/customer/complaints"
