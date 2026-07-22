@@ -170,7 +170,7 @@ export default function TechnicianProfile() {
           </p>
         </div>
         <div className="tp-header-actions">
-          <button type="button" className="tp-btn tp-btn-outline" onClick={() => navigate("/technician-management")}>
+          <button type="button" className="tp-btn tp-btn-outline" onClick={() => navigate("/admin/technicians")}>
             <ArrowLeft size={16} />
             Back to Technicians
           </button>
