@@ -25,6 +25,8 @@ import EditBooking from "../Pages/booking/Edit-Booking";
 import AcceptedBookings from "../Pages/booking/adminInterface/accepted-bookings";
 import RBPage from "../Pages/booking/adminInterface/RBPage";
 import ViewAcceptedBookings from "../pages/booking/adminInterface/accepted-bookings-view"
+import RejectBookingPage from "../Pages/booking/adminInterface/rejected-bookings";
+import ViewRejectedBooking from "../Pages/booking/adminInterface/RBView";
 
 // Complaints
 import NewComplaint from "../Pages/complaint/newcomplaint";
@@ -112,13 +114,15 @@ function AppRoutes() {
 
               <Route path="/admin/bookings/rejection-reason" element={<RBPage />} />
 
-              <Route path="/admin/bookings/rejected" element={<PendingBooking />} />
+              <Route path="/admin/bookings/rejected" element={<RejectBookingPage />} />
 
               <Route path="/admin/bookings/details" element={<BookingDetails />} />
 
               <Route path="/admin/bookings/edit" element={<EditBooking />} />
 
               <Route path="/admin/bookings/assign-technician" element={<AssignTechnician />} />
+
+              <Route path="/admin/bookings/rejected-bookings/view" element={<ViewRejectedBooking />} />
 
               {/* Technicians */}
               <Route

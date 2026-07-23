@@ -32,20 +32,6 @@ export const ADMIN_NAV_GROUPS = [
         label: "OPERATIONS",
         items: [
             {
-                key: "customers",
-                label: "Customers",
-                icon: Users,
-                children: [
-                    {
-                        key: "customers",
-                        label: "Customers",
-                        icon: Eye,
-                        path: "/admin/customer-details",
-                    },
-                ],
-            },
-
-            {
                 key: "bookings",
                 label: "Bookings",
                 icon: Calendar,
@@ -67,12 +53,6 @@ export const ADMIN_NAV_GROUPS = [
                         label: "Rejected Bookings",
                         icon: ClipboardList,
                         path: "/admin/bookings/rejected",
-                    },
-                    {
-                        key: "assign-tech",
-                        label: "Assign Technician",
-                        icon: UserCheck,
-                        path: "/admin/bookings/assign-technician",
                     },
                 ],
             },
