@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
   HiOutlineShieldCheck,
   HiOutlineLockClosed,
@@ -143,6 +143,8 @@ const ChangePassword = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
   };
+
+  const navigate = useNavigate();
 
   return (
     <div className="change-password-page">
@@ -336,7 +338,7 @@ const ChangePassword = () => {
               Update Password
             </button>
 
-            <Link to="/dashboard" className="btn btn-outline">
+            <Link to="/admin/dashboard" className="btn btn-outline">
               <HiOutlineArrowLeft />
               Back to Dashboard
             </Link>

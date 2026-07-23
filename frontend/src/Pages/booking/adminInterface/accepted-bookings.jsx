@@ -205,20 +205,7 @@ export default function AcceptedBookings() {
         </div>
       </header>
 
-      <section className="ab-stats-grid">
-        {stats.map(({ label, sub, value, icon: Icon }) => (
-          <div className="ab-stat-card" key={label}>
-            <span className="ab-stat-icon">
-              <Icon size={22} strokeWidth={2} />
-            </span>
-            <div className="ab-stat-text">
-              <span className="ab-stat-label">{label}</span>
-              <span className="ab-stat-value">{value}</span>
-              <span className="ab-stat-sub">{sub}</span>
-            </div>
-          </div>
-        ))}
-      </section>
+      
 
       <section className="ab-filters-card">
         <div className="ab-search-wrap">
