@@ -530,7 +530,7 @@ function InfoBanner({ navigate }) {
       <button
         type="button"
         className="admin-dashboard-btn admin-dashboard-btn--secondary"
-        onClick={() => navigate(DASHBOARD_ROUTES.reports)}
+        onClick={() => navigate("/admin/reports")}
       >
         View Reports
         <ArrowRight size={16} aria-hidden="true" />
