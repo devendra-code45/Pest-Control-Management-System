@@ -266,25 +266,6 @@ const PendingBooking = () => {
         </div>
       </div>
 
-      {/* Statistic Cards */}
-      <div className="pb-stats-grid">
-        {STAT_CARDS.map((stat) => {
-          const Icon = stat.icon;
-          return (
-            <div className="pb-stat-card" key={stat.id}>
-              <div className={`pb-stat-icon pb-stat-icon--${stat.tone}`}>
-                <Icon size={22} />
-              </div>
-              <div className="pb-stat-content">
-                <span className="pb-stat-label">{stat.label}</span>
-                <span className="pb-stat-value">{stat.value}</span>
-                <span className="pb-stat-caption">{stat.caption}</span>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
       {/* Search & Filters */}
       <div className="pb-filters-card">
         <div className="pb-search-box">

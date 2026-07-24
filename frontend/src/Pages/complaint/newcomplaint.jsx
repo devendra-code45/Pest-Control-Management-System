@@ -1,529 +1,381 @@
-import React, { useState, useRef } from 'react';
-import {useNavigate} from 'react-router-dom';
+import React, { useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
+  ChevronRight,
+  MessageSquare,
   ArrowLeft,
-  Save,
-  ChevronDown,
-  Search,
+  Calendar,
   Phone,
   Mail,
-  MapPin,
-  Tag,
-  Bug,
-  Calendar,
-  Flag,
-  Clock,
-  Megaphone,
-  Upload,
+  UploadCloud,
   X,
-  User,
-  Users,
-  FileText,
-  Info,
-  Building,
-  ChevronRight,
-} from 'lucide-react';
-import './newcomplaint.css';
-
-// ----------------------------------------------------------------------------
-// Reference options (would normally come from an API)
-// ----------------------------------------------------------------------------
-
-const PROPERTY_TYPES = ['Residential - Apartment', 'Residential - Villa', 'Commercial - Office', 'Commercial - Retail', 'Industrial'];
-const PEST_TYPES = ['Cockroach', 'Termite', 'Rodent', 'Mosquito', 'Bed Bug', 'Ant', 'Spider', 'Wasp'];
-const SERVICE_CATEGORIES = ['General Pest Control', 'Termite Control', 'Rodent Control', 'Mosquito Control', 'Bed Bug Treatment', 'Fumigation'];
-const PRIORITIES = ['Low', 'Medium', 'High', 'Emergency'];
-const SOURCES = ['Website', 'Phone Call', 'Referral', 'Social Media', 'Walk-in', 'Existing Customer'];
-const TECHNICIANS = ['Suresh Yadav', 'Rakesh Jadhav', 'Manoj Verma', 'Kiran Reddy', 'Arjun Nair'];
-const TEAMS = ['Team Alpha', 'Team Bravo', 'Team Charlie', 'Team Delta'];
-const STATUSES = ['New', 'Assigned', 'Scheduled'];
+  ShieldCheck,
+  Send,
+  AlertTriangle,
+  CheckCircle2,
+  ChevronDown,
+} from "lucide-react";
+import "./newcomplaint.css";
 
 const DESCRIPTION_LIMIT = 500;
-const NOTES_LIMIT = 300;
-const MAX_FILE_SIZE_MB = 5;
+const MAX_IMAGES = 5;
 
-const initialForm = {
-  customerName: '',
-  phone: '',
-  email: '',
-  property: '',
-  propertyType: '',
-  unit: '',
-  pestType: '',
-  serviceCategory: '',
-  priority: '',
-  description: '',
-  preferredDate: '',
-  preferredTime: '',
-  source: '',
-  notes: '',
-  technician: '',
-  team: '',
-  status: 'New',
+const INITIAL_FORM = {
+  bookingId: "",
+  complaintCategory: "",
+  complaintType: "",
+  preferredDate: "",
+  preferredContactMethod: "Phone Call",
+  preferredContactNumber: "",
+  emailAddress: "",
+  description: "",
 };
 
-// ----------------------------------------------------------------------------
-// Small reusable field components
-// ----------------------------------------------------------------------------
+const REQUIRED_FIELDS = [
+  "bookingId",
+  "complaintCategory",
+  "complaintType",
+  "preferredContactMethod",
+  "preferredContactNumber",
+  "description",
+];
 
-const FieldLabel = ({ children, required }) => (
-  <label className="field-label">
-    {children}
-    {required && <span className="field-label__required">*</span>}
-  </label>
-);
-
-const IconInput = ({ icon: Icon, ...props }) => (
-  <div className="input-shell">
-    <Icon size={16} className="input-shell__icon" />
-    <input className="input-shell__field" {...props} />
-  </div>
-);
-
-const IconSelect = ({ icon: Icon, options, placeholder, ...props }) => (
-  <div className="input-shell">
-    <Icon size={16} className="input-shell__icon" />
-    <select className="input-shell__field input-shell__field--select" {...props}>
-      <option value="">{placeholder}</option>
-      {options.map((opt) => (
-        <option key={opt} value={opt}>
-          {opt}
-        </option>
-      ))}
-    </select>
-    <ChevronDown size={15} className="input-shell__chevron" />
-  </div>
-);
-
-const SectionHeading = ({ icon: Icon, children }) => (
-  <div className="section-heading">
-    <span className="section-heading__icon">
-      <Icon size={15} />
-    </span>
-    <h2>{children}</h2>
-  </div>
-);
-
-// ----------------------------------------------------------------------------
-// Main component
-// ----------------------------------------------------------------------------
-
-const NewComplaint = () => {
-  const [form, setForm] = useState(initialForm);
-  const [photos, setPhotos] = useState([]);
-  const [isDragging, setIsDragging] = useState(false);
+export default function RaiseNewComplaint({ onBack, onSubmit }) {
+  const [formData, setFormData] = useState(INITIAL_FORM);
+  const [images, setImages] = useState([]);
+  const [errors, setErrors] = useState({});
+  const [banner, setBanner] = useState(null);
   const fileInputRef = useRef(null);
-  const navigate = useNavigate();
 
-  const updateField = (field) => (e) => {
-    setForm((prev) => ({ ...prev, [field]: e.target.value }));
+  const updateField = (field, value) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+    if (errors[field]) {
+      setErrors((prev) => {
+        const next = { ...prev };
+        delete next[field];
+        return next;
+      });
+    }
+    if (banner) setBanner(null);
   };
 
   const addFiles = (fileList) => {
-    const files = Array.from(fileList).filter((file) => {
-      const isValidType = ['image/jpeg', 'image/jpg', 'image/png'].includes(file.type);
-      const isValidSize = file.size <= MAX_FILE_SIZE_MB * 1024 * 1024;
-      return isValidType && isValidSize;
-    });
-
-    const newPhotos = files.map((file) => ({
-      id: `${file.name}-${file.lastModified}-${Math.random().toString(36).slice(2, 8)}`,
-      file,
+    const files = Array.from(fileList || []).slice(0, MAX_IMAGES - images.length);
+    const newImages = files.map((file) => ({
+      name: file.name,
       url: URL.createObjectURL(file),
     }));
-
-    setPhotos((prev) => [...prev, ...newPhotos]);
+    setImages((prev) => [...prev, ...newImages].slice(0, MAX_IMAGES));
   };
 
   const handleFileInputChange = (e) => {
-    if (e.target.files?.length) {
-      addFiles(e.target.files);
-    }
-    e.target.value = '';
+    addFiles(e.target.files);
+    e.target.value = "";
   };
 
   const handleDrop = (e) => {
     e.preventDefault();
-    setIsDragging(false);
-    if (e.dataTransfer.files?.length) {
-      addFiles(e.dataTransfer.files);
+    addFiles(e.dataTransfer.files);
+  };
+
+  const removeImage = (index) => {
+    setImages((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const validate = () => {
+    const nextErrors = {};
+    REQUIRED_FIELDS.forEach((field) => {
+      if (!String(formData[field] || "").trim()) {
+        nextErrors[field] = true;
+      }
+    });
+    return nextErrors;
+  };
+
+  const handleSubmit = () => {
+    const nextErrors = validate();
+    setErrors(nextErrors);
+
+    if (Object.keys(nextErrors).length > 0) {
+      setBanner({ type: "error", text: "Please fill in all required fields before submitting." });
+      return;
+    }
+
+    setBanner({ type: "success", text: "Your complaint has been submitted successfully." });
+    if (typeof onSubmit === "function") {
+      onSubmit({ ...formData, images });
     }
   };
 
-  const removePhoto = (id) => {
-    setPhotos((prev) => prev.filter((photo) => photo.id !== id));
+  const handleCancel = () => {
+    setFormData(INITIAL_FORM);
+    setImages([]);
+    setErrors({});
+    setBanner(null);
+    if (typeof onBack === "function") {
+      onBack();
+    }
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    // Wire up to API integration here.
+  const handleBack = () => {
+    if (typeof onBack === "function") {
+      onBack();
+    } else if (typeof window !== "undefined" && window.history.length > 1) {
+      window.history.back();
+    }
   };
+
+  const navigate = useNavigate();
 
   return (
-    <div className="new-complaint-page">
-      {/* Breadcrumb */}
-      <nav className="breadcrumb" aria-label="Breadcrumb">
+    <div className="rnc-page">
+      <nav className="rnc-breadcrumb" aria-label="Breadcrumb">
+        <a href="#" className="rnc-breadcrumb-link">
           Dashboard
-        <ChevronRight size={13} className="at-crumb-sep" />
+        </a>
+        <ChevronRight size={14} className="rnc-breadcrumb-sep" />
+        <a href="#" className="rnc-breadcrumb-link">
           Complaints
-        <ChevronRight size={13} className="at-crumb-sep" />
-        <span className="breadcrumb__current">New Complaint</span>
+        </a>
+        <ChevronRight size={14} className="rnc-breadcrumb-sep" />
+        <span className="rnc-breadcrumb-current">Raise New Complaint</span>
       </nav>
 
-      {/* Page header */}
-      <header className="page-header">
-        <div>
-          <h1 className="page-header__title">New Complaint</h1>
-          <p className="page-header__subtitle">
-            Create a new pest control complaint and assign for quick resolution.
-          </p>
+      <header className="rnc-header">
+        <div className="rnc-header-left">
+          <span className="rnc-header-icon">
+            <MessageSquare size={26} strokeWidth={2} />
+          </span>
+          <div>
+            <h1 className="rnc-title">Raise New Complaint</h1>
+            <p className="rnc-subtitle">Submit your complaint and our team will take the necessary action.</p>
+          </div>
         </div>
-        <div className="page-header__actions">
-          <button type="button" className="btn btn--outline" onClick={() => navigate('/complaint')}>
-            <ArrowLeft size={16} />
-            Back to Complaints
-          </button>
-          <button type="submit" form="new-complaint-form" className="btn btn--primary">
-            <Save size={16} />
-            Save Complaint
-            <ChevronDown size={14} />
-          </button>
-        </div>
+
+        <button type="button" className="rnc-btn rnc-btn-outline" onClick={handleBack}>
+          <ArrowLeft size={16} strokeWidth={2} />
+          Back to My Complaints
+        </button>
       </header>
 
-      <form id="new-complaint-form" className="form-grid" onSubmit={handleSubmit}>
-        {/* Main column */}
-        <div className="form-main">
-          {/* Complaint Information */}
-          <section className="form-card">
-            <SectionHeading icon={FileText}>Complaint Information</SectionHeading>
-
-            <div className="field-grid field-grid--3">
-              <div className="form-field">
-                <FieldLabel required>Customer Name</FieldLabel>
-                <IconInput
-                  icon={Search}
-                  type="text"
-                  placeholder="Search customer name or ID..."
-                  value={form.customerName}
-                  onChange={updateField('customerName')}
-                />
-              </div>
-              <div className="form-field">
-                <FieldLabel required>Phone Number</FieldLabel>
-                <IconInput
-                  icon={Phone}
-                  type="tel"
-                  placeholder="Enter phone number"
-                  value={form.phone}
-                  onChange={updateField('phone')}
-                />
-              </div>
-              <div className="form-field">
-                <FieldLabel>Email</FieldLabel>
-                <IconInput
-                  icon={Mail}
-                  type="email"
-                  placeholder="Enter email address"
-                  value={form.email}
-                  onChange={updateField('email')}
-                />
-              </div>
-            </div>
-
-            <div className="field-grid field-grid--3">
-              <div className="form-field">
-                <FieldLabel required>Property / Location</FieldLabel>
-                <IconInput
-                  icon={MapPin}
-                  type="text"
-                  placeholder="Enter property or location"
-                  value={form.property}
-                  onChange={updateField('property')}
-                />
-              </div>
-              <div className="form-field">
-                <FieldLabel required>Property Type</FieldLabel>
-                <IconSelect
-                  icon={Building}
-                  placeholder="Select property type"
-                  options={PROPERTY_TYPES}
-                  value={form.propertyType}
-                  onChange={updateField('propertyType')}
-                />
-              </div>
-              <div className="form-field">
-                <FieldLabel>Unit / Floor / Area</FieldLabel>
-                <IconInput
-                  icon={Tag}
-                  type="text"
-                  placeholder="Enter unit, floor or area"
-                  value={form.unit}
-                  onChange={updateField('unit')}
-                />
-              </div>
-            </div>
-          </section>
-
-          {/* Complaint Details */}
-          <section className="form-card">
-            <SectionHeading icon={FileText}>Complaint Details</SectionHeading>
-
-            <div className="field-grid field-grid--3">
-              <div className="form-field">
-                <FieldLabel required>Pest Type</FieldLabel>
-                <IconSelect
-                  icon={Bug}
-                  placeholder="Select pest type"
-                  options={PEST_TYPES}
-                  value={form.pestType}
-                  onChange={updateField('pestType')}
-                />
-              </div>
-              <div className="form-field">
-                <FieldLabel required>Service Category</FieldLabel>
-                <IconSelect
-                  icon={Calendar}
-                  placeholder="Select service category"
-                  options={SERVICE_CATEGORIES}
-                  value={form.serviceCategory}
-                  onChange={updateField('serviceCategory')}
-                />
-              </div>
-              <div className="form-field">
-                <FieldLabel required>Priority</FieldLabel>
-                <IconSelect
-                  icon={Flag}
-                  placeholder="Select priority"
-                  options={PRIORITIES}
-                  value={form.priority}
-                  onChange={updateField('priority')}
-                />
-              </div>
-            </div>
-
-            <div className="form-field">
-              <FieldLabel required>Complaint Description</FieldLabel>
-              <textarea
-                className="textarea-field"
-                rows={4}
-                maxLength={DESCRIPTION_LIMIT}
-                placeholder="Describe the pest problem in detail..."
-                value={form.description}
-                onChange={updateField('description')}
-              />
-              <span className="char-counter">
-                {form.description.length} / {DESCRIPTION_LIMIT}
-              </span>
-            </div>
-
-            <div className="field-grid field-grid--3">
-              <div className="form-field">
-                <FieldLabel>Preferred Date</FieldLabel>
-                <IconInput
-                  icon={Calendar}
-                  type="date"
-                  value={form.preferredDate}
-                  onChange={updateField('preferredDate')}
-                />
-              </div>
-              <div className="form-field">
-                <FieldLabel>Preferred Time</FieldLabel>
-                <IconInput
-                  icon={Clock}
-                  type="time"
-                  value={form.preferredTime}
-                  onChange={updateField('preferredTime')}
-                />
-              </div>
-              <div className="form-field">
-                <FieldLabel>How did you hear about us?</FieldLabel>
-                <IconSelect
-                  icon={Megaphone}
-                  placeholder="Select source"
-                  options={SOURCES}
-                  value={form.source}
-                  onChange={updateField('source')}
-                />
-              </div>
-            </div>
-
-            <div className="form-field">
-              <FieldLabel>Upload Photos (Optional)</FieldLabel>
-              <div className="upload-row">
-                <div
-                  className={`dropzone ${isDragging ? 'dropzone--active' : ''}`}
-                  onDragOver={(e) => {
-                    e.preventDefault();
-                    setIsDragging(true);
-                  }}
-                  onDragLeave={() => setIsDragging(false)}
-                  onDrop={handleDrop}
-                  onClick={() => fileInputRef.current?.click()}
-                  role="button"
-                  tabIndex={0}
-                >
-                  <Upload size={22} />
-                  <span className="dropzone__title">Drag &amp; drop images here or click to upload</span>
-                  <span className="dropzone__hint">
-                    Supports: JPG, PNG, JPEG (Max. {MAX_FILE_SIZE_MB}MB each)
-                  </span>
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/jpeg,image/jpg,image/png"
-                    multiple
-                    hidden
-                    onChange={handleFileInputChange}
-                  />
-                </div>
-
-                {photos.length > 0 && (
-                  <div className="photo-previews">
-                    {photos.map((photo) => (
-                      <div className="photo-preview" key={photo.id}>
-                        <img src={photo.url} alt="Uploaded complaint" />
-                        <button
-                          type="button"
-                          className="photo-preview__remove"
-                          onClick={() => removePhoto(photo.id)}
-                          aria-label="Remove photo"
-                        >
-                          <X size={12} />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <div className="form-field">
-              <FieldLabel>Additional Notes (Optional)</FieldLabel>
-              <textarea
-                className="textarea-field"
-                rows={3}
-                maxLength={NOTES_LIMIT}
-                placeholder="Add any additional notes..."
-                value={form.notes}
-                onChange={updateField('notes')}
-              />
-              <span className="char-counter">
-                {form.notes.length} / {NOTES_LIMIT}
-              </span>
-            </div>
-          </section>
+      <section className="rnc-card">
+        <div className="rnc-card-heading">
+          <h2 className="rnc-card-title">Complaint Information</h2>
         </div>
 
-        {/* Sidebar column */}
-        <aside className="form-sidebar">
-          {/* Complaint Summary */}
-          <section className="form-card">
-            <SectionHeading icon={FileText}>Complaint Summary</SectionHeading>
-
-            <div className="summary-banner">
-              <span className="summary-banner__icon">
-                <Bug size={20} />
-              </span>
-              <div>
-                <p className="summary-banner__title">New Complaint</p>
-                <p className="summary-banner__subtitle">Not Saved Yet</p>
-              </div>
-            </div>
-
-            <dl className="summary-list">
-              <div className="summary-list__row">
-                <dt>Customer</dt>
-                <dd>{form.customerName || '-'}</dd>
-              </div>
-              <div className="summary-list__row">
-                <dt>Property</dt>
-                <dd>{form.property || '-'}</dd>
-              </div>
-              <div className="summary-list__row">
-                <dt>Pest Type</dt>
-                <dd>{form.pestType || '-'}</dd>
-              </div>
-              <div className="summary-list__row">
-                <dt>Priority</dt>
-                <dd>{form.priority || '-'}</dd>
-              </div>
-              <div className="summary-list__row">
-                <dt>Preferred Date</dt>
-                <dd>{form.preferredDate || '-'}</dd>
-              </div>
-              <div className="summary-list__row">
-                <dt>Status</dt>
-                <dd>
-                  <span className="badge badge--new">{form.status}</span>
-                </dd>
-              </div>
-            </dl>
-          </section>
-
-          {/* Assign Technician */}
-          <section className="form-card">
-            <SectionHeading icon={User}>Assign Technician</SectionHeading>
-
-            <div className="form-field">
-              <FieldLabel>Assign To</FieldLabel>
-              <IconSelect
-                icon={User}
-                placeholder="Select technician"
-                options={TECHNICIANS}
-                value={form.technician}
-                onChange={updateField('technician')}
-              />
-            </div>
-
-            <div className="form-field form-field--last">
-              <FieldLabel>Team</FieldLabel>
-              <IconSelect
-                icon={Users}
-                placeholder="Select team"
-                options={TEAMS}
-                value={form.team}
-                onChange={updateField('team')}
-              />
-            </div>
-          </section>
-
-          {/* Status */}
-          <section className="form-card">
-            <SectionHeading icon={Flag}>Status</SectionHeading>
-
-            <div className="form-field form-field--last">
-              <FieldLabel>Initial Status</FieldLabel>
-              <IconSelect
-                icon={Flag}
-                placeholder="Select status"
-                options={STATUSES}
-                value={form.status}
-                onChange={updateField('status')}
-              />
-            </div>
-
-            <div className="info-note">
-              <Info size={15} />
-              <p>
-                The complaint will be created with '{form.status}' status and can be updated later.
-              </p>
-            </div>
-          </section>
-
-          <div className="sidebar-actions">
-            <button type="button" className="btn btn--outline">
-              Cancel
-            </button>
-            <button type="submit" className="btn btn--success">
-              <Save size={16} />
-              Save Complaint
-            </button>
+        {banner && (
+          <div className={`rnc-banner ${banner.type === "success" ? "rnc-banner-success" : "rnc-banner-error"}`}>
+            {banner.type === "success" ? (
+              <CheckCircle2 size={16} strokeWidth={2} />
+            ) : (
+              <AlertTriangle size={16} strokeWidth={2} />
+            )}
+            <span>{banner.text}</span>
           </div>
-        </aside>
-      </form>
+        )}
+
+        <div className="rnc-form-grid">
+          <div className="rnc-form-field">
+            <label className="rnc-form-label">
+              Booking ID <span className="rnc-required">*</span>
+            </label>
+            <div className={`rnc-select-wrap ${errors.bookingId ? "rnc-field-error" : ""}`}>
+              <select
+                value={formData.bookingId}
+                onChange={(e) => updateField("bookingId", e.target.value)}
+              >
+                <option value="">Select your booking</option>
+                <option>BK-2025-0102</option>
+                <option>BK-2025-0098</option>
+                <option>BK-2025-0092</option>
+                <option>BK-2025-0088</option>
+                <option>BK-2025-0080</option>
+              </select>
+              <ChevronDown size={14} className="rnc-select-caret" />
+            </div>
+          </div>
+
+          <div className="rnc-form-field">
+            <label className="rnc-form-label">
+              Complaint Category <span className="rnc-required">*</span>
+            </label>
+            <div className={`rnc-select-wrap ${errors.complaintCategory ? "rnc-field-error" : ""}`}>
+              <select
+                value={formData.complaintCategory}
+                onChange={(e) => updateField("complaintCategory", e.target.value)}
+              >
+                <option value="">Select category</option>
+                <option>Pest Still Exists</option>
+                <option>Service Quality</option>
+                <option>Technician Behavior</option>
+                <option>Late Visit</option>
+                <option>Payment Issue</option>
+                <option>Other</option>
+              </select>
+              <ChevronDown size={14} className="rnc-select-caret" />
+            </div>
+          </div>
+
+          <div className="rnc-form-field">
+            <label className="rnc-form-label">
+              Complaint Type <span className="rnc-required">*</span>
+            </label>
+            <div className={`rnc-select-wrap ${errors.complaintType ? "rnc-field-error" : ""}`}>
+              <select
+                value={formData.complaintType}
+                onChange={(e) => updateField("complaintType", e.target.value)}
+              >
+                <option value="">Select type</option>
+                <option>Termite Treatment</option>
+                <option>Cockroach Control</option>
+                <option>General Pest Control</option>
+                <option>Mosquito Control</option>
+                <option>Rodent Control</option>
+              </select>
+              <ChevronDown size={14} className="rnc-select-caret" />
+            </div>
+          </div>
+
+          <div className="rnc-form-field">
+            <label className="rnc-form-label">Preferred Date for Follow-up</label>
+            <div className="rnc-input-wrap">
+              <Calendar size={16} className="rnc-input-icon" />
+              <input
+                type="date"
+                className="rnc-input"
+                value={formData.preferredDate}
+                onChange={(e) => updateField("preferredDate", e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div className="rnc-form-field">
+            <label className="rnc-form-label">
+              Preferred Contact Method <span className="rnc-required">*</span>
+            </label>
+            <div className="rnc-select-wrap">
+              <Phone size={16} className="rnc-input-icon" />
+              <select
+                value={formData.preferredContactMethod}
+                onChange={(e) => updateField("preferredContactMethod", e.target.value)}
+                className="rnc-select-with-icon"
+              >
+                <option>Phone Call</option>
+                <option>Email</option>
+                <option>WhatsApp</option>
+                <option>SMS</option>
+              </select>
+              <ChevronDown size={14} className="rnc-select-caret" />
+            </div>
+          </div>
+
+          <div className="rnc-form-field">
+            <label className="rnc-form-label">
+              Preferred Contact Number <span className="rnc-required">*</span>
+            </label>
+            <div className={`rnc-input-wrap ${errors.preferredContactNumber ? "rnc-field-error" : ""}`}>
+              <Phone size={16} className="rnc-input-icon" />
+              <input
+                type="tel"
+                className="rnc-input"
+                placeholder="Enter phone number"
+                value={formData.preferredContactNumber}
+                onChange={(e) => updateField("preferredContactNumber", e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div className="rnc-form-field">
+            <label className="rnc-form-label">Email Address</label>
+            <div className="rnc-input-wrap">
+              <Mail size={16} className="rnc-input-icon" />
+              <input
+                type="email"
+                className="rnc-input"
+                placeholder="Enter email (optional)"
+                value={formData.emailAddress}
+                onChange={(e) => updateField("emailAddress", e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div className="rnc-form-field rnc-field-span-3">
+            <label className="rnc-form-label">
+              Description of Issue <span className="rnc-required">*</span>
+            </label>
+            <div className={`rnc-textarea-wrap ${errors.description ? "rnc-field-error" : ""}`}>
+              <textarea
+                className="rnc-textarea"
+                placeholder="Describe your issue in detail..."
+                maxLength={DESCRIPTION_LIMIT}
+                value={formData.description}
+                onChange={(e) => updateField("description", e.target.value)}
+              />
+              <span className="rnc-char-count">
+                {formData.description.length}/{DESCRIPTION_LIMIT}
+              </span>
+            </div>
+          </div>
+
+          <div className="rnc-form-field rnc-field-span-3">
+            <label className="rnc-form-label">Upload Images (Optional)</label>
+            <div
+              className="rnc-dropzone"
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={handleDrop}
+              onClick={() => fileInputRef.current?.click()}
+            >
+              <UploadCloud size={32} strokeWidth={1.5} className="rnc-dropzone-icon" />
+              <span className="rnc-dropzone-text">
+                <span className="rnc-dropzone-link">Click to upload</span> or drag and drop
+              </span>
+              <span className="rnc-dropzone-hint">PNG, JPG, JPEG up to 5MB</span>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/png,image/jpeg"
+                multiple
+                hidden
+                onChange={handleFileInputChange}
+              />
+            </div>
+
+            {images.length > 0 && (
+              <div className="rnc-image-preview-row">
+                {images.map((img, index) => (
+                  <div className="rnc-image-thumb" key={img.url}>
+                    <img src={img.url} alt={img.name} />
+                    <button
+                      type="button"
+                      className="rnc-image-remove"
+                      onClick={() => removeImage(index)}
+                      aria-label="Remove image"
+                    >
+                      <X size={12} strokeWidth={2.5} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="rnc-info-note">
+          <ShieldCheck size={16} strokeWidth={2} />
+          <span>Your complaint will be reviewed by our team and we will get back to you as soon as possible.</span>
+        </div>
+
+        <div className="rnc-form-actions">
+          <button type="button" className="rnc-btn rnc-btn-primary" onClick={handleSubmit}>
+            <Send size={16} strokeWidth={2} />
+            Submit Complaint
+          </button>
+          <button type="button" className="rnc-btn rnc-btn-outline" onClick={() => navigate("/customer/complaints")}>
+            <X size={16} strokeWidth={2} />
+            Cancel
+          </button>
+        </div>
+      </section>
     </div>
   );
-};
-
-export default NewComplaint;
+}

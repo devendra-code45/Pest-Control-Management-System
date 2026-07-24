@@ -113,7 +113,7 @@ export const ADMIN_NAV_GROUPS = [
                 key: "change-password",
                 label: "Change Password",
                 icon: Lock,
-                path: "/change-password",
+                path: "/admin/change-password",
             },
 
             {
@@ -187,7 +187,7 @@ export const CUSTOMER_NAV_GROUPS = [
                 key: "change-password",
                 label: "Change Password",
                 icon: Lock,
-                path: "/change-password",
+                path: "/customer/change-password",
             },
             {
                 key: "logout",

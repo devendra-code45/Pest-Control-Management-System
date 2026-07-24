@@ -416,3 +416,130 @@
     height: 32px;
   }
 }
+
+.nb-notification-wrapper {
+  position: relative;
+}
+
+.nb-notification-dropdown {
+  position: absolute;
+  top: calc(100% + 14px);
+  right: 0;
+  z-index: 1000;
+  width: 390px;
+  max-height: 470px;
+  overflow-y: auto;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  box-shadow:
+    0 18px 45px rgba(15, 23, 42, 0.14);
+}
+
+.nb-notification-dropdown::before {
+  content: "";
+  position: absolute;
+  top: -7px;
+  right: 20px;
+  width: 14px;
+  height: 14px;
+  background: #ffffff;
+  border-top: 1px solid #e5e7eb;
+  border-left: 1px solid #e5e7eb;
+  transform: rotate(45deg);
+}
+
+.nb-notification-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px 20px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.nb-notification-header strong {
+  color: #1f2937;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.nb-notification-header button {
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: #15803d;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.nb-notification-item {
+  position: relative;
+  display: flex;
+  gap: 12px;
+  padding: 16px 20px 16px 28px;
+  border-bottom: 1px solid #f0f1f2;
+  background: #ffffff;
+}
+
+.nb-notification-item:last-child {
+  border-bottom: none;
+}
+
+.nb-notification-item.unread {
+  background: #f7fcf8;
+}
+
+.nb-notification-item strong {
+  display: block;
+  margin-bottom: 5px;
+  color: #1f2937;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.nb-notification-item p {
+  margin: 0 0 7px;
+  color: #64748b;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.nb-notification-item small {
+  color: #94a3b8;
+  font-size: 12px;
+}
+
+.nb-notification-dot {
+  position: absolute;
+  top: 23px;
+  left: 12px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #16a34a;
+}
+
+.nb-notification-dot.blue {
+  background: #0ea5e9;
+}
+
+.nb-notification-dot.orange {
+  background: #f59e0b;
+}
+
+@media (max-width: 600px) {
+  .nb-notification-dropdown {
+    position: fixed;
+    top: 70px;
+    right: 12px;
+    left: 12px;
+    width: auto;
+  }
+
+  .nb-notification-dropdown::before {
+    display: none;
+  }
+}

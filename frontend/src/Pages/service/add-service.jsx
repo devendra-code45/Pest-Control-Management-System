@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   ChevronRight,
   ChevronDown,
@@ -48,6 +49,8 @@ export default function AddService() {
   const [serviceDescription, setServiceDescription] = useState("");
   const [notes, setNotes] = useState("");
   const [imageName, setImageName] = useState(null);
+  const navigate = useNavigate();
+
 
   const handleFileChange = (e) => {
     const file = e.target.files?.[0];
@@ -88,7 +91,7 @@ export default function AddService() {
         </div>
 
         <div className="as-header-actions">
-          <button type="button" className="as-btn as-btn-outline">
+          <button type="button" className="as-btn as-btn-outline" onClick={() => navigate("/admin/services")}>
             <X size={16} strokeWidth={2} />
             Cancel
           </button>

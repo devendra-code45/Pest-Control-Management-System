@@ -206,20 +206,7 @@ export default function RejectedBookings() {
         </div>
       </header>
 
-      <section className="rjb-stats-grid">
-        {stats.map(({ label, sub, value, icon: Icon, danger }) => (
-          <div className="rjb-stat-card" key={label}>
-            <span className={`rjb-stat-icon ${danger ? "rjb-stat-icon-danger" : ""}`}>
-              <Icon size={22} strokeWidth={2} />
-            </span>
-            <div className="rjb-stat-text">
-              <span className="rjb-stat-label">{label}</span>
-              <span className="rjb-stat-value">{value}</span>
-              <span className="rjb-stat-sub">{sub}</span>
-            </div>
-          </div>
-        ))}
-      </section>
+
 
       <section className="rjb-filters-card">
         <div className="rjb-search-wrap">
