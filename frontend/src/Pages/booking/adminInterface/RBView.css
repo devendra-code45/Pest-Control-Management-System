@@ -477,7 +477,7 @@
 
 @media (max-width: 1600px) {
   .rbd-layout {
-    grid-template-columns: 1fr 320px;
+    grid-template-columns: 1fr 330px;
   }
 }
 

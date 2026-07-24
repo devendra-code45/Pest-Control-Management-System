@@ -163,12 +163,6 @@
 
 /* Stats grid ---------------------------------------------------------------------- */
 
-.rjb-stats-grid {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 20px;
-  margin-bottom: 24px;
-}
 
 .rjb-stat-card {
   background-color: var(--rjb-card);
@@ -622,11 +616,7 @@
 
 /* Responsive breakpoints ---------------------------------------------------------------------- */
 
-@media (max-width: 1600px) {
-  .rjb-stats-grid {
-    gap: 16px;
-  }
-}
+
 
 @media (max-width: 1440px) {
   .rjb-page {
@@ -640,10 +630,6 @@
 }
 
 @media (max-width: 1366px) {
-  .rjb-stats-grid {
-    grid-template-columns: repeat(5, 1fr);
-    gap: 12px;
-  }
 
   .rjb-stat-card {
     padding: 16px;
@@ -651,9 +637,6 @@
 }
 
 @media (max-width: 1200px) {
-  .rjb-stats-grid {
-    grid-template-columns: repeat(3, 1fr);
-  }
 
   .rjb-filters-card {
     grid-template-columns: 1fr 1fr;
@@ -669,9 +652,6 @@
     padding: 20px 16px 32px;
   }
 
-  .rjb-stats-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
 
   .rjb-header {
     flex-direction: column;

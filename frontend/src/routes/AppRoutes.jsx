@@ -27,10 +27,12 @@ import RBPage from "../Pages/booking/adminInterface/RBPage";
 import ViewAcceptedBookings from "../pages/booking/adminInterface/accepted-bookings-view"
 import RejectBookingPage from "../Pages/booking/adminInterface/rejected-bookings";
 import ViewRejectedBooking from "../Pages/booking/adminInterface/RBView";
+import MyBookings from "../Pages/booking/MyBookings";
 
 // Complaints
 import NewComplaint from "../Pages/complaint/newcomplaint";
-import ComplaintManagement from "../Pages/complaint/complaintmanagement";
+import ComplaintManagement from "../Pages/complaint/ViewComplaintDetails";
+import CustomerComplaints from "../Pages/complaint/CustomerComplaints";
 
 // Technicians
 import TechnicianManagement from "../Pages/technician/technicianmanagement";
@@ -44,6 +46,7 @@ import AddService from "../Pages/service/add-service";
 import EditService from "../Pages/service/edit-service";
 import ServiceDetails from "../Pages/service/service-details";
 import Services from "../Pages/service/services";
+import AvailableServices from "../Pages/service/AvailableServices";
 
 // Payments
 import Payment from "../Pages/Payments/Payments";
@@ -59,6 +62,8 @@ import Registration from "../Pages/login/Registration";
 import ChangePassword from "../Pages/login/ChangePassword";
 import ForgotPassword from "../Pages/login/ForgotPassword";
 import Profile from "../Pages/profile/profile";
+import CustomerProfile from "../Pages/profile/CostomerProfile";
+import EditCustomerProfile from "../Pages/profile/EditCustomerProfile";
 import Reports from "../Pages/reports/Reports";
 
 function AppRoutes() {
@@ -95,13 +100,6 @@ function AppRoutes() {
               />
 
               <Route path="/admin/dashboard" element={<Dashboard />} />
-
-              {/* Customers */}
-              <Route path="/admin/customer-details" element={<CustomerDetails />} />
-
-              <Route path="/admin/customers/add" element={<AddCustomer />} />
-
-              <Route path="/admin/customers/edit" element={<EditCustomer />} />
 
               {/* Bookings */}
               <Route path="/admin/bookings" element={<PendingBooking />} />
@@ -205,7 +203,7 @@ function AppRoutes() {
               />
 
               <Route
-                path="/change-password"
+                path="/admin/change-password"
                 element={<ChangePassword />}
               />
             </Route>
@@ -236,7 +234,7 @@ function AppRoutes() {
               {/* Services and bookings */}
               <Route
                 path="/customer/services"
-                element={<ServiceDetails />}
+                element={<AvailableServices />}
               />
 
               <Route
@@ -246,7 +244,7 @@ function AppRoutes() {
 
               <Route
                 path="/customer/bookings"
-                element={<PendingBooking />}
+                element={<MyBookings />}
               />
 
               <Route
@@ -256,11 +254,12 @@ function AppRoutes() {
 
               <Route path="/customer/payments" element={<CustomerPayment />} />
               <Route path="/customer/payments/invoice" element={<Invoice />} />
-              {/* Complaints */}
-              <Route
-                path="/customer/complaints"
-                element={<NewComplaint />}
-              />
+              
+              {/*complaints*/}
+
+              <Route path="/customer/complaints" element={<CustomerComplaints />} />
+              <Route path="/customer/complaints/raise-new-complaint" element={<NewComplaint />} />
+              <Route path="/customer/complaints/view-details" element={<ComplaintManagement />} />
 
               {/* Payments */}
               <Route
@@ -276,11 +275,12 @@ function AppRoutes() {
               {/* Account */}
               <Route
                 path="/customer/profile"
-                element={<Profile />}
+                element={<CustomerProfile />}
               />
+              <Route path="/customer/profile/edit-profile" element={<EditCustomerProfile />} />
 
               <Route
-                path="/change-password"
+                path="/customer/change-password"
                 element={<ChangePassword />}
               />
             </Route>

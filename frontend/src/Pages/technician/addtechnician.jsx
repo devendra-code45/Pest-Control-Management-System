@@ -1,4 +1,6 @@
 import React, { useState, useRef } from "react";
+import { useNavigate } from "react-router-dom";
+
 import {
   Home,
   ChevronRight,
@@ -112,6 +114,7 @@ export default function AddTechnician() {
   const [status, setStatus] = useState("Active");
   const [photoPreview, setPhotoPreview] = useState(null);
   const fileInputRef = useRef(null);
+  const navigate = useNavigate();
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -553,7 +556,7 @@ export default function AddTechnician() {
 
       {/* Sticky bottom action bar */}
       <div className="at-footer-actions">
-        <button type="button" className="at-btn at-btn-outline">
+        <button type="button" className="at-btn at-btn-outline" onClick={() => navigate("/admin/technicians")}>
           Cancel
         </button>
         <button type="button" className="at-btn at-btn-primary">

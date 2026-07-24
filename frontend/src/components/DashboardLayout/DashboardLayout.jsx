@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+
 import {
   Navigate,
   Outlet,
@@ -7,7 +8,9 @@ import {
 } from "react-router-dom";
 
 import Sidebar from "../Sidebar/Sidebar";
-import Navbar from "../Navbar/Navbar";
+
+import AdminNavbar from "../Navbar/AdminNavbar";
+import CustomerNavbar from "../Navbar/CustomerNavbar";
 
 import {
   ADMIN_NAV_GROUPS,
@@ -19,8 +22,11 @@ import { useAuth } from "../../context/AuthContext";
 import "./DashboardLayout.css";
 
 export default function DashboardLayout() {
-  const [collapsed, setCollapsed] = useState(false);
-  const [mobileOpen, setMobileOpen] = useState(false);
+  const [collapsed, setCollapsed] =
+    useState(false);
+
+  const [mobileOpen, setMobileOpen] =
+    useState(false);
 
   const location = useLocation();
   const navigate = useNavigate();
@@ -38,21 +44,30 @@ export default function DashboardLayout() {
       }
     };
 
-    window.addEventListener("resize", handleResize);
+    window.addEventListener(
+      "resize",
+      handleResize
+    );
 
     return () => {
-      window.removeEventListener("resize", handleResize);
+      window.removeEventListener(
+        "resize",
+        handleResize
+      );
     };
   }, []);
 
   if (!auth.isAuthenticated) {
-    return <Navigate to="/login" replace />;
+    return (
+      <Navigate to="/login" replace />
+    );
   }
 
-  const navGroups =
-    auth.role === "ADMIN"
-      ? ADMIN_NAV_GROUPS
-      : CUSTOMER_NAV_GROUPS;
+  const isAdmin = auth.role === "ADMIN";
+
+  const navGroups = isAdmin
+    ? ADMIN_NAV_GROUPS
+    : CUSTOMER_NAV_GROUPS;
 
   const handleLogout = () => {
     logout();
@@ -62,7 +77,9 @@ export default function DashboardLayout() {
   return (
     <div
       className={`dl-layout ${
-        collapsed ? "dl-layout-collapsed" : ""
+        collapsed
+          ? "dl-layout-collapsed"
+          : ""
       }`}
     >
       <aside
@@ -74,10 +91,14 @@ export default function DashboardLayout() {
           navGroups={navGroups}
           collapsed={collapsed}
           onToggle={() =>
-            setCollapsed((value) => !value)
+            setCollapsed(
+              (current) => !current
+            )
           }
           mobileOpen={mobileOpen}
-          onCloseMobile={() => setMobileOpen(false)}
+          onCloseMobile={() =>
+            setMobileOpen(false)
+          }
           onLogout={handleLogout}
         />
       </aside>
@@ -85,16 +106,33 @@ export default function DashboardLayout() {
       {mobileOpen && (
         <div
           className="dl-backdrop"
-          onClick={() => setMobileOpen(false)}
+          onClick={() =>
+            setMobileOpen(false)
+          }
           aria-hidden="true"
         />
       )}
 
       <div className="dl-right">
-        <Navbar
-          collapsed={collapsed}
-          onMenuClick={() => setMobileOpen(true)}
-        />
+        {isAdmin ? (
+          <AdminNavbar
+            user={auth.user}
+            notificationCount={3}
+            onMenuClick={() =>
+              setMobileOpen(true)
+            }
+            onLogout={handleLogout}
+          />
+        ) : (
+          <CustomerNavbar
+            user={auth.user}
+            notificationCount={3}
+            onMenuClick={() =>
+              setMobileOpen(true)
+            }
+            onLogout={handleLogout}
+          />
+        )}
 
         <main className="dl-main">
           <div className="dl-content">

@@ -255,10 +255,10 @@ const EditTechnicianProfile = () => {
           <button
             type="button"
             className="btn btn--outline"
-            onClick={handleCancel}
+            onClick={() => navigate("/admin/technicians")}
           >
             <ArrowLeft size={16} />
-            Back to Profile
+            Back to Technicians
           </button>
 
           <button

@@ -117,7 +117,7 @@ export default function Navbar({
           {dropdownOpen && (
             <div className="nb-dropdown">
               <Link
-                to="/profile"
+                to="/customer/profile"
                 className="nb-dropdown-item"
                 onClick={() => setDropdownOpen(false)}
               >

@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   ChevronRight,
   X,
@@ -67,6 +68,7 @@ export default function EditService({ onCancel, onUpdate }) {
   const [formData, setFormData] = useState(INITIAL_DATA);
   const [errors, setErrors] = useState({});
   const [banner, setBanner] = useState(null);
+  const navigate = useNavigate();
 
   const updateField = (field, value, limit) => {
     if (limit && value.length > limit) return;
@@ -142,7 +144,7 @@ export default function EditService({ onCancel, onUpdate }) {
         </div>
 
         <div className="es-header-actions">
-          <button type="button" className="es-btn es-btn-outline" onClick={handleCancel}>
+          <button type="button" className="es-btn es-btn-outline" onClick={() => navigate("/admin/services")}>
             <X size={16} strokeWidth={2} />
             Cancel
           </button>
