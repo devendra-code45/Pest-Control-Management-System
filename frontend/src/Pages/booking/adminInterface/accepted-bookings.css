@@ -160,12 +160,7 @@
 
 /* Stats grid ---------------------------------------------------------------------- */
 
-.ab-stats-grid {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 20px;
-  margin-bottom: 24px;
-}
+
 
 .ab-stat-card {
   background-color: var(--ab-card);
@@ -635,11 +630,6 @@
 
 /* Responsive breakpoints ---------------------------------------------------------------------- */
 
-@media (max-width: 1600px) {
-  .ab-stats-grid {
-    gap: 16px;
-  }
-}
 
 @media (max-width: 1440px) {
   .ab-page {
@@ -653,10 +643,6 @@
 }
 
 @media (max-width: 1366px) {
-  .ab-stats-grid {
-    grid-template-columns: repeat(5, 1fr);
-    gap: 12px;
-  }
 
   .ab-stat-card {
     padding: 16px;

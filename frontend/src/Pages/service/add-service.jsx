@@ -1,317 +1,433 @@
 import React, { useState } from "react";
 import {
+  ChevronRight,
+  ChevronDown,
   X,
-  CalendarPlus,
-  Briefcase,
-  Tag,
-  LayoutGrid,
-  Bug,
-  Clock,
-  DollarSign,
-  ShieldCheck,
+  Save,
+  SprayCan,
   FileText,
+  Tag,
+  Grid3x3,
+  Shield,
+  Bug,
+  PenLine,
+  Boxes,
+  IndianRupee,
+  Clock,
+  Calendar,
+  Home,
+  ShieldCheck,
+  Flag,
+  ListChecks,
+  Info,
+  Image as ImageIcon,
   UploadCloud,
-  Eye,
-  Lightbulb,
+  Star,
   CheckCircle2,
 } from "lucide-react";
 import "./add-service.css";
 
-const CATEGORIES = [
-  "Termite Control",
-  "General Pest Control",
-  "Rodent Control",
-  "Bed Bug Control",
-  "Mosquito Control",
+const highlights = [
+  "Add clear and descriptive service name",
+  "Select the most relevant category and pest type",
+  "Provide accurate pricing and duration",
+  "Add what's included in the service",
+  "Upload a high quality image for better visibility",
 ];
 
-const PEST_TYPES = ["Termites", "Cockroaches", "Rodents", "Bed Bugs", "Mosquitoes", "Ants", "Spiders"];
-
-const DURATIONS = ["Under 1 Hour", "1 - 2 Hours", "2 - 3 Hours", "2 - 4 Hours", "Half Day", "Full Day"];
-
-const TIPS = [
-  "Provide clear and descriptive service name.",
-  "Add accurate duration for better scheduling.",
-  "Set competitive pricing for your services.",
-  "Use high quality image for better presentation.",
-];
+const LIMITS = {
+  shortDescription: 150,
+  whatsIncluded: 300,
+  serviceDescription: 500,
+  notes: 300,
+};
 
 export default function AddService() {
-  const [form, setForm] = useState({
-    name: "",
-    category: "",
-    pestType: "",
-    duration: "",
-    price: "",
-    status: "Active",
-    shortDescription: "",
-    detailedDescription: "",
-    image: null,
-  });
+  const [shortDescription, setShortDescription] = useState("");
+  const [whatsIncluded, setWhatsIncluded] = useState("");
+  const [serviceDescription, setServiceDescription] = useState("");
+  const [notes, setNotes] = useState("");
+  const [imageName, setImageName] = useState(null);
 
-  const update = (field) => (e) => setForm((f) => ({ ...f, [field]: e.target.value }));
-
-  const handleImageUpload = (e) => {
+  const handleFileChange = (e) => {
     const file = e.target.files?.[0];
-    if (file) {
-      setForm((f) => ({ ...f, image: URL.createObjectURL(file) }));
-    }
+    setImageName(file ? file.name : null);
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    const file = e.dataTransfer.files?.[0];
+    if (file) setImageName(file.name);
   };
 
   return (
-    <div className="add-service-page">
-      <div className="asp-breadcrumb">
-        <span className="crumb-active">Dashboard</span>
-        <span className="crumb-sep">›</span>
-        <span>Services</span>
-        <span className="crumb-sep">›</span>
-        <span>Add Service</span>
-      </div>
+    <div className="as-page">
+      <nav className="as-breadcrumb" aria-label="Breadcrumb">
+        <a href="#" className="as-breadcrumb-link">
+          Admin
+        </a>
+        <ChevronRight size={14} className="as-breadcrumb-sep" />
+        <a href="#" className="as-breadcrumb-link">
+          Services
+        </a>
+        <ChevronRight size={14} className="as-breadcrumb-sep" />
+        <span className="as-breadcrumb-current">Add Service</span>
+      </nav>
 
-      <div className="asp-header">
-        <div>
-          <h1>Add Service</h1>
-          <p>Create a new pest control service for your offerings.</p>
+      <header className="as-header">
+        <div className="as-header-left">
+          <span className="as-header-icon">
+            <SprayCan size={26} strokeWidth={2} />
+          </span>
+          <div>
+            <h1 className="as-title">Add Service</h1>
+            <p className="as-subtitle">
+              Create a new pest control service and add all required details.
+            </p>
+          </div>
         </div>
-        <div className="asp-header-actions">
-          <button className="btn btn-outline">
-            <X size={18} />
+
+        <div className="as-header-actions">
+          <button type="button" className="as-btn as-btn-outline">
+            <X size={16} strokeWidth={2} />
             Cancel
           </button>
-          <button className="btn btn-primary">
-            <CalendarPlus size={18} />
+          <button type="button" className="as-btn as-btn-primary">
+            <Save size={16} strokeWidth={2} />
             Save Service
           </button>
         </div>
-      </div>
+      </header>
 
-      <div className="asp-grid">
-        <div className="asp-card">
-          <div className="card-title">
-            <span className="card-icon">
-              <Briefcase size={18} />
-            </span>
-            Service Information
-          </div>
-
-          <div className="form-grid">
-            <div className="form-field">
-              <label>
-                Service Name<span className="required">*</span>
-              </label>
-              <div className="input-with-icon">
-                <Tag size={16} />
-                <input
-                  type="text"
-                  placeholder="Enter service name"
-                  value={form.name}
-                  onChange={update("name")}
-                />
-              </div>
+      <div className="as-layout">
+        <div className="as-main-col">
+          <section className="as-card">
+            <div className="as-card-header">
+              <span className="as-card-header-icon">
+                <FileText size={18} strokeWidth={2} />
+              </span>
+              <h2 className="as-card-title">Basic Information</h2>
             </div>
 
-            <div className="form-field">
-              <label>
-                Category<span className="required">*</span>
-              </label>
-              <div className="input-with-icon">
-                <LayoutGrid size={16} />
-                <select value={form.category} onChange={update("category")}>
-                  <option value="">Select category</option>
-                  {CATEGORIES.map((c) => (
-                    <option key={c} value={c}>
-                      {c}
+            <div className="as-form-grid as-grid-3">
+              <div className="as-form-field">
+                <label className="as-form-label">
+                  Service Name <span className="as-required">*</span>
+                </label>
+                <div className="as-input-wrap">
+                  <Tag size={16} className="as-input-icon" />
+                  <input type="text" className="as-input" placeholder="Enter service name" />
+                </div>
+              </div>
+
+              <div className="as-form-field">
+                <label className="as-form-label">
+                  Service Category <span className="as-required">*</span>
+                </label>
+                <div className="as-select-wrap">
+                  <Grid3x3 size={16} className="as-input-icon" />
+                  <select defaultValue="">
+                    <option value="" disabled>
+                      Select category
                     </option>
-                  ))}
-                </select>
+                    <option>Residential</option>
+                    <option>Commercial</option>
+                    <option>Industrial</option>
+                  </select>
+                  <ChevronDown size={14} className="as-select-caret" />
+                </div>
               </div>
-            </div>
 
-            <div className="form-field">
-              <label>Pest Type (Applicable)</label>
-              <div className="input-with-icon">
-                <Bug size={16} />
-                <select value={form.pestType} onChange={update("pestType")}>
-                  <option value="">Select pest type</option>
-                  {PEST_TYPES.map((p) => (
-                    <option key={p} value={p}>
-                      {p}
+              <div className="as-form-field">
+                <label className="as-form-label">
+                  Pest Type <span className="as-required">*</span>
+                </label>
+                <div className="as-select-wrap">
+                  <Shield size={16} className="as-input-icon" />
+                  <select defaultValue="">
+                    <option value="" disabled>
+                      Select pest type
                     </option>
-                  ))}
-                </select>
+                    <option>Cockroach</option>
+                    <option>Termite</option>
+                    <option>Rodent</option>
+                    <option>Mosquito</option>
+                    <option>Bed Bug</option>
+                  </select>
+                  <ChevronDown size={14} className="as-select-caret" />
+                </div>
               </div>
-            </div>
 
-            <div className="form-field">
-              <label>
-                Service Duration<span className="required">*</span>
-              </label>
-              <div className="input-with-icon">
-                <Clock size={16} />
-                <select value={form.duration} onChange={update("duration")}>
-                  <option value="">Select duration</option>
-                  {DURATIONS.map((d) => (
-                    <option key={d} value={d}>
-                      {d}
+              <div className="as-form-field">
+                <label className="as-form-label">
+                  Service Type <span className="as-required">*</span>
+                </label>
+                <div className="as-select-wrap">
+                  <Bug size={16} className="as-input-icon" />
+                  <select defaultValue="">
+                    <option value="" disabled>
+                      Select service type
                     </option>
-                  ))}
-                </select>
+                    <option>General Pest Control</option>
+                    <option>Termite Control</option>
+                    <option>Fumigation</option>
+                  </select>
+                  <ChevronDown size={14} className="as-select-caret" />
+                </div>
+              </div>
+
+              <div className="as-form-field as-field-span-2">
+                <label className="as-form-label">
+                  Short Description <span className="as-required">*</span>
+                </label>
+                <div className="as-input-wrap as-input-wrap-counted">
+                  <PenLine size={16} className="as-input-icon" />
+                  <input
+                    type="text"
+                    className="as-input"
+                    placeholder="Brief description about the service"
+                    maxLength={LIMITS.shortDescription}
+                    value={shortDescription}
+                    onChange={(e) => setShortDescription(e.target.value)}
+                  />
+                  <span className="as-char-count-inline">
+                    {shortDescription.length}/{LIMITS.shortDescription}
+                  </span>
+                </div>
               </div>
             </div>
+          </section>
 
-            <div className="form-field">
-              <label>
-                Price (USD)<span className="required">*</span>
-              </label>
-              <div className="input-with-icon">
-                <DollarSign size={16} />
-                <input
-                  type="number"
-                  placeholder="Enter price"
-                  value={form.price}
-                  onChange={update("price")}
-                />
+          <section className="as-card">
+            <div className="as-card-header">
+              <span className="as-card-header-icon">
+                <Boxes size={18} strokeWidth={2} />
+              </span>
+              <h2 className="as-card-title">Service Details</h2>
+            </div>
+
+            <div className="as-form-grid as-grid-3">
+              <div className="as-form-field">
+                <label className="as-form-label">
+                  Price (₹) <span className="as-required">*</span>
+                </label>
+                <div className="as-input-wrap">
+                  <IndianRupee size={16} className="as-input-icon" />
+                  <input type="number" className="as-input" placeholder="Enter price" />
+                </div>
+              </div>
+
+              <div className="as-form-field">
+                <label className="as-form-label">
+                  Duration <span className="as-required">*</span>
+                </label>
+                <div className="as-select-wrap">
+                  <Clock size={16} className="as-input-icon" />
+                  <select defaultValue="">
+                    <option value="" disabled>
+                      Select duration
+                    </option>
+                    <option>30 Minutes</option>
+                    <option>1 Hour</option>
+                    <option>2 Hours</option>
+                    <option>Half Day</option>
+                  </select>
+                  <ChevronDown size={14} className="as-select-caret" />
+                </div>
+              </div>
+
+              <div className="as-form-field">
+                <label className="as-form-label">Service Frequency</label>
+                <div className="as-select-wrap">
+                  <Calendar size={16} className="as-input-icon" />
+                  <select defaultValue="">
+                    <option value="" disabled>
+                      Select frequency
+                    </option>
+                    <option>One Time Service</option>
+                    <option>Monthly</option>
+                    <option>Quarterly</option>
+                  </select>
+                  <ChevronDown size={14} className="as-select-caret" />
+                </div>
+              </div>
+
+              <div className="as-form-field">
+                <label className="as-form-label">
+                  Applicable For <span className="as-required">*</span>
+                </label>
+                <div className="as-select-wrap">
+                  <Home size={16} className="as-input-icon" />
+                  <select defaultValue="">
+                    <option value="" disabled>
+                      Select applicability
+                    </option>
+                    <option>Residential</option>
+                    <option>Commercial</option>
+                    <option>Both</option>
+                  </select>
+                  <ChevronDown size={14} className="as-select-caret" />
+                </div>
+              </div>
+
+              <div className="as-form-field">
+                <label className="as-form-label">Warranty Period</label>
+                <div className="as-select-wrap">
+                  <ShieldCheck size={16} className="as-input-icon" />
+                  <select defaultValue="">
+                    <option value="" disabled>
+                      Select warranty
+                    </option>
+                    <option>No Warranty</option>
+                    <option>30 Days</option>
+                    <option>90 Days</option>
+                    <option>1 Year</option>
+                  </select>
+                  <ChevronDown size={14} className="as-select-caret" />
+                </div>
+              </div>
+
+              <div className="as-form-field">
+                <label className="as-form-label">Priority Level</label>
+                <div className="as-select-wrap">
+                  <Flag size={16} className="as-input-icon" />
+                  <select defaultValue="">
+                    <option value="" disabled>
+                      Select priority
+                    </option>
+                    <option>Low</option>
+                    <option>Medium</option>
+                    <option>High</option>
+                  </select>
+                  <ChevronDown size={14} className="as-select-caret" />
+                </div>
+              </div>
+
+              <div className="as-form-field as-field-span-3">
+                <label className="as-form-label">
+                  What's Included <span className="as-required">*</span>
+                </label>
+                <div className="as-input-wrap as-input-wrap-counted">
+                  <ListChecks size={16} className="as-input-icon" />
+                  <input
+                    type="text"
+                    className="as-input"
+                    placeholder="List what is included in this service (chemicals, equipment, inspection, etc.)"
+                    maxLength={LIMITS.whatsIncluded}
+                    value={whatsIncluded}
+                    onChange={(e) => setWhatsIncluded(e.target.value)}
+                  />
+                  <span className="as-char-count-inline">
+                    {whatsIncluded.length}/{LIMITS.whatsIncluded}
+                  </span>
+                </div>
+              </div>
+
+              <div className="as-form-field as-field-span-3">
+                <label className="as-form-label">
+                  Service Description <span className="as-required">*</span>
+                </label>
+                <div className="as-textarea-wrap">
+                  <PenLine size={16} className="as-textarea-icon" />
+                  <textarea
+                    className="as-textarea"
+                    placeholder="Enter detailed description about the service, process, benefits and precautions"
+                    maxLength={LIMITS.serviceDescription}
+                    value={serviceDescription}
+                    onChange={(e) => setServiceDescription(e.target.value)}
+                  />
+                  <span className="as-char-count">
+                    {serviceDescription.length}/{LIMITS.serviceDescription}
+                  </span>
+                </div>
               </div>
             </div>
-
-            <div className="form-field">
-              <label>
-                Service Status<span className="required">*</span>
-              </label>
-              <div className="input-with-icon">
-                <ShieldCheck size={16} />
-                <select value={form.status} onChange={update("status")}>
-                  <option value="Active">Active</option>
-                  <option value="Inactive">Inactive</option>
-                </select>
-              </div>
-            </div>
-
-            <div className="form-field form-field-full">
-              <label>
-                Short Description<span className="required">*</span>
-              </label>
-              <div className="input-with-icon textarea-wrap">
-                <FileText size={16} />
-                <textarea
-                  rows={2}
-                  maxLength={150}
-                  placeholder="Enter short description about the service"
-                  value={form.shortDescription}
-                  onChange={update("shortDescription")}
-                />
-                <span className="char-count">{form.shortDescription.length}/150</span>
-              </div>
-            </div>
-
-            <div className="form-field form-field-full">
-              <label>
-                Detailed Description<span className="required">*</span>
-              </label>
-              <div className="input-with-icon textarea-wrap">
-                <FileText size={16} />
-                <textarea
-                  rows={5}
-                  maxLength={1000}
-                  placeholder="Enter detailed description about the service, process, and benefits..."
-                  value={form.detailedDescription}
-                  onChange={update("detailedDescription")}
-                />
-                <span className="char-count">{form.detailedDescription.length}/1000</span>
-              </div>
-            </div>
-
-            <div className="form-field form-field-full">
-              <label>Service Image (Optional)</label>
-              <label className="dropzone" htmlFor="add-service-image">
-                {form.image ? (
-                  <img src={form.image} alt="Service preview" className="dropzone-preview" />
-                ) : (
-                  <>
-                    <UploadCloud size={28} />
-                    <div>
-                      <strong>Drag and drop an image here or click to upload</strong>
-                      <span>JPG, PNG or WEBP (Max. 2MB)</span>
-                    </div>
-                  </>
-                )}
-                <input
-                  id="add-service-image"
-                  type="file"
-                  accept="image/png, image/jpeg, image/webp"
-                  hidden
-                  onChange={handleImageUpload}
-                />
-              </label>
-            </div>
-          </div>
+          </section>
         </div>
 
-        <div className="asp-side">
-          <div className="asp-card">
-            <div className="card-title">
-              <span className="card-icon">
-                <Eye size={18} />
+        <aside className="as-side-col">
+          <section className="as-card">
+            <div className="as-card-header">
+              <span className="as-card-header-icon">
+                <ImageIcon size={18} strokeWidth={2} />
               </span>
-              Service Preview
+              <h2 className="as-card-title">Service Image</h2>
             </div>
 
-            <div className="preview-avatar">
-              <Bug size={48} />
+            <div
+              className="as-dropzone"
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={handleDrop}
+            >
+              <UploadCloud size={40} strokeWidth={1.5} className="as-dropzone-icon" />
+              <span className="as-dropzone-text">Drag &amp; drop an image here</span>
+              <span className="as-dropzone-or">or</span>
+              <label className="as-btn as-btn-outline as-choose-file-btn">
+                Choose File
+                <input type="file" accept="image/*" onChange={handleFileChange} hidden />
+              </label>
+              <span className="as-dropzone-hint">Recommended: 800x600px, JPG/PNG, Max 2MB</span>
             </div>
 
-            <div className="preview-rows">
-              <div className="preview-row">
-                <span>Service Name</span>
-                <span>{form.name || "-"}</span>
-              </div>
-              <div className="preview-row">
-                <span>Category</span>
-                <span>{form.category || "-"}</span>
-              </div>
-              <div className="preview-row">
-                <span>Pest Type</span>
-                <span>{form.pestType || "-"}</span>
-              </div>
-              <div className="preview-row">
-                <span>Duration</span>
-                <span>{form.duration || "-"}</span>
-              </div>
-              <div className="preview-row">
-                <span>Price</span>
-                <span>{form.price ? `$${Number(form.price).toFixed(2)}` : "-"}</span>
-              </div>
-              <div className="preview-row">
-                <span>Status</span>
-                <span
-                  className={`status-badge ${
-                    form.status === "Active" ? "status-active" : "status-inactive"
-                  }`}
-                >
-                  {form.status}
-                </span>
+            <div className="as-preview-block">
+              <span className="as-preview-label">Image Preview</span>
+              <div className="as-preview-box">
+                {imageName ? (
+                  <span className="as-preview-filename">{imageName}</span>
+                ) : (
+                  <>
+                    <SprayCan size={28} strokeWidth={1.5} className="as-preview-icon" />
+                    <span className="as-preview-text">No image selected</span>
+                  </>
+                )}
               </div>
             </div>
-          </div>
+          </section>
 
-          <div className="asp-card">
-            <div className="card-title">
-              <span className="card-icon">
-                <Lightbulb size={18} />
+          <section className="as-card as-highlights-card">
+            <div className="as-card-header">
+              <span className="as-card-header-icon">
+                <Star size={18} strokeWidth={2} />
               </span>
-              Tips
+              <h2 className="as-card-title">Service Highlights</h2>
             </div>
-            <ul className="tips-list">
-              {TIPS.map((tip) => (
-                <li key={tip}>
-                  <CheckCircle2 size={16} />
-                  <span>{tip}</span>
+            <ul className="as-highlights-list">
+              {highlights.map((item) => (
+                <li key={item}>
+                  <CheckCircle2 size={16} strokeWidth={2} className="as-highlight-check" />
+                  <span>{item}</span>
                 </li>
               ))}
             </ul>
+          </section>
+        </aside>
+      </div>
+
+      <section className="as-card as-optional-card">
+        <div className="as-card-header">
+          <span className="as-card-header-icon as-icon-info">
+            <Info size={18} strokeWidth={2} />
+          </span>
+          <h2 className="as-card-title">Additional Information (Optional)</h2>
+        </div>
+
+        <div className="as-form-field">
+          <label className="as-form-label">Notes</label>
+          <div className="as-input-wrap as-input-wrap-counted">
+            <input
+              type="text"
+              className="as-input"
+              placeholder="Add any additional notes or special instructions"
+              maxLength={LIMITS.notes}
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+            />
+            <span className="as-char-count-inline">
+              {notes.length}/{LIMITS.notes}
+            </span>
           </div>
         </div>
-      </div>
+      </section>
     </div>
   );
 }

@@ -220,9 +220,9 @@ export default function AssignTechnician() {
           <p className="as-subtitle">Assign a technician to a service request or job.</p>
         </div>
         <div className="as-header-actions">
-          <button type="button" className="as-btn as-btn-outline" onClick={() => navigate("/technician-management")}>
+          <button type="button" className="as-btn as-btn-outline" onClick={() => navigate("/admin/bookings/pending")}>
             <ArrowLeft size={16} />
-            Back to Technicians
+            Back to Bookings
           </button>
           <button type="button" className="as-btn as-btn-primary">
             <UserCheck size={16} />

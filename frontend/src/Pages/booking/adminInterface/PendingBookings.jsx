@@ -521,7 +521,7 @@ const PendingBooking = () => {
                         <button
                           type="button"
                           className="pb-btn pb-btn-success pb-btn-xs"
-                          onClick={() => handleAccept(booking.id)}
+                          onClick={() => navigate("/admin/bookings/assign-technician")}
                         >
                           <Check size={14} />
                           Accept
@@ -534,27 +534,6 @@ const PendingBooking = () => {
                           <X size={14} />
                           Reject
                         </button>
-                        <div className="pb-more-wrapper">
-                          <button
-                            type="button"
-                            className="pb-btn pb-btn-icon-only pb-btn-xs"
-                            onClick={() =>
-                              setOpenMenuId(openMenuId === booking.id ? null : booking.id)
-                            }
-                          >
-                            <MoreVertical size={15} />
-                          </button>
-                          {openMenuId === booking.id && (
-                            <div className="pb-dropdown-menu">
-                              <button type="button">View Details</button>
-                              <button type="button">Assign Technician</button>
-                              <button type="button">Reschedule</button>
-                              <button type="button" className="pb-dropdown-danger">
-                                Cancel Booking
-                              </button>
-                            </div>
-                          )}
-                        </div>
                       </div>
                     </td>
                   </tr>

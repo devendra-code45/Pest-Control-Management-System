@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Plus,
   Search,
@@ -117,6 +118,8 @@ export default function Services() {
     });
   }, [search, category, status]);
 
+  const navigate = useNavigate();
+
   return (
     <div className="services-page">
       <div className="services-breadcrumb">
@@ -130,29 +133,13 @@ export default function Services() {
           <h1>Services</h1>
           <p>Manage all pest control services offered by your company.</p>
         </div>
-        <button className="btn btn-primary">
+        <button className="btns btns-primary services-add-btn" onClick={() => navigate("/admin/services/add")}>
           <Plus size={18} />
           Add Service
         </button>
       </div>
 
-      <div className="stats-grid">
-        {STAT_CARDS.map((card) => {
-          const Icon = card.icon;
-          return (
-            <div className="stat-card" key={card.label}>
-              <div className="stat-icon">
-                <Icon size={20} />
-              </div>
-              <div className={`stat-value ${card.isText ? "stat-value-text" : ""}`}>
-                {card.value}
-              </div>
-              <div className="stat-label">{card.label}</div>
-              <div className="stat-sub">{card.sub}</div>
-            </div>
-          );
-        })}
-      </div>
+      
 
       <div className="table-card">
         <div className="table-toolbar">
@@ -194,14 +181,6 @@ export default function Services() {
               <option value={50}>50 Per Page</option>
             </select>
           </div>
-
-          <button className="btn btn-outline">
-            <Filter size={16} />
-            Filter
-          </button>
-          <button className="icon-btn" aria-label="Refresh">
-            <RefreshCw size={16} />
-          </button>
         </div>
 
         <div className="table-scroll">
@@ -253,14 +232,11 @@ export default function Services() {
                       </td>
                       <td>
                         <div className="row-actions">
-                          <button className="icon-btn" aria-label="View">
+                          <button className="icon-btn" aria-label="View"  onClick={() => navigate("/admin/services/details")}>
                             <Eye size={16} />
                           </button>
-                          <button className="icon-btn" aria-label="Edit">
+                          <button className="icon-btn" aria-label="Edit" onClick={() => navigate("/admin/services/edit")}>
                             <Pencil size={16} />
-                          </button>
-                          <button className="icon-btn" aria-label="More">
-                            <MoreVertical size={16} />
                           </button>
                         </div>
                       </td>

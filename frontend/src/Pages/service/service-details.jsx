@@ -1,312 +1,342 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import {
+  ChevronRight,
+  Eye,
   Pencil,
-  MoreHorizontal,
-  Plus,
+  ArrowLeft,
   Bug,
-  LayoutGrid,
-  Clock,
-  DollarSign,
-  CalendarDays,
-  ShieldCheck,
-  FileText,
-  Info,
-  CheckCircle2,
+  Calendar,
   ClipboardList,
+  Settings,
+  Clock,
+  RefreshCw,
+  IndianRupee,
+  Home,
+  ShieldCheck,
+  Flag,
+  Tag,
   Image as ImageIcon,
-  StickyNote,
-  History,
+  Info,
+  CheckCircle,
+  Camera,
 } from "lucide-react";
 import "./service-details.css";
 
-const SERVICE = {
+const service = {
   name: "Termite Treatment",
   status: "Active",
-  shortDescription: "Comprehensive termite inspection and treatment to protect your property.",
-  category: "Termite Control",
-  pestType: "Termites",
-  duration: "2 - 3 Hours",
-  price: 150.0,
+  description: "Comprehensive termite inspection and treatment to protect your property.",
+  serviceId: "SRV-2025-0001",
   createdOn: "10 May 2025",
-  lastUpdated: "12 May 2025 02:35 PM",
-  serviceId: "SRV-2025-00124",
-  createdBy: "Admin",
+  lastUpdated: "22 May 2025",
+  category: "Termite Control",
+  pestType: "Termite",
+  serviceType: "Standard Treatment",
   detailedDescription:
-    "Our termite treatment service includes a thorough inspection of the property, identification of termite activity, and application of effective treatment methods to eliminate termites and prevent future infestations.",
-  benefits: [
-    "Eliminates existing termite colonies",
-    "Prevents future termite infestations",
-    "Safe and eco-friendly treatment options",
-    "Protects property structure and value",
-    "Long-lasting protection",
+    "Our termite treatment service includes a thorough inspection of the property, identification of termite activity, and application of advanced termiticides to eliminate existing colonies and prevent future infestations. We use safe and eco-friendly chemicals that are effective and long-lasting.",
+  whatsIncluded: [
+    "Inspection of affected areas",
+    "Termite treatment application",
+    "Barrier protection",
+    "Detailed report and recommendations",
   ],
-  included: [
-    "Detailed property inspection",
-    "Termite activity detection",
-    "Treatment application",
-    "Post-treatment guidance",
-  ],
-  note: "Ensure the area is accessible for inspection and treatment.",
-  activity: [
-    { date: "12 May 2025 02:35 PM", title: "Service updated", detail: "Updated by Admin", tone: "active" },
-    { date: "10 May 2025 11:20 AM", title: "Service created", detail: "Created by Admin", tone: "active" },
-    { date: "10 May 2025 11:15 AM", title: "Initial data added", detail: "Created by System", tone: "muted" },
-  ],
+  notes: "Recommended annual inspection for best results.",
 };
 
-export default function ServiceDetails() {
-  return (
-    <div className="service-details-page">
-      <div className="sdp-breadcrumb">
-        <span className="crumb-active">Dashboard</span>
-        <span className="crumb-sep">›</span>
-        <span>Services</span>
-        <span className="crumb-sep">›</span>
-        <span>Service Details</span>
-      </div>
+const details = [
+  { icon: Clock, label: "Duration", value: "2 - 3 Hours" },
+  { icon: IndianRupee, label: "Price", value: "₹150.00" },
+  { icon: Home, label: "Applicable For", value: "Residential, Commercial" },
+  { icon: RefreshCw, label: "Service Frequency", value: "One Time Service" },
+  { icon: ShieldCheck, label: "Warranty Period", value: "30 Days" },
+  { icon: Flag, label: "Priority Level", value: "Medium" },
+];
 
-      <div className="sdp-header">
-        <div>
-          <h1>Service Details</h1>
-          <p>View complete information about the selected service.</p>
+const pricing = {
+  basePrice: "₹150.00",
+  discount: "₹0.00",
+  tax: "₹0.00",
+  total: "₹150.00",
+};
+
+const statusInfo = {
+  currentStatus: "Active",
+  availability: "Available",
+  createdBy: "John Doe (Administrator)",
+};
+
+const timeline = [
+  { title: "Service Created", date: "10 May 2025, 10:30 AM", by: "By John Doe" },
+  { title: "Service Updated", date: "15 May 2025, 02:15 PM", by: "By John Doe" },
+  { title: "Service Activated", date: "22 May 2025, 09:45 AM", by: "By John Doe" },
+];
+
+const InfoRow = ({ label, value }) => (
+  <div className="sd-info-row">
+    <span className="sd-info-label">{label}</span>
+    <span className="sd-info-colon">:</span>
+    <span className="sd-info-value">{value}</span>
+  </div>
+);
+
+export default function ServiceDetails({ onEdit, onBack }) {
+  const handleEdit = () => {
+    if (typeof onEdit === "function") {
+      onEdit(service.serviceId);
+    } else {
+      console.log("Edit Service clicked for", service.serviceId);
+    }
+  };
+
+  const handleBack = () => {
+    if (typeof onBack === "function") {
+      onBack();
+    } else if (typeof window !== "undefined" && window.history.length > 1) {
+      window.history.back();
+    } else {
+      console.log("Back to Services clicked");
+    }
+  };
+
+  const navigate = useNavigate();
+
+  return (
+    <div className="sd-page">
+      <nav className="sd-breadcrumb" aria-label="Breadcrumb">
+        <a href="#" className="sd-breadcrumb-link">
+          Admin
+        </a>
+        <ChevronRight size={14} className="sd-breadcrumb-sep" />
+        <a href="#" className="sd-breadcrumb-link">
+          Services
+        </a>
+        <ChevronRight size={14} className="sd-breadcrumb-sep" />
+        <span className="sd-breadcrumb-current">View Service</span>
+      </nav>
+
+      <header className="sd-header">
+        <div className="sd-header-left">
+          <span className="sd-header-icon">
+            <Eye size={26} strokeWidth={2} />
+          </span>
+          <div>
+            <h1 className="sd-title">Service Details</h1>
+            <p className="sd-subtitle">View complete information about this service.</p>
+          </div>
         </div>
-        <div className="sdp-header-actions">
-          <button className="btn btn-outline">
-            <Pencil size={18} />
+
+        <div className="sd-header-actions">
+          <button type="button" className="sd-btn sd-btn-outline" onClick={() => navigate("/admin/services/edit")}>
+            <Pencil size={16} strokeWidth={2} />
             Edit Service
           </button>
-          <button className="btn btn-outline">
-            <MoreHorizontal size={18} />
-            More Actions
-          </button>
-          <button className="btn btn-primary">
-            <Plus size={18} />
-            Add Service
+          <button type="button" className="sd-btn sd-btn-outline" onClick={handleBack}>
+            <ArrowLeft size={16} strokeWidth={2} />
+            Back to Services
           </button>
         </div>
-      </div>
+      </header>
 
-      <div className="sdp-summary-card">
-        <div className="summary-main">
-          <div className="summary-icon">
-            <Bug size={32} />
-          </div>
-          <div>
-            <div className="summary-title-row">
-              <h2>{SERVICE.name}</h2>
-              <span className="status-badge status-active">{SERVICE.status}</span>
+      <section className="sd-summary-card">
+        <div className="sd-summary-left">
+          <span className="sd-summary-icon">
+            <Bug size={28} strokeWidth={2} />
+          </span>
+          <div className="sd-summary-text">
+            <div className="sd-summary-name-row">
+              <span className="sd-summary-name">{service.name}</span>
+              <span className="sd-badge sd-badge-success">{service.status}</span>
             </div>
-            <p className="summary-desc">{SERVICE.shortDescription}</p>
+            <p className="sd-summary-desc">{service.description}</p>
           </div>
         </div>
 
-        <div className="summary-meta">
-          <div className="meta-item">
-            <span className="meta-label">
-              <LayoutGrid size={14} /> Category
-            </span>
-            <span className="meta-value">{SERVICE.category}</span>
+        <div className="sd-summary-meta">
+          <div className="sd-meta-field">
+            <span className="sd-meta-label">Service ID</span>
+            <span className="sd-meta-value">{service.serviceId}</span>
           </div>
-          <div className="meta-item">
-            <span className="meta-label">
-              <Bug size={14} /> Pest Type
+          <div className="sd-meta-field">
+            <span className="sd-meta-label">Created On</span>
+            <span className="sd-meta-value sd-meta-with-icon">
+              <Calendar size={14} strokeWidth={2} />
+              {service.createdOn}
             </span>
-            <span className="meta-value">{SERVICE.pestType}</span>
           </div>
-          <div className="meta-item">
-            <span className="meta-label">
-              <Clock size={14} /> Duration
+          <div className="sd-meta-field">
+            <span className="sd-meta-label">Last Updated</span>
+            <span className="sd-meta-value sd-meta-with-icon">
+              <Calendar size={14} strokeWidth={2} />
+              {service.lastUpdated}
             </span>
-            <span className="meta-value">{SERVICE.duration}</span>
           </div>
-          <div className="meta-item">
-            <span className="meta-label">
-              <DollarSign size={14} /> Price (USD)
-            </span>
-            <span className="meta-value">${SERVICE.price.toFixed(2)}</span>
-          </div>
-          <div className="meta-item">
-            <span className="meta-label">
-              <CalendarDays size={14} /> Created On
-            </span>
-            <span className="meta-value">{SERVICE.createdOn}</span>
+          <div className="sd-meta-field">
+            <span className="sd-meta-label">Status</span>
+            <span className="sd-badge sd-badge-success">{service.status}</span>
           </div>
         </div>
+      </section>
 
-        <div className="summary-status-card">
-          <div className="card-title">
-            <span className="card-icon">
-              <ShieldCheck size={18} />
-            </span>
-            Service Status
-          </div>
-          <div className="status-rows">
-            <div className="status-row">
-              <span>Status</span>
-              <span className="status-badge status-active">{SERVICE.status}</span>
-            </div>
-            <div className="status-row">
-              <span>Created On</span>
-              <span>{SERVICE.createdOn}</span>
-            </div>
-            <div className="status-row">
-              <span>Last Updated</span>
-              <span>{SERVICE.lastUpdated}</span>
-            </div>
-            <div className="status-row status-row-divider">
-              <span>Service ID</span>
-              <span>{SERVICE.serviceId}</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="sdp-grid">
-        <div className="sdp-main">
-          <div className="sdp-card">
-            <div className="card-title">
-              <span className="card-icon">
-                <FileText size={18} />
+      <div className="sd-layout">
+        <div className="sd-main-col">
+          <section className="sd-card">
+            <div className="sd-card-header">
+              <span className="sd-card-header-icon">
+                <ClipboardList size={18} strokeWidth={2} />
               </span>
-              Description
+              <h2 className="sd-card-title">Service Information</h2>
             </div>
-            <div className="desc-block">
-              <span className="desc-label">Short Description</span>
-              <p>{SERVICE.shortDescription}</p>
-            </div>
-            <div className="desc-block">
-              <span className="desc-label">Detailed Description</span>
-              <p>{SERVICE.detailedDescription}</p>
-            </div>
-          </div>
 
-          <div className="sdp-two-col">
-            <div className="sdp-card">
-              <div className="card-title">
-                <span className="card-icon">
-                  <ShieldCheck size={18} />
-                </span>
-                Key Benefits
+            <div className="sd-info-columns">
+              <div className="sd-info-list">
+                <InfoRow label="Service Name" value={service.name} />
+                <InfoRow label="Service Category" value={service.category} />
+                <InfoRow label="Pest Type" value={service.pestType} />
+                <InfoRow label="Service Type" value={service.serviceType} />
+                <InfoRow label="Short Description" value={service.description} />
               </div>
-              <ul className="check-list">
-                {SERVICE.benefits.map((b) => (
-                  <li key={b}>
-                    <CheckCircle2 size={16} />
-                    <span>{b}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
 
-            <div className="sdp-card">
-              <div className="card-title">
-                <span className="card-icon">
-                  <ClipboardList size={18} />
-                </span>
-                Included In Service
+              <div className="sd-info-list">
+                <InfoRow label="Detailed Description" value={service.detailedDescription} />
+                <InfoRow
+                  label="What's Included"
+                  value={
+                    <ul className="sd-bullet-list">
+                      {service.whatsIncluded.map((item) => (
+                        <li key={item}>{item}</li>
+                      ))}
+                    </ul>
+                  }
+                />
+                <InfoRow label="Notes" value={service.notes} />
               </div>
-              <ul className="check-list">
-                {SERVICE.included.map((i) => (
-                  <li key={i}>
-                    <CheckCircle2 size={16} />
-                    <span>{i}</span>
-                  </li>
-                ))}
-              </ul>
             </div>
-          </div>
+          </section>
 
-          <div className="sdp-card">
-            <div className="card-title">
-              <span className="card-icon">
-                <History size={18} />
+          <section className="sd-card">
+            <div className="sd-card-header">
+              <span className="sd-card-header-icon">
+                <Settings size={18} strokeWidth={2} />
               </span>
-              Activity History
+              <h2 className="sd-card-title">Service Details</h2>
             </div>
-            <div className="activity-timeline">
-              {SERVICE.activity.map((a) => (
-                <div className="activity-item" key={a.title}>
-                  <span className={`activity-dot ${a.tone === "muted" ? "dot-muted" : ""}`} />
-                  <div className="activity-body">
-                    <span className="activity-date">{a.date}</span>
-                    <span className="activity-title">{a.title}</span>
-                    <span className="activity-detail">{a.detail}</span>
+
+            <div className="sd-detail-grid">
+              {details.map(({ icon: Icon, label, value }) => (
+                <div className="sd-detail-item" key={label}>
+                  <span className="sd-detail-icon">
+                    <Icon size={16} strokeWidth={2} />
+                  </span>
+                  <div className="sd-detail-text">
+                    <span className="sd-detail-label">{label}</span>
+                    <span className="sd-detail-value">{value}</span>
                   </div>
                 </div>
               ))}
             </div>
-          </div>
+          </section>
+
+          <section className="sd-card">
+            <div className="sd-card-header">
+              <span className="sd-card-header-icon">
+                <Clock size={18} strokeWidth={2} />
+              </span>
+              <h2 className="sd-card-title">Activity Timeline</h2>
+            </div>
+
+            <div className="sd-timeline">
+              {timeline.map((step, index) => (
+                <React.Fragment key={step.title}>
+                  <div className="sd-timeline-step">
+                    <span className="sd-timeline-dot">
+                      <CheckCircle size={16} strokeWidth={2} />
+                    </span>
+                    <div className="sd-timeline-text">
+                      <span className="sd-timeline-title">{step.title}</span>
+                      <span className="sd-timeline-date">{step.date}</span>
+                      <span className="sd-timeline-by">{step.by}</span>
+                    </div>
+                  </div>
+                  {index < timeline.length - 1 && <span className="sd-timeline-connector" />}
+                </React.Fragment>
+              ))}
+            </div>
+          </section>
         </div>
 
-        <div className="sdp-side">
-          <div className="sdp-card">
-            <div className="card-title">
-              <span className="card-icon">
-                <Info size={18} />
+        <aside className="sd-side-col">
+          <section className="sd-card">
+            <div className="sd-card-header">
+              <span className="sd-card-header-icon">
+                <Tag size={18} strokeWidth={2} />
               </span>
-              Service Information
+              <h2 className="sd-card-title">Pricing Information</h2>
             </div>
-            <div className="info-rows">
-              <div className="info-row">
-                <span>Category</span>
-                <span>{SERVICE.category}</span>
-              </div>
-              <div className="info-row">
-                <span>Pest Type</span>
-                <span>{SERVICE.pestType}</span>
-              </div>
-              <div className="info-row">
-                <span>Duration</span>
-                <span>{SERVICE.duration}</span>
-              </div>
-              <div className="info-row">
-                <span>Price (USD)</span>
-                <span>${SERVICE.price.toFixed(2)}</span>
-              </div>
-              <div className="info-row">
-                <span>Status</span>
-                <span className="text-success">{SERVICE.status}</span>
-              </div>
-              <div className="info-row">
-                <span>Created By</span>
-                <span>{SERVICE.createdBy}</span>
-              </div>
-              <div className="info-row">
-                <span>Created On</span>
-                <span>{SERVICE.createdOn}</span>
-              </div>
-              <div className="info-row">
-                <span>Last Updated</span>
-                <span>{SERVICE.lastUpdated}</span>
-              </div>
-            </div>
-          </div>
 
-          <div className="sdp-card">
-            <div className="card-title">
-              <span className="card-icon">
-                <ImageIcon size={18} />
-              </span>
-              Service Image
+            <div className="sd-pricing-list">
+              <div className="sd-pricing-row">
+                <span className="sd-pricing-label">Base Price</span>
+                <span className="sd-pricing-colon">:</span>
+                <span className="sd-pricing-value">{pricing.basePrice}</span>
+              </div>
+              <div className="sd-pricing-row">
+                <span className="sd-pricing-label">Discount</span>
+                <span className="sd-pricing-colon">:</span>
+                <span className="sd-pricing-value">{pricing.discount}</span>
+              </div>
+              <div className="sd-pricing-row">
+                <span className="sd-pricing-label">Tax (0%)</span>
+                <span className="sd-pricing-colon">:</span>
+                <span className="sd-pricing-value">{pricing.tax}</span>
+              </div>
             </div>
-            <div className="service-image-frame">
-              <Bug size={40} />
-            </div>
-          </div>
 
-          <div className="sdp-card notes-card">
-            <div className="card-title">
-              <span className="card-icon">
-                <StickyNote size={18} />
+            <div className="sd-pricing-total-row">
+              <span className="sd-pricing-total-label">Total Price</span>
+              <span className="sd-pricing-colon">:</span>
+              <span className="sd-pricing-total-value">{pricing.total}</span>
+            </div>
+          </section>
+
+          <section className="sd-card">
+            <div className="sd-card-header">
+              <span className="sd-card-header-icon">
+                <ImageIcon size={18} strokeWidth={2} />
               </span>
-              Notes
+              <h2 className="sd-card-title">Service Image</h2>
             </div>
-            <div className="note-box">
-              <Info size={16} />
-              <p>{SERVICE.note}</p>
+
+            <div className="sd-image-placeholder">
+              <Camera size={32} strokeWidth={1.5} />
+              <span>No image uploaded</span>
             </div>
-          </div>
-        </div>
+          </section>
+
+          <section className="sd-card">
+            <div className="sd-card-header">
+              <span className="sd-card-header-icon">
+                <Info size={18} strokeWidth={2} />
+              </span>
+              <h2 className="sd-card-title">Status Information</h2>
+            </div>
+
+            <div className="sd-status-list">
+              <div className="sd-status-row">
+                <span className="sd-status-label">Current Status</span>
+                <span className="sd-badge sd-badge-success">{statusInfo.currentStatus}</span>
+              </div>
+              <div className="sd-status-row">
+                <span className="sd-status-label">Service Availability</span>
+                <span className="sd-badge sd-badge-success">{statusInfo.availability}</span>
+              </div>
+              <div className="sd-status-row">
+                <span className="sd-status-label">Created By</span>
+                <span className="sd-status-value">{statusInfo.createdBy}</span>
+              </div>
+            </div>
+          </section>
+        </aside>
       </div>
     </div>
   );

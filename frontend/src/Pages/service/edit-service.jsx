@@ -1,332 +1,478 @@
 import React, { useState } from "react";
 import {
+  ChevronRight,
   X,
   Save,
-  Briefcase,
-  Tag,
-  LayoutGrid,
-  Bug,
-  Clock,
-  DollarSign,
-  ShieldCheck,
+  SprayCan,
   FileText,
-  UploadCloud,
-  Eye,
-  Lightbulb,
+  Tag,
+  Grid3x3,
+  Shield,
+  Bug,
+  PenLine,
+  Boxes,
+  IndianRupee,
+  Clock,
+  Calendar,
+  Home,
+  ShieldCheck,
+  Flag,
+  ListChecks,
+  Info,
+  ChevronDown,
+  AlertTriangle,
   CheckCircle2,
 } from "lucide-react";
 import "./edit-service.css";
 
-const CATEGORIES = [
-  "Termite Control",
-  "General Pest Control",
-  "Rodent Control",
-  "Bed Bug Control",
-  "Mosquito Control",
-];
-
-const PEST_TYPES = ["Termites", "Cockroaches", "Rodents", "Bed Bugs", "Mosquitoes", "Ants", "Spiders"];
-
-const DURATIONS = ["Under 1 Hour", "1 - 2 Hours", "2 - 3 Hours", "2 - 4 Hours", "Half Day", "Full Day"];
-
-const TIPS = [
-  "Keep the service name clear and specific.",
-  "Provide accurate duration for better scheduling.",
-  "Set competitive pricing for your services.",
-  "Use high quality image for better presentation.",
-];
-
-const EXISTING_SERVICE = {
-  name: "Termite Treatment",
-  category: "Termite Control",
-  pestType: "Termites",
-  duration: "2 - 3 Hours",
-  price: "150.00",
-  status: "Active",
-  shortDescription: "Comprehensive termite inspection and treatment to protect your property.",
-  detailedDescription:
-    "Our termite treatment service includes a thorough inspection of the property, identification of termite activity, and application of effective treatment methods to eliminate termites and prevent future infestations.",
-  image:
-    "https://images.unsplash.com/photo-1632934558790-3ba54a5f2c4c?auto=format&fit=crop&w=400&q=60",
+const LIMITS = {
+  shortDescription: 150,
+  whatsIncluded: 300,
+  serviceDescription: 500,
+  notes: 300,
 };
 
-export default function EditService() {
-  const [form, setForm] = useState(EXISTING_SERVICE);
+const INITIAL_DATA = {
+  serviceName: "Cockroach Control",
+  serviceCategory: "General Pest Control",
+  pestType: "Cockroach",
+  serviceType: "Standard Treatment",
+  shortDescription: "Effective cockroach control treatment for residential and commercial spaces.",
+  price: "1,500",
+  duration: "2 Hours",
+  serviceFrequency: "One Time Service",
+  applicableFor: "Residential",
+  warrantyPeriod: "30 Days",
+  priorityLevel: "Medium",
+  whatsIncluded: "Gel application, surface spray, inspection, basic prevention tips",
+  serviceDescription:
+    "Our cockroach control service targets all types of cockroaches using safe and effective chemicals. It includes inspection, treatment, and prevention tips to keep your space cockroach-free.",
+  notes: "Best results recommended with regular cleaning and moisture control.",
+};
 
-  const update = (field) => (e) => setForm((f) => ({ ...f, [field]: e.target.value }));
+const REQUIRED_FIELDS = [
+  "serviceName",
+  "serviceCategory",
+  "pestType",
+  "serviceType",
+  "shortDescription",
+  "price",
+  "duration",
+  "applicableFor",
+  "whatsIncluded",
+  "serviceDescription",
+];
 
-  const handleImageUpload = (e) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setForm((f) => ({ ...f, image: URL.createObjectURL(file) }));
+export default function EditService({ onCancel, onUpdate }) {
+  const [formData, setFormData] = useState(INITIAL_DATA);
+  const [errors, setErrors] = useState({});
+  const [banner, setBanner] = useState(null);
+
+  const updateField = (field, value, limit) => {
+    if (limit && value.length > limit) return;
+    setFormData((prev) => ({ ...prev, [field]: value }));
+    if (errors[field]) {
+      setErrors((prev) => {
+        const next = { ...prev };
+        delete next[field];
+        return next;
+      });
     }
   };
 
-  const removeImage = () => setForm((f) => ({ ...f, image: null }));
+  const validate = () => {
+    const nextErrors = {};
+    REQUIRED_FIELDS.forEach((field) => {
+      if (!String(formData[field] || "").trim()) {
+        nextErrors[field] = true;
+      }
+    });
+    return nextErrors;
+  };
+
+  const handleCancel = () => {
+    setFormData(INITIAL_DATA);
+    setErrors({});
+    setBanner(null);
+    if (typeof onCancel === "function") {
+      onCancel();
+    } else if (typeof window !== "undefined" && window.history.length > 1) {
+      window.history.back();
+    }
+  };
+
+  const handleUpdate = () => {
+    const nextErrors = validate();
+    setErrors(nextErrors);
+
+    if (Object.keys(nextErrors).length > 0) {
+      setBanner({ type: "error", text: "Please fill in all required fields before updating." });
+      return;
+    }
+
+    setBanner({ type: "success", text: "Service updated successfully." });
+    if (typeof onUpdate === "function") {
+      onUpdate(formData);
+    }
+  };
 
   return (
-    <div className="edit-service-page">
-      <div className="esp-breadcrumb">
-        <span className="crumb-active">Dashboard</span>
-        <span className="crumb-sep">›</span>
-        <span>Services</span>
-        <span className="crumb-sep">›</span>
-        <span>Edit Service</span>
-      </div>
+    <div className="es-page">
+      <nav className="es-breadcrumb" aria-label="Breadcrumb">
+        <a href="#" className="es-breadcrumb-link">
+          Admin
+        </a>
+        <ChevronRight size={14} className="es-breadcrumb-sep" />
+        <a href="#" className="es-breadcrumb-link">
+          Services
+        </a>
+        <ChevronRight size={14} className="es-breadcrumb-sep" />
+        <span className="es-breadcrumb-current">Edit Service</span>
+      </nav>
 
-      <div className="esp-header">
-        <div>
-          <h1>Edit Service</h1>
-          <p>Update the service details and information.</p>
+      <header className="es-header">
+        <div className="es-header-left">
+          <span className="es-header-icon">
+            <SprayCan size={26} strokeWidth={2} />
+          </span>
+          <div>
+            <h1 className="es-title">Edit Service</h1>
+            <p className="es-subtitle">Update the service information and save your changes.</p>
+          </div>
         </div>
-        <div className="esp-header-actions">
-          <button className="btn btn-outline">
-            <X size={18} />
+
+        <div className="es-header-actions">
+          <button type="button" className="es-btn es-btn-outline" onClick={handleCancel}>
+            <X size={16} strokeWidth={2} />
             Cancel
           </button>
-          <button className="btn btn-primary">
-            <Save size={18} />
+          <button type="button" className="es-btn es-btn-primary" onClick={handleUpdate}>
+            <Save size={16} strokeWidth={2} />
             Update Service
           </button>
         </div>
-      </div>
+      </header>
 
-      <div className="esp-grid">
-        <div className="esp-card">
-          <div className="card-title">
-            <span className="card-icon">
-              <Briefcase size={18} />
+      {banner && (
+        <div className={`es-banner ${banner.type === "success" ? "es-banner-success" : "es-banner-error"}`}>
+          {banner.type === "success" ? (
+            <CheckCircle2 size={16} strokeWidth={2} />
+          ) : (
+            <AlertTriangle size={16} strokeWidth={2} />
+          )}
+          <span>{banner.text}</span>
+        </div>
+      )}
+
+      <section className="es-card">
+        <div className="es-card-header">
+          <span className="es-card-header-icon">
+            <FileText size={18} strokeWidth={2} />
+          </span>
+          <h2 className="es-card-title">Basic Information</h2>
+        </div>
+
+        <div className="es-form-grid es-grid-3">
+          <div className="es-form-field">
+            <label className="es-form-label">
+              Service Name <span className="es-required">*</span>
+            </label>
+            <div className={`es-input-wrap ${errors.serviceName ? "es-field-error" : ""}`}>
+              <Tag size={16} className="es-input-icon" />
+              <input
+                type="text"
+                className="es-input"
+                placeholder="Enter service name"
+                value={formData.serviceName}
+                onChange={(e) => updateField("serviceName", e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div className="es-form-field">
+            <label className="es-form-label">
+              Service Category <span className="es-required">*</span>
+            </label>
+            <div className={`es-select-wrap ${errors.serviceCategory ? "es-field-error" : ""}`}>
+              <Grid3x3 size={16} className="es-input-icon" />
+              <select
+                value={formData.serviceCategory}
+                onChange={(e) => updateField("serviceCategory", e.target.value)}
+              >
+                <option value="" disabled>
+                  Select category
+                </option>
+                <option>General Pest Control</option>
+                <option>Termite Control</option>
+                <option>Fumigation</option>
+                <option>Rodent Control</option>
+              </select>
+              <ChevronDown size={14} className="es-select-caret" />
+            </div>
+          </div>
+
+          <div className="es-form-field">
+            <label className="es-form-label">
+              Pest Type <span className="es-required">*</span>
+            </label>
+            <div className={`es-select-wrap ${errors.pestType ? "es-field-error" : ""}`}>
+              <Shield size={16} className="es-input-icon" />
+              <select value={formData.pestType} onChange={(e) => updateField("pestType", e.target.value)}>
+                <option value="" disabled>
+                  Select pest type
+                </option>
+                <option>Cockroach</option>
+                <option>Termite</option>
+                <option>Rodent</option>
+                <option>Mosquito</option>
+                <option>Bed Bug</option>
+              </select>
+              <ChevronDown size={14} className="es-select-caret" />
+            </div>
+          </div>
+
+          <div className="es-form-field">
+            <label className="es-form-label">
+              Service Type <span className="es-required">*</span>
+            </label>
+            <div className={`es-select-wrap ${errors.serviceType ? "es-field-error" : ""}`}>
+              <Bug size={16} className="es-input-icon" />
+              <select value={formData.serviceType} onChange={(e) => updateField("serviceType", e.target.value)}>
+                <option value="" disabled>
+                  Select service type
+                </option>
+                <option>Standard Treatment</option>
+                <option>Deep Treatment</option>
+                <option>Preventive Treatment</option>
+              </select>
+              <ChevronDown size={14} className="es-select-caret" />
+            </div>
+          </div>
+
+          <div className="es-form-field es-field-span-2">
+            <label className="es-form-label">
+              Short Description <span className="es-required">*</span>
+            </label>
+            <div
+              className={`es-input-wrap es-input-wrap-counted ${
+                errors.shortDescription ? "es-field-error" : ""
+              }`}
+            >
+              <input
+                type="text"
+                className="es-input es-input-no-icon"
+                placeholder="Brief description about the service"
+                maxLength={LIMITS.shortDescription}
+                value={formData.shortDescription}
+                onChange={(e) =>
+                  updateField("shortDescription", e.target.value, LIMITS.shortDescription)
+                }
+              />
+              <span className="es-char-count-inline">
+                {formData.shortDescription.length}/{LIMITS.shortDescription}
+              </span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="es-card">
+        <div className="es-card-header">
+          <span className="es-card-header-icon">
+            <Boxes size={18} strokeWidth={2} />
+          </span>
+          <h2 className="es-card-title">Service Details</h2>
+        </div>
+
+        <div className="es-form-grid es-grid-3">
+          <div className="es-form-field">
+            <label className="es-form-label">
+              Price (₹) <span className="es-required">*</span>
+            </label>
+            <div className={`es-input-wrap ${errors.price ? "es-field-error" : ""}`}>
+              <IndianRupee size={16} className="es-input-icon" />
+              <input
+                type="text"
+                className="es-input"
+                placeholder="Enter price"
+                value={formData.price}
+                onChange={(e) => updateField("price", e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div className="es-form-field">
+            <label className="es-form-label">
+              Duration <span className="es-required">*</span>
+            </label>
+            <div className={`es-select-wrap ${errors.duration ? "es-field-error" : ""}`}>
+              <Clock size={16} className="es-input-icon" />
+              <select value={formData.duration} onChange={(e) => updateField("duration", e.target.value)}>
+                <option value="" disabled>
+                  Select duration
+                </option>
+                <option>30 Minutes</option>
+                <option>1 Hour</option>
+                <option>2 Hours</option>
+                <option>Half Day</option>
+              </select>
+              <ChevronDown size={14} className="es-select-caret" />
+            </div>
+          </div>
+
+          <div className="es-form-field">
+            <label className="es-form-label">Service Frequency</label>
+            <div className="es-select-wrap">
+              <Calendar size={16} className="es-input-icon" />
+              <select
+                value={formData.serviceFrequency}
+                onChange={(e) => updateField("serviceFrequency", e.target.value)}
+              >
+                <option value="" disabled>
+                  Select frequency
+                </option>
+                <option>One Time Service</option>
+                <option>Monthly</option>
+                <option>Quarterly</option>
+              </select>
+              <ChevronDown size={14} className="es-select-caret" />
+            </div>
+          </div>
+
+          <div className="es-form-field">
+            <label className="es-form-label">
+              Applicable For <span className="es-required">*</span>
+            </label>
+            <div className={`es-select-wrap ${errors.applicableFor ? "es-field-error" : ""}`}>
+              <Home size={16} className="es-input-icon" />
+              <select
+                value={formData.applicableFor}
+                onChange={(e) => updateField("applicableFor", e.target.value)}
+              >
+                <option value="" disabled>
+                  Select applicability
+                </option>
+                <option>Residential</option>
+                <option>Commercial</option>
+                <option>Both</option>
+              </select>
+              <ChevronDown size={14} className="es-select-caret" />
+            </div>
+          </div>
+
+          <div className="es-form-field">
+            <label className="es-form-label">Warranty Period</label>
+            <div className="es-select-wrap">
+              <ShieldCheck size={16} className="es-input-icon" />
+              <select
+                value={formData.warrantyPeriod}
+                onChange={(e) => updateField("warrantyPeriod", e.target.value)}
+              >
+                <option value="" disabled>
+                  Select warranty
+                </option>
+                <option>No Warranty</option>
+                <option>30 Days</option>
+                <option>90 Days</option>
+                <option>1 Year</option>
+              </select>
+              <ChevronDown size={14} className="es-select-caret" />
+            </div>
+          </div>
+
+          <div className="es-form-field">
+            <label className="es-form-label">Priority Level</label>
+            <div className="es-select-wrap">
+              <Flag size={16} className="es-input-icon" />
+              <select
+                value={formData.priorityLevel}
+                onChange={(e) => updateField("priorityLevel", e.target.value)}
+              >
+                <option value="" disabled>
+                  Select priority
+                </option>
+                <option>Low</option>
+                <option>Medium</option>
+                <option>High</option>
+              </select>
+              <ChevronDown size={14} className="es-select-caret" />
+            </div>
+          </div>
+
+          <div className="es-form-field es-field-span-3">
+            <label className="es-form-label">
+              What's Included <span className="es-required">*</span>
+            </label>
+            <div
+              className={`es-input-wrap es-input-wrap-counted ${
+                errors.whatsIncluded ? "es-field-error" : ""
+              }`}
+            >
+              <ListChecks size={16} className="es-input-icon" />
+              <input
+                type="text"
+                className="es-input"
+                placeholder="List what is included in this service (chemicals, equipment, inspection, etc.)"
+                maxLength={LIMITS.whatsIncluded}
+                value={formData.whatsIncluded}
+                onChange={(e) => updateField("whatsIncluded", e.target.value, LIMITS.whatsIncluded)}
+              />
+              <span className="es-char-count-inline">
+                {formData.whatsIncluded.length}/{LIMITS.whatsIncluded}
+              </span>
+            </div>
+          </div>
+
+          <div className="es-form-field es-field-span-3">
+            <label className="es-form-label">
+              Service Description <span className="es-required">*</span>
+            </label>
+            <div
+              className={`es-textarea-wrap ${errors.serviceDescription ? "es-field-error" : ""}`}
+            >
+              <PenLine size={16} className="es-textarea-icon" />
+              <textarea
+                className="es-textarea"
+                placeholder="Enter detailed description about the service, process, benefits and precautions"
+                maxLength={LIMITS.serviceDescription}
+                value={formData.serviceDescription}
+                onChange={(e) =>
+                  updateField("serviceDescription", e.target.value, LIMITS.serviceDescription)
+                }
+              />
+              <span className="es-char-count">
+                {formData.serviceDescription.length}/{LIMITS.serviceDescription}
+              </span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="es-card es-optional-card">
+        <div className="es-card-header">
+          <span className="es-card-header-icon es-icon-info">
+            <Info size={18} strokeWidth={2} />
+          </span>
+          <h2 className="es-card-title">Additional Information (Optional)</h2>
+        </div>
+
+        <div className="es-form-field">
+          <label className="es-form-label">Notes</label>
+          <div className="es-input-wrap es-input-wrap-counted">
+            <input
+              type="text"
+              className="es-input es-input-no-icon"
+              placeholder="Add any additional notes or special instructions"
+              maxLength={LIMITS.notes}
+              value={formData.notes}
+              onChange={(e) => updateField("notes", e.target.value, LIMITS.notes)}
+            />
+            <span className="es-char-count-inline">
+              {formData.notes.length}/{LIMITS.notes}
             </span>
-            Service Information
-          </div>
-
-          <div className="form-grid">
-            <div className="form-field">
-              <label>
-                Service Name<span className="required">*</span>
-              </label>
-              <div className="input-with-icon">
-                <Tag size={16} />
-                <input type="text" value={form.name} onChange={update("name")} />
-              </div>
-            </div>
-
-            <div className="form-field">
-              <label>
-                Category<span className="required">*</span>
-              </label>
-              <div className="input-with-icon">
-                <LayoutGrid size={16} />
-                <select value={form.category} onChange={update("category")}>
-                  {CATEGORIES.map((c) => (
-                    <option key={c} value={c}>
-                      {c}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            <div className="form-field">
-              <label>
-                Pest Type (Applicable)<span className="required">*</span>
-              </label>
-              <div className="input-with-icon">
-                <Bug size={16} />
-                <select value={form.pestType} onChange={update("pestType")}>
-                  {PEST_TYPES.map((p) => (
-                    <option key={p} value={p}>
-                      {p}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            <div className="form-field">
-              <label>
-                Service Duration<span className="required">*</span>
-              </label>
-              <div className="input-with-icon">
-                <Clock size={16} />
-                <select value={form.duration} onChange={update("duration")}>
-                  {DURATIONS.map((d) => (
-                    <option key={d} value={d}>
-                      {d}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            <div className="form-field">
-              <label>
-                Price (USD)<span className="required">*</span>
-              </label>
-              <div className="input-with-icon">
-                <DollarSign size={16} />
-                <input type="number" value={form.price} onChange={update("price")} />
-              </div>
-            </div>
-
-            <div className="form-field">
-              <label>
-                Service Status<span className="required">*</span>
-              </label>
-              <div className="input-with-icon">
-                <ShieldCheck size={16} />
-                <select value={form.status} onChange={update("status")}>
-                  <option value="Active">Active</option>
-                  <option value="Inactive">Inactive</option>
-                </select>
-              </div>
-            </div>
-
-            <div className="form-field form-field-full">
-              <label>
-                Short Description<span className="required">*</span>
-              </label>
-              <div className="input-with-icon textarea-wrap">
-                <FileText size={16} />
-                <textarea
-                  rows={2}
-                  maxLength={150}
-                  value={form.shortDescription}
-                  onChange={update("shortDescription")}
-                />
-                <span className="char-count">{form.shortDescription.length}/150</span>
-              </div>
-            </div>
-
-            <div className="form-field form-field-full">
-              <label>
-                Detailed Description<span className="required">*</span>
-              </label>
-              <div className="input-with-icon textarea-wrap">
-                <FileText size={16} />
-                <textarea
-                  rows={5}
-                  maxLength={1000}
-                  value={form.detailedDescription}
-                  onChange={update("detailedDescription")}
-                />
-                <span className="char-count">{form.detailedDescription.length}/1000</span>
-              </div>
-            </div>
-
-            <div className="form-field form-field-full">
-              <label>Service Image (Optional)</label>
-              {form.image ? (
-                <div className="dropzone dropzone-filled">
-                  <UploadCloud size={24} />
-                  <div>
-                    <strong>Drag and drop an image here or click to upload</strong>
-                    <span>JPG, PNG or WEBP (Max. 2MB)</span>
-                  </div>
-                  <div className="image-preview-wrap">
-                    <img src={form.image} alt="Service" className="dropzone-preview" />
-                    <button
-                      type="button"
-                      className="remove-image-btn"
-                      onClick={removeImage}
-                      aria-label="Remove image"
-                    >
-                      <X size={12} />
-                    </button>
-                  </div>
-                  <input
-                    id="edit-service-image"
-                    type="file"
-                    accept="image/png, image/jpeg, image/webp"
-                    hidden
-                    onChange={handleImageUpload}
-                  />
-                </div>
-              ) : (
-                <label className="dropzone" htmlFor="edit-service-image">
-                  <UploadCloud size={28} />
-                  <div>
-                    <strong>Drag and drop an image here or click to upload</strong>
-                    <span>JPG, PNG or WEBP (Max. 2MB)</span>
-                  </div>
-                  <input
-                    id="edit-service-image"
-                    type="file"
-                    accept="image/png, image/jpeg, image/webp"
-                    hidden
-                    onChange={handleImageUpload}
-                  />
-                </label>
-              )}
-            </div>
           </div>
         </div>
-
-        <div className="esp-side">
-          <div className="esp-card">
-            <div className="card-title">
-              <span className="card-icon">
-                <Eye size={18} />
-              </span>
-              Service Preview
-            </div>
-
-            <div className="preview-avatar">
-              <Bug size={48} />
-            </div>
-
-            <div className="preview-rows">
-              <div className="preview-row">
-                <span>Service Name</span>
-                <span>{form.name || "-"}</span>
-              </div>
-              <div className="preview-row">
-                <span>Category</span>
-                <span>{form.category || "-"}</span>
-              </div>
-              <div className="preview-row">
-                <span>Pest Type</span>
-                <span>{form.pestType || "-"}</span>
-              </div>
-              <div className="preview-row">
-                <span>Duration</span>
-                <span>{form.duration || "-"}</span>
-              </div>
-              <div className="preview-row">
-                <span>Price</span>
-                <span>{form.price ? `$${Number(form.price).toFixed(2)}` : "-"}</span>
-              </div>
-              <div className="preview-row">
-                <span>Status</span>
-                <span
-                  className={`status-badge ${
-                    form.status === "Active" ? "status-active" : "status-inactive"
-                  }`}
-                >
-                  {form.status}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          <div className="esp-card">
-            <div className="card-title">
-              <span className="card-icon">
-                <Lightbulb size={18} />
-              </span>
-              Tips
-            </div>
-            <ul className="tips-list">
-              {TIPS.map((tip) => (
-                <li key={tip}>
-                  <CheckCircle2 size={16} />
-                  <span>{tip}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </div>
-      </div>
+      </section>
     </div>
   );
 }

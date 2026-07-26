@@ -25,6 +25,8 @@ import EditBooking from "../Pages/booking/Edit-Booking";
 import AcceptedBookings from "../Pages/booking/adminInterface/accepted-bookings";
 import RBPage from "../Pages/booking/adminInterface/RBPage";
 import ViewAcceptedBookings from "../pages/booking/adminInterface/accepted-bookings-view"
+import RejectBookingPage from "../Pages/booking/adminInterface/rejected-bookings";
+import ViewRejectedBooking from "../Pages/booking/adminInterface/RBView";
 
 // Complaints
 import NewComplaint from "../Pages/complaint/newcomplaint";
@@ -50,6 +52,7 @@ import Invoice from "../Pages/Payments/invoice";
 import PaymentDetails from "../pages/Payments/PaymentDetails";
 import CustomerPayment from "../Pages/Payments/CustomerPayments";
 import AdminPayment from "../Pages/Payments/AdminPayments";
+// import PaymentDetail from "../pages/Payments/PaymentsDetail";
 
 // Other pages
 import Login from "../Pages/login/Login";
@@ -112,13 +115,15 @@ function AppRoutes() {
 
               <Route path="/admin/bookings/rejection-reason" element={<RBPage />} />
 
-              <Route path="/admin/bookings/rejected" element={<PendingBooking />} />
+              <Route path="/admin/bookings/rejected" element={<RejectBookingPage />} />
 
               <Route path="/admin/bookings/details" element={<BookingDetails />} />
 
               <Route path="/admin/bookings/edit" element={<EditBooking />} />
 
               <Route path="/admin/bookings/assign-technician" element={<AssignTechnician />} />
+
+              <Route path="/admin/bookings/rejected-bookings/view" element={<ViewRejectedBooking />} />
 
               {/* Technicians */}
               <Route
@@ -224,9 +229,12 @@ function AppRoutes() {
                   />
                 }
               />
-
               <Route path="/customer/dashboard" element={<CustomerDashboard />} />
-
+              <Route
+                path="/customer/dashboard"
+                element={<Dashboard />}
+              />
+              <Route path="/customer/dashboard" element={<CustomerDashboard />} />
               {/* Services and bookings */}
               <Route
                 path="/customer/services"
@@ -242,14 +250,14 @@ function AppRoutes() {
                 path="/customer/bookings"
                 element={<PendingBooking />}
               />
-
               <Route path="/customer/payments" element={<CustomerPayment />} />
               <Route path="/customer/payments/invoice" element={<Invoice />} />
               <Route
                 path="/customer/bookings/details"
                 element={<BookingDetails />}
               />
-
+              <Route path="/customer/payments" element={<CustomerPayment />} />
+              <Route path="/customer/payments/invoice" element={<Invoice />} />
               {/* Complaints */}
               <Route
                 path="/customer/complaints"
