@@ -17,6 +17,7 @@ export function AuthProvider({ children }) {
     return {
       isAuthenticated: false,
       role: null,
+      token: null,
       user: null,
     };
   });
@@ -25,7 +26,8 @@ export function AuthProvider({ children }) {
     const authData = {
       isAuthenticated: true,
       role: userData.role,
-      user: userData,
+      token: userData.token,
+      user: userData
     };
 
     setAuth(authData);
@@ -36,6 +38,7 @@ export function AuthProvider({ children }) {
     const emptyAuth = {
       isAuthenticated: false,
       role: null,
+      token: null,
       user: null,
     };
 

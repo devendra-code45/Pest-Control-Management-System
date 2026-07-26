@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react";
-import { NavLink, useLocation } from "react-router-dom";
+import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import {
   Leaf,
   ChevronDown,
   PanelLeftClose,
   PanelLeftOpen,
   X,
+  Headphones,
+  ArrowRight,
 } from "lucide-react";
 import "./Sidebar.css";
 
@@ -26,6 +28,8 @@ export default function Sidebar({
   const location = useLocation();
   // Accordion: only one submenu open at a time. Change to a Set if you
   // want multiple open together.
+  const isCustomerInterface =
+    location.pathname.startsWith("/customer");
   const [openKeys, setOpenKeys] = useState(new Set());
 
   // Whichever group contains the current route opens automatically --
@@ -78,6 +82,7 @@ export default function Sidebar({
       onToggle?.();
     }
   };
+  
 
   return (
     <>
@@ -231,6 +236,52 @@ export default function Sidebar({
             </div>
           ))}
         </nav>
+
+        {isCustomerInterface && (
+          <div
+            className={cx(
+              "sb-support-wrapper",
+              collapsed &&
+              !mobileOpen &&
+              "sb-support-wrapper--collapsed"
+            )}
+          >
+            {collapsed && !mobileOpen ? (
+              <NavLink
+                to="/customer/complaints"
+                className="sb-support-collapsed"
+                aria-label="Contact Support"
+                title="Contact Support"
+              >
+                <Headphones size={20} />
+              </NavLink>
+            ) : (
+              <div className="sb-support-card">
+                <div className="sb-support-icon">
+                  <Headphones size={20} />
+                </div>
+
+                <div className="sb-support-content">
+                  <h3>Need Help?</h3>
+
+                  <p>
+                    Contact our support team for help
+                    with your bookings or services.
+                  </p>
+
+                  <NavLink
+                    to="/customer/contact-support"
+                    className="sb-support-button"
+                    onClick={closeOnMobile}
+                  >
+                    Contact Support
+                    <ArrowRight size={15} />
+                  </NavLink>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </>
   );

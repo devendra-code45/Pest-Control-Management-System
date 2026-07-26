@@ -163,11 +163,6 @@ export default function MyComplaints({ onRaiseComplaint, onViewDetails }) {
             <p className="mc-subtitle">Raise a new complaint or track the status of your existing complaints.</p>
           </div>
         </div>
-
-        <button type="button" className="mc-btn mc-btn-primary" onClick={() => navigate("/customer/complaints/raise-new-complaint")}>
-          <Plus size={16} strokeWidth={2} />
-          Raise New Complaint
-        </button>
       </header>
 
       <section className="mc-stats-grid">

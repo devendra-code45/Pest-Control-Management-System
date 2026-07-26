@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from "react";
+import { changePassword } from "../../api/userApi";
 import {
   ChevronRight,
   Lock,
@@ -92,20 +93,40 @@ export default function ChangePassword({ onSubmit, onCancel }) {
     return nextErrors;
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     const nextErrors = validate();
     setErrors(nextErrors);
 
     if (Object.keys(nextErrors).length > 0) {
-      setBanner({ type: "error", text: "Please fix the errors below and try again." });
+      setBanner({
+        type: "error",
+        text: "Please fix the errors below and try again.",
+      });
       return;
     }
 
-    setBanner({ type: "success", text: "Password updated successfully." });
-    if (typeof onSubmit === "function") {
-      onSubmit(formData);
+    try {
+      await changePassword({
+        oldPassword: formData.currentPassword,
+        newPassword: formData.newPassword,
+        confirmPassword: formData.confirmPassword,
+      });
+
+      setBanner({
+        type: "success",
+        text: "Password updated successfully.",
+      });
+
+      setFormData(INITIAL_FORM);
+    } catch (error) {
+      setBanner({
+        type: "error",
+        text:
+          error.response?.data?.message ||
+          error.response?.data ||
+          "Unable to change password.",
+      });
     }
-    setFormData(INITIAL_FORM);
   };
 
   const handleCancel = () => {
@@ -121,8 +142,8 @@ export default function ChangePassword({ onSubmit, onCancel }) {
     strength.label === "Strong"
       ? "cp-strength-strong"
       : strength.label === "Medium"
-      ? "cp-strength-medium"
-      : "cp-strength-weak";
+        ? "cp-strength-medium"
+        : "cp-strength-weak";
 
   return (
     <div className="cp-page">

@@ -13,6 +13,7 @@ import {
 } from "react-icons/hi";
 import { FaLeaf } from "react-icons/fa";
 import { FcGoogle } from "react-icons/fc";
+import axios from "../../api/axios";
 import "./Login.css";
 
 /* ------------------------------------------------------------------ */
@@ -143,43 +144,55 @@ const Login = () => {
 
   const [error, setError] = useState("");
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
+
     setError("");
 
-    const email = form.username.trim().toLowerCase();
+    try {
 
-    if (
-      email === "admin@gmail.com" &&
-      form.password === "admin123"
-    ) {
-      login({
-        userId: 1,
-        name: "System Admin",
-        email,
-        role: "ADMIN",
+      const response = await axios.post("/users/login", {
+
+        email: form.username,
+        password: form.password
+
       });
 
-      navigate("/admin/dashboard", { replace: true });
-      return;
-    }
+      const data = response.data;
 
-    if (
-      email === "customer@gmail.com" &&
-      form.password === "customer123"
-    ) {
       login({
-        userId: 2,
-        name: "Demo Customer",
-        email,
-        role: "CUSTOMER",
+
+        id: data.id,
+        fullName: data.fullName,
+        email: data.email,
+        role: data.role,
+        token: data.token
+
       });
 
-      navigate("/customer/dashboard", { replace: true });
-      return;
-    }
+      if (data.role === "ADMIN") {
 
-    setError("Invalid username or password");
+        navigate("/admin/dashboard", { replace: true });
+
+      } else {
+
+        navigate("/customer/dashboard", { replace: true });
+
+      }
+
+    } catch (error) {
+
+      if (error.response) {
+
+        setError(error.response.data.message || "Invalid email or password");
+
+      } else {
+
+        setError("Server is not running.");
+
+      }
+
+    }
   };
   const updateForm = (event) => {
     const { name, value } = event.target;
