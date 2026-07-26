@@ -12,10 +12,6 @@ import DashboardLayout from "../components/DashboardLayout/DashboardLayout";
 import Dashboard from "../Pages/dashboard/Dashboard";
 import CustomerDashboard from "../Pages/dashboard/CustomerDashboard";
 
-// Customer management
-import AddCustomer from "../Pages/customer/add-customer";
-import EditCustomer from "../Pages/customer/edit-customer";
-import CustomerDetails from "../Pages/customer/customer-details";
 
 // Booking management
 import CreateBooking from "../Pages/booking/Create-Booking";
@@ -51,9 +47,10 @@ import AvailableServices from "../Pages/service/AvailableServices";
 import Payment from "../Pages/Payments/Payments";
 import CreatePayment from "../Pages/Payments/CreatePayments";
 import Invoice from "../Pages/Payments/invoice";
-import PaymentDetail from "../pages/Payments/PaymentsDetail";
+import PaymentDetails from "../pages/Payments/PaymentDetails";
 import CustomerPayment from "../Pages/Payments/CustomerPayments";
-
+import AdminPayment from "../Pages/Payments/AdminPayments";
+// import PaymentDetail from "../pages/Payments/PaymentsDetail";
 
 // Other pages
 import Login from "../Pages/login/Login";
@@ -174,7 +171,7 @@ function AppRoutes() {
               {/* Payments */}
               <Route
                 path="/admin/payments"
-                element={<Payment />}
+                element={<AdminPayment />}
               />
 
               <Route
@@ -189,8 +186,9 @@ function AppRoutes() {
 
               <Route
                 path="/admin/payments/details"
-                element={<PaymentDetail />}
+                element={<PaymentDetails />}
               />
+            
 
               {/* Reports and account */}
               <Route
@@ -226,7 +224,7 @@ function AppRoutes() {
                   />
                 }
               />
-
+              <Route path="/customer/dashboard" element={<CustomerDashboard />} />
               <Route
                 path="/customer/dashboard"
                 element={<CustomerDashboard />}
@@ -247,12 +245,12 @@ function AppRoutes() {
                 path="/customer/bookings"
                 element={<MyBookings />}
               />
-
+              <Route path="/customer/payments" element={<CustomerPayment />} />
+              <Route path="/customer/payments/invoice" element={<Invoice />} />
               <Route
                 path="/customer/bookings/details"
                 element={<BookingDetails />}
               />
-
               <Route path="/customer/payments" element={<CustomerPayment />} />
               <Route path="/customer/payments/invoice" element={<Invoice />} />
               
