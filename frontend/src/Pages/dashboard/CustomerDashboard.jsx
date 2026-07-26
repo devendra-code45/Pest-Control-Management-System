@@ -1,617 +1,464 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
-  CalendarDays,
-  CalendarPlus,
-  CheckCircle2,
-  ChevronRight,
-  CircleCheck,
-  CircleX,
-  ClipboardList,
-  Clock3,
+  Calendar,
+  History,
+  ClipboardCheck,
+  CreditCard,
+  MapPin,
+  Clock,
+  User,
+  ArrowRight,
+  Plus,
+  FileText,
+  Wallet,
   Headphones,
-  Home,
-  MessageSquareWarning,
-  ReceiptIndianRupee,
-  ShieldCheck,
-  UserRound,
-  X,
-} from 'lucide-react';
-import './CustomerDashboard.css';
+  Zap,
+} from "lucide-react";
 
-const CUSTOMER_DASHBOARD_ROUTES = {
-  bookService: '/book-service',
-  upcomingServices: '/bookings?status=upcoming',
-  serviceRequests: '/service-requests',
-  completedServices: '/bookings?status=completed',
-  payments: '/payments',
-  bookings: '/bookings',
-  complaints: '/complaints/create',
-  support: '/support',
-};
+import api from "../../api/axios";
+import { useAuth } from "../../context/AuthContext";
+import "./CustomerDashboard.css";
 
-const SUMMARY_CARDS = [
-  {
-    id: 'upcoming',
-    label: 'Upcoming Service',
-    value: '1',
-    icon: CalendarDays,
-    route: CUSTOMER_DASHBOARD_ROUTES.upcomingServices,
-  },
-  {
-    id: 'active',
-    label: 'Active Requests',
-    value: '2',
-    icon: ClipboardList,
-    route: CUSTOMER_DASHBOARD_ROUTES.serviceRequests,
-  },
-  {
-    id: 'completed',
-    label: 'Completed Services',
-    value: '8',
-    icon: CheckCircle2,
-    route: CUSTOMER_DASHBOARD_ROUTES.completedServices,
-  },
-  {
-    id: 'spent',
-    label: 'Total Spent',
-    value: '₹12,450',
-    icon: ReceiptIndianRupee,
-    route: CUSTOMER_DASHBOARD_ROUTES.payments,
-  },
-];
+const DEFAULT_CUSTOMER_NAME = "Customer";
 
-const QUICK_ACTIONS = [
+const STATS = [
   {
-    id: 'book',
-    label: 'Book New Service',
-    icon: CalendarPlus,
-    route: CUSTOMER_DASHBOARD_ROUTES.bookService,
+    id: "bookings",
+    label: "Total Bookings",
+    value: "12",
+    icon: Calendar,
+    tone: "green",
+    linkLabel: "View all bookings",
+    path: "/customer/bookings",
   },
   {
-    id: 'complaint',
-    label: 'Raise a Complaint',
-    icon: MessageSquareWarning,
-    route: CUSTOMER_DASHBOARD_ROUTES.complaints,
+    id: "upcoming",
+    label: "Upcoming Services",
+    value: "3",
+    icon: History,
+    tone: "blue",
+    linkLabel: "View upcoming",
+    path: "/customer/bookings?filter=upcoming",
   },
   {
-    id: 'support',
-    label: 'Contact Support',
-    icon: Headphones,
-    route: CUSTOMER_DASHBOARD_ROUTES.support,
+    id: "completed",
+    label: "Completed Services",
+    value: "8",
+    icon: ClipboardCheck,
+    tone: "orange",
+    linkLabel: "View history",
+    path: "/customer/bookings?filter=completed",
+  },
+  {
+    id: "spent",
+    label: "Total Spent",
+    value: "₹8,450",
+    icon: CreditCard,
+    tone: "purple",
+    linkLabel: "View payments",
+    path: "/customer/payments",
   },
 ];
 
 const RECENT_BOOKINGS = [
   {
-    id: 'BK-2026-024',
-    service: 'Termite Control',
-    date: '12 Jul 2026',
-    status: 'Completed',
-    amount: '₹3,500',
+    id: "BK-2025-0012",
+    service: "General Pest Control",
+    date: "25 May 2025",
+    status: "Confirmed",
+    amount: "₹1,299",
   },
   {
-    id: 'BK-2026-018',
-    service: 'General Pest Control',
-    date: '28 Jun 2026',
-    status: 'Completed',
-    amount: '₹1,800',
+    id: "BK-2025-0011",
+    service: "Termite Inspection",
+    date: "18 May 2025",
+    status: "Completed",
+    amount: "₹999",
   },
   {
-    id: 'BK-2026-012',
-    service: 'Mosquito Control',
-    date: '15 Jun 2026',
-    status: 'Cancelled',
-    amount: '₹1,200',
+    id: "BK-2025-0010",
+    service: "Cockroach Control",
+    date: "10 May 2025",
+    status: "Completed",
+    amount: "₹799",
+  },
+  {
+    id: "BK-2025-0009",
+    service: "Rodent Control",
+    date: "02 May 2025",
+    status: "Cancelled",
+    amount: "₹699",
   },
 ];
 
-const INITIAL_APPOINTMENT = {
-  id: 'BK-2026-030',
-  date: '2026-07-24',
-  time: '10:30',
-  service: 'Cockroach Control',
-  property: 'Home • Pune, Maharashtra',
-  technician: 'Rahul Patil',
-  status: 'Confirmed',
+const QUICK_ACTIONS = [
+  {
+    id: "book",
+    label: "Book a Service",
+    icon: Plus,
+    tone: "green",
+    path: "/customer/create-booking",
+  },
+  {
+    id: "bookings",
+    label: "My Bookings",
+    icon: FileText,
+    tone: "blue",
+    path: "/customer/bookings",
+  },
+  {
+    id: "payments",
+    label: "Payment History",
+    icon: Wallet,
+    tone: "purple",
+    path: "/customer/payments",
+  },
+  {
+    id: "support",
+    label: "Help & Support",
+    icon: Headphones,
+    tone: "pink",
+    path: "/customer/contact-support",
+  },
+];
+
+const UPCOMING_SERVICE = {
+  day: "25",
+  month: "May 2025",
+  relative: "Tomorrow",
+  service: "General Pest Control",
+  address: "302, Green Valley Apartments, Baner, Pune - 411045",
+  time: "10:30 AM - 11:30 AM",
+  technician: "Amit Patil",
+  status: "Confirmed",
 };
 
-function formatDateParts(isoDate) {
-  const date = new Date(`${isoDate}T00:00:00`);
-
-  return {
-    day: new Intl.DateTimeFormat('en-IN', { day: '2-digit' }).format(date),
-    month: new Intl.DateTimeFormat('en-IN', { month: 'short' })
-      .format(date)
-      .toUpperCase(),
-    longDate: new Intl.DateTimeFormat('en-IN', {
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric',
-    }).format(date),
-  };
-}
-
-function formatTime(time) {
-  const [hours, minutes] = time.split(':').map(Number);
-  const suffix = hours >= 12 ? 'PM' : 'AM';
-  const displayHours = hours % 12 || 12;
-  return `${displayHours}:${String(minutes).padStart(2, '0')} ${suffix}`;
-}
-
 function StatusBadge({ status }) {
-  const isCompleted = status === 'Completed';
-  const Icon = isCompleted ? CircleCheck : CircleX;
+  const toneMap = {
+    Confirmed: "cd-badge--success",
+    Completed: "cd-badge--success",
+    Pending: "cd-badge--warning",
+    "In Progress": "cd-badge--info",
+    Cancelled: "cd-badge--danger",
+  };
 
   return (
-    <span className={`cd-status cd-status--${status.toLowerCase()}`}>
-      <Icon aria-hidden="true" size={16} strokeWidth={2.2} />
+    <span
+      className={`cd-badge ${
+        toneMap[status] || "cd-badge--neutral"
+      }`}
+    >
       {status}
     </span>
   );
 }
 
-function CustomerDashboard() {
+export default function CustomerDashboard({
+  stats = STATS,
+  recentBookings = RECENT_BOOKINGS,
+  upcomingService = UPCOMING_SERVICE,
+  quickActions = QUICK_ACTIONS,
+}) {
   const navigate = useNavigate();
-  const [appointment, setAppointment] = useState(INITIAL_APPOINTMENT);
-  const [isRescheduleOpen, setIsRescheduleOpen] = useState(false);
-  const [rescheduleForm, setRescheduleForm] = useState({
-    date: INITIAL_APPOINTMENT.date,
-    time: INITIAL_APPOINTMENT.time,
-    reason: '',
-  });
-  const [formErrors, setFormErrors] = useState({});
-  const [successMessage, setSuccessMessage] = useState('');
-  const closeButtonRef = useRef(null);
-  const modalRef = useRef(null);
-  const lastFocusedElementRef = useRef(null);
+  const { auth, logout } = useAuth();
 
-  const appointmentDate = useMemo(
-    () => formatDateParts(appointment.date),
-    [appointment.date],
-  );
+  const [profile, setProfile] = useState(null);
+  const [profileLoading, setProfileLoading] = useState(true);
+  const [profileError, setProfileError] = useState("");
 
-  const minDate = useMemo(() => {
-    const today = new Date();
-    const offset = today.getTimezoneOffset();
-    return new Date(today.getTime() - offset * 60_000)
-      .toISOString()
-      .split('T')[0];
+  useEffect(() => {
+    const fetchCustomerProfile = async () => {
+      try {
+        setProfileLoading(true);
+        setProfileError("");
+
+        const response = await api.get("/users/profile");
+
+        setProfile(response.data);
+      } catch (error) {
+        const status = error.response?.status;
+
+        if (status === 401 || status === 403) {
+          logout();
+          navigate("/login", { replace: true });
+          return;
+        }
+
+        setProfileError("Unable to load customer information.");
+      } finally {
+        setProfileLoading(false);
+      }
+    };
+
+    fetchCustomerProfile();
   }, []);
 
-  useEffect(() => {
-    if (!isRescheduleOpen) return undefined;
+  const customerName =
+    profile?.fullName ||
+    auth?.user?.fullName ||
+    DEFAULT_CUSTOMER_NAME;
 
-    lastFocusedElementRef.current = document.activeElement;
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    closeButtonRef.current?.focus();
+  const firstName = useMemo(() => {
+    return customerName.trim().split(/\s+/)[0] || DEFAULT_CUSTOMER_NAME;
+  }, [customerName]);
 
-    const handleKeyDown = (event) => {
-      if (event.key === 'Escape') {
-        setIsRescheduleOpen(false);
-        return;
-      }
-
-      if (event.key === 'Tab' && modalRef.current) {
-        const focusableElements = modalRef.current.querySelectorAll(
-          'button:not([disabled]), input:not([disabled]), textarea:not([disabled])',
-        );
-        const firstElement = focusableElements[0];
-        const lastElement = focusableElements[focusableElements.length - 1];
-
-        if (event.shiftKey && document.activeElement === firstElement) {
-          event.preventDefault();
-          lastElement?.focus();
-        } else if (!event.shiftKey && document.activeElement === lastElement) {
-          event.preventDefault();
-          firstElement?.focus();
-        }
-      }
-    };
-
-    document.addEventListener('keydown', handleKeyDown);
-
-    return () => {
-      document.removeEventListener('keydown', handleKeyDown);
-      document.body.style.overflow = previousOverflow;
-      lastFocusedElementRef.current?.focus?.();
-    };
-  }, [isRescheduleOpen]);
-
-  useEffect(() => {
-    if (!successMessage) return undefined;
-
-    const timer = window.setTimeout(() => setSuccessMessage(''), 3500);
-    return () => window.clearTimeout(timer);
-  }, [successMessage]);
-
-  const bookingDetailsRoute = (bookingId) =>
-    `${CUSTOMER_DASHBOARD_ROUTES.bookings}/${bookingId}`;
-
-  const openRescheduleModal = () => {
-    setRescheduleForm({
-      date: appointment.date,
-      time: appointment.time,
-      reason: '',
-    });
-    setFormErrors({});
-    setIsRescheduleOpen(true);
-  };
-
-  const closeRescheduleModal = () => {
-    setIsRescheduleOpen(false);
-    setFormErrors({});
-  };
-
-  const handleRescheduleChange = (event) => {
-    const { name, value } = event.target;
-    setRescheduleForm((current) => ({ ...current, [name]: value }));
-    setFormErrors((current) => ({ ...current, [name]: '' }));
-  };
-
-  const handleRescheduleSubmit = (event) => {
-    event.preventDefault();
-    const errors = {};
-
-    if (!rescheduleForm.date) errors.date = 'Please select a new date.';
-    if (!rescheduleForm.time) errors.time = 'Please select a new time.';
-
-    if (Object.keys(errors).length > 0) {
-      setFormErrors(errors);
-      return;
+  const goTo = (path) => {
+    if (path) {
+      navigate(path);
     }
-
-    setAppointment((current) => ({
-      ...current,
-      date: rescheduleForm.date,
-      time: rescheduleForm.time,
-    }));
-    setIsRescheduleOpen(false);
-    setSuccessMessage('Appointment rescheduled successfully.');
   };
 
   return (
-    <main className="customer-dashboard" aria-labelledby="customer-dashboard-title">
-      {successMessage && (
-        <div className="cd-toast" role="status" aria-live="polite">
-          <CircleCheck aria-hidden="true" size={20} />
-          <span>{successMessage}</span>
-        </div>
-      )}
+    <div className="cd-page">
+      {/* Welcome header */}
+      <div className="cd-welcome">
+        <p className="cd-welcome__eyebrow">Welcome back,</p>
 
-      <header className="cd-page-header">
-        <div>
-          <h1 id="customer-dashboard-title">Customer Dashboard</h1>
-          <p>Manage your pest control services and appointments</p>
-        </div>
-        <button
-          className="cd-button cd-button--primary cd-header-action"
-          type="button"
-          onClick={() => navigate(CUSTOMER_DASHBOARD_ROUTES.bookService)}
-        >
-          <CalendarPlus aria-hidden="true" size={20} />
-          Book a Service
-        </button>
-      </header>
-
-      <section className="cd-summary-grid" aria-label="Service summary">
-        {SUMMARY_CARDS.map(({ id, label, value, icon: Icon, route }) => (
-          <button
-            className="cd-summary-card"
-            type="button"
-            key={id}
-            onClick={() => navigate(route)}
-            aria-label={`${label}: ${value}. View details`}
-          >
-            <span className="cd-icon-box">
-              <Icon aria-hidden="true" size={28} strokeWidth={1.8} />
+        <h1 className="cd-welcome__name">
+          {profileLoading ? "Loading..." : firstName}!{" "}
+          {!profileLoading && (
+            <span
+              className="cd-wave"
+              role="img"
+              aria-label="waving hand"
+            >
+              👋
             </span>
-            <span className="cd-summary-copy">
-              <span className="cd-summary-label">{label}</span>
-              <strong>{value}</strong>
-            </span>
-          </button>
-        ))}
-      </section>
+          )}
+        </h1>
 
-      <section className="cd-primary-grid" aria-label="Appointment and quick actions">
-        <article className="cd-card cd-appointment-card">
-          <h2>Upcoming Appointment</h2>
+        <p className="cd-welcome__subtitle">
+          Here&apos;s what&apos;s happening with your pest control services.
+        </p>
 
-          <div className="cd-appointment-body">
-            <div className="cd-date-badge" aria-label={appointmentDate.longDate}>
-              <strong>{appointmentDate.day}</strong>
-              <span>{appointmentDate.month}</span>
+        {profileError && (
+          <p className="cd-dashboard-error">{profileError}</p>
+        )}
+      </div>
+
+      {/* Stat cards */}
+      <div className="cd-stats">
+        {stats.map((stat) => {
+          const Icon = stat.icon;
+
+          return (
+            <div className="cd-card cd-stat-card" key={stat.id}>
+              <span
+                className={`cd-stat-icon cd-stat-icon--${stat.tone}`}
+              >
+                <Icon size={22} />
+              </span>
+
+              <div className="cd-stat-body">
+                <p className="cd-stat-label">{stat.label}</p>
+
+                <p
+                  className={`cd-stat-value cd-stat-value--${stat.tone}`}
+                >
+                  {stat.value}
+                </p>
+
+                <button
+                  type="button"
+                  className="cd-stat-link"
+                  onClick={() => goTo(stat.path)}
+                >
+                  {stat.linkLabel}
+                  <ArrowRight size={13} />
+                </button>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Upcoming service and recent bookings */}
+      <div className="cd-twocol">
+        <section className="cd-card cd-upcoming-card">
+          <div className="cd-card__header">
+            <div className="cd-card__title">
+              <Calendar
+                size={18}
+                className="cd-card__title-icon"
+              />
+              <h3>Upcoming Service</h3>
+            </div>
+          </div>
+
+          <div className="cd-upcoming-panel">
+            <div className="cd-upcoming-date">
+              <span className="cd-upcoming-date__day">
+                {upcomingService.day}
+              </span>
+
+              <span className="cd-upcoming-date__month">
+                {upcomingService.month}
+              </span>
+
+              <span className="cd-badge cd-badge--success cd-upcoming-date__tag">
+                {upcomingService.relative}
+              </span>
             </div>
 
-            <div className="cd-appointment-content">
-              <h3>{appointment.service}</h3>
-              <p className="cd-property-line">
-                <Home aria-hidden="true" size={18} />
-                {appointment.property}
+            <div className="cd-upcoming-details">
+              <h4>{upcomingService.service}</h4>
+
+              <p className="cd-upcoming-row">
+                <MapPin size={15} />
+                {upcomingService.address}
               </p>
 
-              <div className="cd-appointment-meta">
-                <div className="cd-meta-item">
-                  <Clock3 aria-hidden="true" size={21} />
-                  <span>
-                    <strong>{formatTime(appointment.time)}</strong>
-                    <small>Time</small>
-                  </span>
-                </div>
-                <div className="cd-meta-item">
-                  <UserRound aria-hidden="true" size={21} />
-                  <span>
-                    <strong>{appointment.technician}</strong>
-                    <small>Technician</small>
-                  </span>
-                </div>
-                <div className="cd-meta-item">
-                  <CircleCheck aria-hidden="true" size={21} />
-                  <span>
-                    <strong className="cd-confirmed-label">{appointment.status}</strong>
-                    <small>Status</small>
-                  </span>
-                </div>
+              <p className="cd-upcoming-row">
+                <Clock size={15} />
+                {upcomingService.time}
+              </p>
+
+              <div className="cd-upcoming-footer">
+                <p className="cd-upcoming-row cd-upcoming-row--tech">
+                  <User size={15} />
+                  Technician: <b>{upcomingService.technician}</b>
+                </p>
+
+                <StatusBadge status={upcomingService.status} />
               </div>
             </div>
           </div>
 
-          <div className="cd-appointment-actions">
-            <button
-              className="cd-button cd-button--outline"
-              type="button"
-              onClick={() => navigate(bookingDetailsRoute(appointment.id))}
-            >
-              View Details
-              <ChevronRight aria-hidden="true" size={18} />
-            </button>
-            <button
-              className="cd-button cd-button--secondary"
-              type="button"
-              onClick={openRescheduleModal}
-            >
-              <CalendarDays aria-hidden="true" size={18} />
-              Reschedule
-            </button>
-          </div>
-        </article>
+          <button
+            type="button"
+            className="cd-text-link"
+            onClick={() =>
+              goTo("/customer/bookings?filter=upcoming")
+            }
+          >
+            View all upcoming services
+            <ArrowRight size={14} />
+          </button>
+        </section>
 
-        <article className="cd-card cd-quick-card">
-          <h2>Quick Actions</h2>
-          <div className="cd-quick-list">
-            {QUICK_ACTIONS.map(({ id, label, icon: Icon, route }) => (
-              <button
-                className="cd-quick-action"
-                type="button"
-                key={id}
-                onClick={() => navigate(route)}
-              >
-                <span className="cd-quick-icon">
-                  <Icon aria-hidden="true" size={22} />
-                </span>
-                <span>{label}</span>
-                <ChevronRight className="cd-quick-chevron" aria-hidden="true" size={20} />
-              </button>
-            ))}
-          </div>
-        </article>
-      </section>
+        <section className="cd-card cd-bookings-card">
+          <div className="cd-card__header">
+            <div className="cd-card__title">
+              <FileText
+                size={18}
+                className="cd-card__title-icon"
+              />
+              <h3>Recent Bookings</h3>
+            </div>
 
-      <section className="cd-secondary-grid" aria-label="Recent bookings and support">
-        <article className="cd-card cd-bookings-card">
-          <div className="cd-card-header">
-            <h2>Recent Bookings</h2>
             <button
-              className="cd-text-button"
               type="button"
-              onClick={() => navigate(CUSTOMER_DASHBOARD_ROUTES.bookings)}
+              className="cd-text-link cd-text-link--inline"
+              onClick={() => goTo("/customer/bookings")}
             >
-              View All Bookings
-              <ChevronRight aria-hidden="true" size={18} />
+              View all bookings
+              <ArrowRight size={14} />
             </button>
           </div>
 
-          <div className="cd-table-wrapper">
-            <table className="cd-bookings-table">
-              <caption className="cd-visually-hidden">Three most recent pest control bookings</caption>
+          <div className="cd-table-wrap">
+            <table className="cd-table">
               <thead>
                 <tr>
-                  <th scope="col">Service</th>
-                  <th scope="col">Date</th>
-                  <th scope="col">Status</th>
-                  <th scope="col">Amount</th>
-                  <th scope="col">Action</th>
+                  <th>Booking ID</th>
+                  <th>Service</th>
+                  <th>Date</th>
+                  <th>Status</th>
+                  <th>Amount</th>
                 </tr>
               </thead>
+
               <tbody>
-                {RECENT_BOOKINGS.map((booking) => (
-                  <tr key={booking.id}>
-                    <td>{booking.service}</td>
-                    <td>{booking.date}</td>
-                    <td><StatusBadge status={booking.status} /></td>
-                    <td>{booking.amount}</td>
+                {recentBookings.map((row) => (
+                  <tr
+                    key={row.id}
+                    className="cd-table__row"
+                    onClick={() =>
+                      goTo(`/customer/bookings/${row.id}`)
+                    }
+                  >
+                    <td className="cd-table__id">{row.id}</td>
+                    <td>{row.service}</td>
+                    <td>{row.date}</td>
+
                     <td>
-                      <button
-                        className="cd-row-action"
-                        type="button"
-                        onClick={() => navigate(bookingDetailsRoute(booking.id))}
-                        aria-label={`View ${booking.service} booking`}
-                      >
-                        View
-                      </button>
+                      <StatusBadge status={row.status} />
+                    </td>
+
+                    <td className="cd-table__amount">
+                      {row.amount}
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
+        </section>
+      </div>
 
-          <div className="cd-mobile-bookings">
-            {RECENT_BOOKINGS.map((booking) => (
-              <article className="cd-mobile-booking" key={booking.id}>
-                <div className="cd-mobile-booking__header">
-                  <div>
-                    <h3>{booking.service}</h3>
-                    <p>{booking.date}</p>
-                  </div>
-                  <StatusBadge status={booking.status} />
-                </div>
-                <div className="cd-mobile-booking__footer">
-                  <strong>{booking.amount}</strong>
-                  <button
-                    className="cd-row-action"
-                    type="button"
-                    onClick={() => navigate(bookingDetailsRoute(booking.id))}
-                    aria-label={`View ${booking.service} booking`}
-                  >
-                    View
-                    <ChevronRight aria-hidden="true" size={16} />
-                  </button>
-                </div>
-              </article>
-            ))}
-          </div>
-        </article>
-
-        <article className="cd-card cd-help-card">
-          <div className="cd-help-copy">
-            <h2>Need Help?</h2>
-            <p>Our support team is ready to assist you.</p>
-            <button
-              className="cd-button cd-button--outline"
-              type="button"
-              onClick={() => navigate(CUSTOMER_DASHBOARD_ROUTES.support)}
-            >
-              <Headphones aria-hidden="true" size={19} />
-              Contact Support
-            </button>
-          </div>
-          <div className="cd-help-visual" aria-hidden="true">
-            <ShieldCheck className="cd-help-shield" size={88} strokeWidth={1.4} />
-            <Headphones className="cd-help-headphones" size={54} strokeWidth={1.7} />
-          </div>
-        </article>
-      </section>
-
-      {isRescheduleOpen && (
-        <div
-          className="cd-modal-backdrop"
-          role="presentation"
-          onMouseDown={(event) => {
-            if (event.target === event.currentTarget) closeRescheduleModal();
-          }}
-        >
-          <section
-            className="cd-modal"
-            ref={modalRef}
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="reschedule-modal-title"
-            aria-describedby="reschedule-modal-description"
-          >
-            <header className="cd-modal-header">
-              <div>
-                <h2 id="reschedule-modal-title">Reschedule Appointment</h2>
-                <p id="reschedule-modal-description">
-                  Select a new date and time for your service.
-                </p>
-              </div>
-              <button
-                className="cd-icon-button"
-                type="button"
-                ref={closeButtonRef}
-                onClick={closeRescheduleModal}
-                aria-label="Close reschedule dialog"
-              >
-                <X aria-hidden="true" size={21} />
-              </button>
-            </header>
-
-            <div className="cd-modal-summary">
-              <span className="cd-icon-box cd-icon-box--small">
-                <CalendarDays aria-hidden="true" size={21} />
-              </span>
-              <span>
-                <strong>{appointment.service}</strong>
-                <small>
-                  Current: {appointmentDate.longDate} at {formatTime(appointment.time)}
-                </small>
-              </span>
+      {/* Quick actions and support */}
+      <div className="cd-bottomrow">
+        <section className="cd-card cd-quickactions-card">
+          <div className="cd-card__header">
+            <div className="cd-card__title">
+              <Zap
+                size={18}
+                className="cd-card__title-icon"
+              />
+              <h3>Quick Actions</h3>
             </div>
+          </div>
 
-            <form className="cd-reschedule-form" onSubmit={handleRescheduleSubmit} noValidate>
-              <div className="cd-form-grid">
-                <div className="cd-field">
-                  <label htmlFor="reschedule-date">New Date</label>
-                  <input
-                    id="reschedule-date"
-                    type="date"
-                    name="date"
-                    min={minDate}
-                    value={rescheduleForm.date}
-                    onChange={handleRescheduleChange}
-                    aria-invalid={Boolean(formErrors.date)}
-                    aria-describedby={formErrors.date ? 'reschedule-date-error' : undefined}
-                  />
-                  {formErrors.date && (
-                    <small className="cd-field-error" id="reschedule-date-error">
-                      {formErrors.date}
-                    </small>
-                  )}
-                </div>
+          <div className="cd-quickactions-grid">
+            {quickActions.map((action) => {
+              const Icon = action.icon;
 
-                <div className="cd-field">
-                  <label htmlFor="reschedule-time">New Time</label>
-                  <input
-                    id="reschedule-time"
-                    type="time"
-                    name="time"
-                    value={rescheduleForm.time}
-                    onChange={handleRescheduleChange}
-                    aria-invalid={Boolean(formErrors.time)}
-                    aria-describedby={formErrors.time ? 'reschedule-time-error' : undefined}
-                  />
-                  {formErrors.time && (
-                    <small className="cd-field-error" id="reschedule-time-error">
-                      {formErrors.time}
-                    </small>
-                  )}
-                </div>
-              </div>
-
-              <div className="cd-field">
-                <label htmlFor="reschedule-reason">Reason (optional)</label>
-                <textarea
-                  id="reschedule-reason"
-                  name="reason"
-                  rows="3"
-                  placeholder="Tell us why you need to reschedule"
-                  value={rescheduleForm.reason}
-                  onChange={handleRescheduleChange}
-                />
-              </div>
-
-              <div className="cd-modal-actions">
+              return (
                 <button
-                  className="cd-button cd-button--secondary"
                   type="button"
-                  onClick={closeRescheduleModal}
+                  key={action.id}
+                  className="cd-quickaction"
+                  onClick={() => goTo(action.path)}
                 >
-                  Cancel
+                  <span
+                    className={`cd-quickaction__icon cd-quickaction__icon--${action.tone}`}
+                  >
+                    <Icon size={20} />
+                  </span>
+
+                  <span className="cd-quickaction__label">
+                    {action.label}
+                  </span>
                 </button>
-                <button className="cd-button cd-button--primary" type="submit">
-                  <CalendarPlus aria-hidden="true" size={18} />
-                  Confirm Reschedule
-                </button>
-              </div>
-            </form>
-          </section>
-        </div>
-      )}
-    </main>
+              );
+            })}
+          </div>
+        </section>
+
+        <section className="cd-card cd-help-card">
+          <span className="cd-help-icon">
+            <Headphones size={22} />
+          </span>
+
+          <h3>Need Help?</h3>
+
+          <p>
+            Our support team is here to help you with any queries.
+          </p>
+
+          <button
+            type="button"
+            className="cd-btn cd-btn--outline"
+            onClick={() =>
+              goTo("/customer/contact-support")
+            }
+          >
+            Contact Support
+            <ArrowRight size={15} />
+          </button>
+        </section>
+      </div>
+    </div>
   );
 }
-
-export default CustomerDashboard;

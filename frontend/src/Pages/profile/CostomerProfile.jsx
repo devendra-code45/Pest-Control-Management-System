@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { changePassword } from "../../api/userApi";
 import {
   User,
   Mail,
@@ -91,6 +92,8 @@ function ChangePasswordModal({ onClose }) {
   const [showNext, setShowNext] = useState(false);
   const [errors, setErrors] = useState({});
   const [success, setSuccess] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [apiError, setApiError] = useState("");
 
   const handleChange = (field) => (e) => {
     setForm((prev) => ({ ...prev, [field]: e.target.value }));
@@ -106,13 +109,37 @@ function ChangePasswordModal({ onClose }) {
     return Object.keys(next).length === 0;
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (!validate()) return;
-    setSuccess(true);
-    setTimeout(() => {
-      onClose();
-    }, 1200);
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+
+    if (!validate()) {
+      return;
+    }
+
+    try {
+      setSubmitting(true);
+      setApiError("");
+
+      await changePassword({
+        oldPassword: form.current,
+        newPassword: form.next,
+        confirmPassword: form.confirm,
+      });
+
+      setSuccess(true);
+
+      setTimeout(() => {
+        onClose();
+      }, 1200);
+    } catch (error) {
+      setApiError(
+        error.response?.data?.message ||
+        error.response?.data ||
+        "Unable to change password."
+      );
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -198,13 +225,27 @@ function ChangePasswordModal({ onClose }) {
               {errors.confirm && <span className="cp-error-text">{errors.confirm}</span>}
             </div>
 
+            {apiError && (
+              <p className="cp-error-text">{apiError}</p>
+            )}
+
             <div className="cp-modal__actions">
-              <button type="button" className="cp-btn cp-btn--outline" onClick={onClose}>
+              <button
+                type="button"
+                className="cp-btn cp-btn--outline"
+                onClick={onClose}
+                disabled={submitting}
+              >
                 Cancel
               </button>
-              <button type="submit" className="cp-btn cp-btn--primary">
+
+              <button
+                type="submit"
+                className="cp-btn cp-btn--primary"
+                disabled={submitting}
+              >
                 <Save size={16} />
-                Update Password
+                {submitting ? "Updating..." : "Update Password"}
               </button>
             </div>
           </form>

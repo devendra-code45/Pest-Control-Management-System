@@ -1,403 +1,696 @@
-import React, { useState } from 'react';
-import axios from 'axios';
+import React, { useMemo, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
-  ChevronRight,
-  X,
-  CalendarCheck,
-  ClipboardList,
-  User,
-  Building2,
-  SprayCan,
-  Bug,
-  Flag,
   Calendar,
-  Clock,
+  User,
+  Mail,
+  Phone,
   MapPin,
-  FileText,
-  Paperclip,
+  Pencil,
+  Bug,
+  Sparkles,
+  Clock,
+  Tag,
+  Building2,
+  Ruler,
   UploadCloud,
-  UserCircle2,
+  X,
+  RotateCcw,
+  CalendarCheck,
+  ChevronDown,
+  LayoutGrid,
+  UserCheck,
+  Leaf,
   ShieldCheck,
-} from 'lucide-react';
-import './Create-Booking.css';
+} from "lucide-react";
+import "./Create-Booking.css";
 
-const SUMMARY_FIELDS = [
-  { key: 'serviceType', label: 'Service Type' },
-  { key: 'pestType', label: 'Pest Type' },
-  { key: 'scheduleDate', label: 'Schedule Date' },
-  { key: 'scheduleTime', label: 'Schedule Time' },
-  { key: 'technician', label: 'Technician' },
-  { key: 'duration', label: 'Estimated Duration' },
-];
-
-export default function CreateBooking() {
-  const [form, setForm] = useState({
-    customerId: '',
-    property: '',
-    serviceId: '',
-    pestType: '',
-    priority: '',
-    scheduleDate: '',
-    scheduleTime: '',
-    technicianId: '',
-    duration: '',
-    address: '',
-    notes: '',
-  });
-
-  const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState('');
-  const [error, setError] = useState('');
-
-  const update = (field) => (e) => setForm((f) => ({ ...f, [field]: e.target.value }));
-  const validateForm = () => {
-    if (!form.customerId) {
-      return 'Please select a customer.';
-    }
-
-    if (!form.property.trim()) {
-      return 'Please select a property.';
-    }
-
-    if (!form.serviceId) {
-      return 'Please select a service.';
-    }
-
-    if (!form.pestType) {
-      return 'Please select a pest type.';
-    }
-
-    if (!form.priority) {
-      return 'Please select a priority.';
-    }
-
-    if (!form.scheduleDate) {
-      return 'Please select a schedule date.';
-    }
-
-    if (!form.scheduleTime) {
-      return 'Please select a schedule time.';
-    }
-
-    if (!form.technicianId) {
-      return 'Please select a technician.';
-    }
-
-    if (!form.address.trim()) {
-      return 'Please enter the service address.';
-    }
-
-    return '';
-  };
-  const handleSubmit = async () => {
-  console.log("Save button clicked");
-  console.log("Form data:", form);
-
-  try {
-    const bookingData = {
-      customerId: Number(form.customerId),
-      property: form.property,
-      serviceId: Number(form.serviceId),
-      pestType: form.pestType,
-      priority: form.priority,
-      scheduleDate: form.scheduleDate,
-      scheduleTime: form.scheduleTime,
-      technicianId: Number(form.technicianId),
-      duration: form.duration,
-      address: form.address,
-      notes: form.notes,
-    };
-
-    const response = await axios.post(
-      "http://localhost:8080/api/bookings",
-      bookingData
-    );
-
-    console.log("Backend response:", response.data);
-    alert("Booking saved successfully");
-  } catch (error) {
-    console.error("Booking save error:", error);
-
-    const message =
-      error.response?.data?.message ||
-      error.response?.data ||
-      "Booking could not be saved";
-
-    alert(message);
-  }
+const DEFAULT_PROFILE = {
+  name: "Rahul Sharma",
+  email: "rahul.sharma@email.com",
+  phone: "+91 98765 43210",
+  address: "Flat 302, Green Valley Apartments, Baner, Pune - 411045",
 };
 
+const SERVICES = {
+  "Termite Control": {
+    icon: Bug,
+    duration: "45 - 60 mins",
+    price: 1299,
+    types: [
+      { label: "Inspection & Treatment", inspectionCharge: 199 },
+      { label: "Treatment Only", inspectionCharge: 0 },
+      { label: "Inspection Only", inspectionCharge: 0 },
+    ],
+  },
+  "General Pest Control": {
+    icon: Sparkles,
+    duration: "60 - 75 mins",
+    price: 999,
+    types: [
+      { label: "Standard Treatment", inspectionCharge: 0 },
+      { label: "Deep Treatment", inspectionCharge: 149 },
+    ],
+  },
+  "Cockroach Control": {
+    icon: Bug,
+    duration: "30 - 45 mins",
+    price: 799,
+    types: [
+      { label: "Gel Treatment", inspectionCharge: 0 },
+      { label: "Spray Treatment", inspectionCharge: 0 },
+    ],
+  },
+  "Rodent Control": {
+    icon: Bug,
+    duration: "45 - 60 mins",
+    price: 899,
+    types: [
+      { label: "Trap Installation", inspectionCharge: 99 },
+      { label: "Baiting Treatment", inspectionCharge: 99 },
+    ],
+  },
+  "Mosquito Control": {
+    icon: Sparkles,
+    duration: "30 - 45 mins",
+    price: 699,
+    types: [{ label: "Fogging Treatment", inspectionCharge: 0 }],
+  },
+};
+
+const PROPERTY_TYPES = ["Apartment", "Independent House", "Villa", "Commercial Office", "Warehouse", "Other"];
+
+const PROPERTY_SIZES = ["Below 500 sq.ft.", "500 - 1000 sq.ft.", "1001 - 1500 sq.ft.", "1501 - 2000 sq.ft.", "Above 2000 sq.ft."];
+
+const TIME_SLOTS = ["08:00 AM - 10:00 AM", "10:00 AM - 12:00 PM", "12:00 PM - 02:00 PM", "02:00 PM - 04:00 PM", "04:00 PM - 06:00 PM"];
+
+const PEST_TYPES = ["Termites", "Cockroaches", "Ants", "Rodents", "Mosquitoes", "Bed Bugs", "Other"];
+
+const CONVENIENCE_FEE = 49;
+const MAX_IMAGES = 5;
+const MAX_DESCRIPTION = 500;
+
+const EMPTY_FORM = {
+  service: "",
+  serviceType: "",
+  propertyType: "",
+  propertySize: "",
+  address: DEFAULT_PROFILE.address,
+  landmark: "",
+  city: "Pune",
+  pincode: "411045",
+  date: "",
+  timeSlot: "",
+  pestType: "",
+  description: "",
+};
+
+function todayPlus(days) {
+  const d = new Date();
+  d.setDate(d.getDate() + days);
+  return d.toISOString().split("T")[0];
+}
+
+export default function BookService({ profile = DEFAULT_PROFILE, onEditProfile, onSubmit }) {
+  const [form, setForm] = useState(EMPTY_FORM);
+  const [errors, setErrors] = useState({});
+  const [images, setImages] = useState([]);
+  const [isDragging, setIsDragging] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+  const fileInputRef = useRef(null);
+
+  const selectedService = form.service ? SERVICES[form.service] : null;
+  const selectedType = useMemo(() => {
+    if (!selectedService || !form.serviceType) return null;
+    return selectedService.types.find((t) => t.label === form.serviceType) || null;
+  }, [selectedService, form.serviceType]);
+
+  const pricing = useMemo(() => {
+    const serviceCharge = selectedService ? selectedService.price : 0;
+    const inspectionCharge = selectedType ? selectedType.inspectionCharge : 0;
+    const convenienceFee = selectedService ? CONVENIENCE_FEE : 0;
+    const total = serviceCharge + inspectionCharge + convenienceFee;
+    return { serviceCharge, inspectionCharge, convenienceFee, total };
+  }, [selectedService, selectedType]);
+
+  const handleField = (field) => (e) => {
+    const value = e.target.value;
+    setForm((prev) => {
+      const next = { ...prev, [field]: value };
+      if (field === "service") next.serviceType = "";
+      return next;
+    });
+    if (errors[field]) setErrors((prev) => ({ ...prev, [field]: "" }));
+  };
+
+  const handleDescription = (e) => {
+    const value = e.target.value.slice(0, MAX_DESCRIPTION);
+    setForm((prev) => ({ ...prev, description: value }));
+    if (errors.description) setErrors((prev) => ({ ...prev, description: "" }));
+  };
+
+  const addImages = (files) => {
+    const list = Array.from(files || []).filter((f) => f.type.startsWith("image/"));
+    const room = MAX_IMAGES - images.length;
+    const accepted = list.slice(0, room).map((file) => ({
+      file,
+      url: URL.createObjectURL(file),
+      id: `${file.name}-${file.lastModified}-${Math.random().toString(36).slice(2, 7)}`,
+    }));
+    setImages((prev) => [...prev, ...accepted]);
+  };
+
+  const removeImage = (id) => {
+    setImages((prev) => prev.filter((img) => img.id !== id));
+  };
+
+  const validate = () => {
+    const next = {};
+    if (!form.service) next.service = "Please select a service";
+    if (!form.serviceType) next.serviceType = "Please select a service type";
+    if (!form.propertyType) next.propertyType = "Please select a property type";
+    if (!form.propertySize) next.propertySize = "Please select a property size";
+    if (!form.address.trim()) next.address = "Address is required";
+    if (!form.city.trim()) next.city = "City is required";
+    if (!/^\d{6}$/.test(form.pincode)) next.pincode = "Enter a valid 6-digit pincode";
+    if (!form.date) next.date = "Please select a preferred date";
+    if (!form.timeSlot) next.timeSlot = "Please select a time slot";
+    if (!form.pestType) next.pestType = "Please select a pest type";
+    if (!form.description.trim()) next.description = "Please describe the problem";
+    setErrors(next);
+    return Object.keys(next).length === 0;
+  };
+
+  const resetForm = () => {
+    setForm(EMPTY_FORM);
+    setErrors({});
+    setImages([]);
+    setSubmitted(false);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (!validate()) return;
+
+    setSubmitting(true);
+    setTimeout(() => {
+      setSubmitting(false);
+      setSubmitted(true);
+      if (onSubmit) onSubmit({ ...form, images, pricing });
+      setTimeout(() => setSubmitted(false), 2500);
+    }, 800);
+  };
+
+  const ServiceIcon = selectedService ? selectedService.icon : Bug;
+
+  const navigate = useNavigate();
+
   return (
-    <div className="cb-page">
-      <div className="cb-breadcrumb">
-        <span className="crumb-active">Dashboard</span>
-        <ChevronRight size={14} className="crumb-sep" />
-        <span>Bookings</span>
-        <ChevronRight size={14} className="crumb-sep" />
-        <span>Create Booking</span>
-      </div>
-
-      <div className="cb-header">
+    <div className="bs-page">
+      <div className="bs-header">
+        <span className="bs-header-icon">
+          <Calendar size={22} />
+        </span>
         <div>
-          <h1 className="page-title">Create Booking</h1>
-          <p className="page-subtitle">Add a new pest control service booking.</p>
-        </div>
-        <div className="cb-header-actions">
-          <button className="btn btn-outline">
-            <X size={16} />
-            Cancel
-          </button>
-          <button
-            type="button"
-            className="btn btn-primary"
-            onClick={handleSubmit}
-          >
-            <CalendarCheck size={17} />
-            Save Booking
-          </button>
+          <h1 className="bs-title">Book a Pest Control Service</h1>
+          <p className="bs-subtitle">Fill in the details below to schedule your service.</p>
         </div>
       </div>
 
-      <div className="cb-layout">
-        <div className="cb-main-col">
-          <div className="form-card">
-            <div className="form-card-title">
-              <span className="title-icon">
-                <Calendar size={18} />
-              </span>
-              Booking Information
+      <div className="bs-profile-bar">
+        <div className="bs-profile-field">
+          <User size={18} />
+          <div>
+            <p className="bs-profile-label">Name</p>
+            <p className="bs-profile-value">{profile.name}</p>
+          </div>
+        </div>
+        <div className="bs-profile-field">
+          <Mail size={18} />
+          <div>
+            <p className="bs-profile-label">Email</p>
+            <p className="bs-profile-value">{profile.email}</p>
+          </div>
+        </div>
+        <div className="bs-profile-field">
+          <Phone size={18} />
+          <div>
+            <p className="bs-profile-label">Phone</p>
+            <p className="bs-profile-value">{profile.phone}</p>
+          </div>
+        </div>
+        <div className="bs-profile-field bs-profile-field--address">
+          <MapPin size={18} />
+          <div>
+            <p className="bs-profile-label">Address</p>
+            <p className="bs-profile-value">{profile.address}</p>
+          </div>
+        </div>
+        <button className="bs-btn bs-btn--outline bs-btn--sm" onClick={() => navigate("/customer/profile/edit-profile")}>
+          <Pencil size={14} />
+          Edit Profile
+        </button>
+      </div>
+
+      <div className="bs-layout">
+        <form className="bs-form" onSubmit={handleSubmit} noValidate>
+          {/* Step 1 */}
+          <section className="bs-card">
+            <div className="bs-step-heading">
+              <span className="bs-step-number">1</span>
+              <h3>Select Service</h3>
             </div>
 
-            <div className="form-grid">
-              <div className="form-field">
+            <div className="bs-grid-2">
+              <div className="bs-field">
                 <label>
-                  Customer <span className="req">*</span>
+                  Select Service <span className="bs-required">*</span>
                 </label>
-                <div className="input-with-icon">
-                  <User size={16} />
-                  <select
-                    value={form.customerId}
-                    onChange={update('customerId')}
-                  >
-                    <option value="">Select Customer</option>
-                    <option value="1">Ramesh Sharma</option>
-                    <option value="2">Anita Verma</option>
-                    <option value="3">Neha Kapoor</option>
+                <div className={`bs-select ${errors.service ? "bs-select--error" : ""}`}>
+                  <span className="bs-select__icon">
+                    <ServiceIcon size={16} />
+                  </span>
+                  <select value={form.service} onChange={handleField("service")}>
+                    <option value="" disabled>
+                      Choose a service
+                    </option>
+                    {Object.keys(SERVICES).map((name) => (
+                      <option key={name} value={name}>
+                        {name}
+                      </option>
+                    ))}
                   </select>
+                  <ChevronDown size={15} className="bs-select__chevron" />
                 </div>
+                {errors.service && <span className="bs-error-text">{errors.service}</span>}
               </div>
 
-              <div className="form-field">
+              <div className="bs-field">
                 <label>
-                  Property <span className="req">*</span>
+                  Service Type <span className="bs-required">*</span>
                 </label>
-                <div className="input-with-icon">
-                  <Building2 size={16} />
-                  <select value={form.property} onChange={update('property')}>
-                    <option value="">Select Property</option>
-                    <option>Green Villa</option>
-                    <option>City Apartments</option>
-                    <option>Kapoor Residence</option>
+                <div className={`bs-select ${errors.serviceType ? "bs-select--error" : ""} ${!selectedService ? "bs-select--disabled" : ""}`}>
+                  <span className="bs-select__icon">
+                    <Sparkles size={16} />
+                  </span>
+                  <select value={form.serviceType} onChange={handleField("serviceType")} disabled={!selectedService}>
+                    <option value="" disabled>
+                      {selectedService ? "Choose a service type" : "Select a service first"}
+                    </option>
+                    {selectedService?.types.map((t) => (
+                      <option key={t.label} value={t.label}>
+                        {t.label}
+                      </option>
+                    ))}
                   </select>
+                  <ChevronDown size={15} className="bs-select__chevron" />
+                </div>
+                {errors.serviceType && <span className="bs-error-text">{errors.serviceType}</span>}
+              </div>
+
+              <div className="bs-field">
+                <label className="bs-field__muted-label">Service Duration</label>
+                <div className="bs-readonly">
+                  <Clock size={15} />
+                  {selectedService ? selectedService.duration : "\u2014"}
                 </div>
               </div>
 
-              <div className="form-field">
+              <div className="bs-field">
+                <label className="bs-field__muted-label">Starting Price</label>
+                <div className="bs-readonly">
+                  <Tag size={15} />
+                  {selectedService ? `\u20b9${selectedService.price.toLocaleString("en-IN")} onwards` : "\u2014"}
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* Step 2 */}
+          <section className="bs-card">
+            <div className="bs-step-heading">
+              <span className="bs-step-number">2</span>
+              <h3>Property Details</h3>
+            </div>
+
+            <div className="bs-grid-2">
+              <div className="bs-field">
                 <label>
-                  Service Type <span className="req">*</span>
+                  Property Type <span className="bs-required">*</span>
                 </label>
-                <div className="input-with-icon">
-                  <SprayCan size={16} />
-                  <select value={form.serviceType} onChange={update('serviceType')}>
-                    <option value="">Select Service Type</option>
-                    <option value="1">General Pest Control</option>
-                    <option value="2">Termite Treatment</option>
-                    <option value="3">Rodent Control</option>
+                <div className={`bs-select ${errors.propertyType ? "bs-select--error" : ""}`}>
+                  <span className="bs-select__icon">
+                    <Building2 size={16} />
+                  </span>
+                  <select value={form.propertyType} onChange={handleField("propertyType")}>
+                    <option value="" disabled>
+                      Select property type
+                    </option>
+                    {PROPERTY_TYPES.map((type) => (
+                      <option key={type} value={type}>
+                        {type}
+                      </option>
+                    ))}
                   </select>
+                  <ChevronDown size={15} className="bs-select__chevron" />
                 </div>
+                {errors.propertyType && <span className="bs-error-text">{errors.propertyType}</span>}
               </div>
 
-              <div className="form-field">
+              <div className="bs-field">
                 <label>
-                  Pest Type <span className="req">*</span>
+                  Property Size (Approx.) <span className="bs-required">*</span>
                 </label>
-                <div className="input-with-icon">
-                  <Bug size={16} />
-                  <select value={form.pestType} onChange={update('pestType')}>
-                    <option value="">Select Pest Type</option>
-                    <option>Cockroaches</option>
-                    <option>Termites</option>
-                    <option>Rodents</option>
-                    <option>Mosquitoes</option>
+                <div className={`bs-select ${errors.propertySize ? "bs-select--error" : ""}`}>
+                  <span className="bs-select__icon">
+                    <Ruler size={16} />
+                  </span>
+                  <select value={form.propertySize} onChange={handleField("propertySize")}>
+                    <option value="" disabled>
+                      Select property size
+                    </option>
+                    {PROPERTY_SIZES.map((size) => (
+                      <option key={size} value={size}>
+                        {size}
+                      </option>
+                    ))}
                   </select>
+                  <ChevronDown size={15} className="bs-select__chevron" />
                 </div>
+                {errors.propertySize && <span className="bs-error-text">{errors.propertySize}</span>}
               </div>
+            </div>
+          </section>
 
-              <div className="form-field">
+          {/* Step 3 */}
+          <section className="bs-card">
+            <div className="bs-step-heading">
+              <span className="bs-step-number">3</span>
+              <h3>Service Address</h3>
+            </div>
+
+            <div className="bs-field bs-field--full">
+              <label>
+                Address <span className="bs-required">*</span>
+              </label>
+              <div className={`bs-input ${errors.address ? "bs-input--error" : ""}`}>
+                <MapPin size={16} className="bs-input__icon" />
+                <input type="text" value={form.address} onChange={handleField("address")} placeholder="Enter your full address" />
+              </div>
+              {errors.address && <span className="bs-error-text">{errors.address}</span>}
+            </div>
+
+            <div className="bs-grid-3">
+              <div className="bs-field">
                 <label>
-                  Priority <span className="req">*</span>
+                  Landmark <span className="bs-optional">(Optional)</span>
                 </label>
-                <div className="input-with-icon">
-                  <Flag size={16} />
-                  <select value={form.priority} onChange={update('priority')}>
-                    <option value="">Select Priority</option>
-                    <option>Low</option>
-                    <option>Medium</option>
-                    <option>High</option>
-                  </select>
+                <div className="bs-input">
+                  <MapPin size={16} className="bs-input__icon" />
+                  <input type="text" value={form.landmark} onChange={handleField("landmark")} placeholder="Near Baner Road" />
                 </div>
               </div>
 
-              <div className="form-field">
+              <div className="bs-field">
                 <label>
-                  Schedule Date <span className="req">*</span>
+                  City <span className="bs-required">*</span>
                 </label>
-                <div className="input-with-icon">
-                  <Calendar size={16} />
-                  <input
-                    type="date"
-                    value={form.scheduleDate}
-                    onChange={update('scheduleDate')}
-                    placeholder="Select Date"
-                  />
+                <div className={`bs-input ${errors.city ? "bs-input--error" : ""}`}>
+                  <input type="text" value={form.city} onChange={handleField("city")} placeholder="City" />
                 </div>
+                {errors.city && <span className="bs-error-text">{errors.city}</span>}
               </div>
 
-              <div className="form-field">
+              <div className="bs-field">
                 <label>
-                  Schedule Time <span className="req">*</span>
+                  Pincode <span className="bs-required">*</span>
                 </label>
-                <div className="input-with-icon">
-                  <Clock size={16} />
-                  <input type="time" value={form.scheduleTime} onChange={update('scheduleTime')} />
-                </div>
-              </div>
-
-              <div className="form-field">
-                <label>
-                  Technician <span className="req">*</span>
-                </label>
-                <div className="input-with-icon">
-                  <User size={16} />
-                  <select value={form.technician} onChange={update('technician')}>
-                    <option value="">Assign Technician</option>
-                    <option value="1">Amit Kumar</option>
-                    <option value="2">Vikram Singh</option>
-                    <option value="3">Rahul Mehta</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="form-field">
-                <label>Estimated Duration</label>
-                <div className="input-with-icon">
-                  <Clock size={16} />
-                  <select value={form.duration} onChange={update('duration')}>
-                    <option value="">Select Duration</option>
-                    <option>1 Hour</option>
-                    <option>2 Hours</option>
-                    <option>3 Hours</option>
-                    <option>4 Hours</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="form-field span-3">
-                <label>
-                  Service Address <span className="req">*</span>
-                </label>
-                <div className="input-with-icon">
-                  <MapPin size={16} />
+                <div className={`bs-input ${errors.pincode ? "bs-input--error" : ""}`}>
                   <input
                     type="text"
-                    placeholder="Enter complete service address"
-                    value={form.address}
-                    onChange={update('address')}
+                    inputMode="numeric"
+                    value={form.pincode}
+                    onChange={handleField("pincode")}
+                    placeholder="411045"
                   />
                 </div>
+                {errors.pincode && <span className="bs-error-text">{errors.pincode}</span>}
+              </div>
+            </div>
+          </section>
+
+          {/* Step 4 */}
+          <section className="bs-card">
+            <div className="bs-step-heading">
+              <span className="bs-step-number">4</span>
+              <h3>Schedule Service</h3>
+            </div>
+
+            <div className="bs-grid-2">
+              <div className="bs-field">
+                <label>
+                  Preferred Date <span className="bs-required">*</span>
+                </label>
+                <div className={`bs-input ${errors.date ? "bs-input--error" : ""}`}>
+                  <Calendar size={16} className="bs-input__icon" />
+                  <input type="date" min={todayPlus(0)} value={form.date} onChange={handleField("date")} />
+                </div>
+                {errors.date && <span className="bs-error-text">{errors.date}</span>}
               </div>
 
-              <div className="form-field span-3">
-                <label>Notes (Optional)</label>
-                <div>
+              <div className="bs-field">
+                <label>
+                  Preferred Time Slot <span className="bs-required">*</span>
+                </label>
+                <div className={`bs-select ${errors.timeSlot ? "bs-select--error" : ""}`}>
+                  <span className="bs-select__icon">
+                    <Clock size={16} />
+                  </span>
+                  <select value={form.timeSlot} onChange={handleField("timeSlot")}>
+                    <option value="" disabled>
+                      Select a time slot
+                    </option>
+                    {TIME_SLOTS.map((slot) => (
+                      <option key={slot} value={slot}>
+                        {slot}
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown size={15} className="bs-select__chevron" />
+                </div>
+                {errors.timeSlot && <span className="bs-error-text">{errors.timeSlot}</span>}
+              </div>
+            </div>
+          </section>
+
+          {/* Step 5 */}
+          <section className="bs-card">
+            <div className="bs-step-heading">
+              <span className="bs-step-number">5</span>
+              <h3>Pest Problem Details</h3>
+            </div>
+
+            <div className="bs-grid-2">
+              <div className="bs-field">
+                <label>
+                  Pest Type <span className="bs-required">*</span>
+                </label>
+                <div className={`bs-select ${errors.pestType ? "bs-select--error" : ""}`}>
+                  <span className="bs-select__icon">
+                    <Bug size={16} />
+                  </span>
+                  <select value={form.pestType} onChange={handleField("pestType")}>
+                    <option value="" disabled>
+                      Select pest type
+                    </option>
+                    {PEST_TYPES.map((pest) => (
+                      <option key={pest} value={pest}>
+                        {pest}
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown size={15} className="bs-select__chevron" />
+                </div>
+                {errors.pestType && <span className="bs-error-text">{errors.pestType}</span>}
+              </div>
+
+              <div className="bs-field">
+                <label>
+                  Problem Description <span className="bs-required">*</span>
+                </label>
+                <div className={`bs-input bs-input--textarea ${errors.description ? "bs-input--error" : ""}`}>
                   <textarea
                     rows={3}
-                    placeholder="Enter any special instructions or notes..."
-                    value={form.notes}
-                    onChange={update('notes')}
+                    maxLength={MAX_DESCRIPTION}
+                    value={form.description}
+                    onChange={handleDescription}
+                    placeholder="We suspect termite activity in the wooden doors and window frames."
                   />
+                  <span className="bs-char-count">
+                    {form.description.length}/{MAX_DESCRIPTION}
+                  </span>
                 </div>
+                {errors.description && <span className="bs-error-text">{errors.description}</span>}
               </div>
             </div>
 
-            <div className="attachments-section">
-              <div className="attachments-title">
-                <Paperclip size={16} />
-                Attachments (Optional)
-              </div>
-              <div className="upload-dropzone">
-                <UploadCloud size={28} />
-                <p>Drag and drop files here or click to upload</p>
-                <span>Supported formats: JPG, PNG, PDF (Max 5MB)</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <aside className="cb-side-col">
-          <div className="form-card">
-            <div className="form-card-title">
-              <span className="title-icon">
-                <User size={18} />
-              </span>
-              Customer Details
-            </div>
-            {form.customer ? (
-              <div className="customer-block">
-                <span className="avatar-lg">
-                  {form.customer
-                    .split(' ')
-                    .map((n) => n[0])
-                    .join('')}
-                </span>
-                <div className="customer-name">{form.customer}</div>
-              </div>
-            ) : (
-              <div className="no-customer">
-                <UserCircle2 size={40} />
-                <div>
-                  <div className="no-customer-title">No customer selected</div>
-                  <span>Select a customer to view details.</span>
+            <div className="bs-field bs-field--full">
+              <label>
+                Upload Images <span className="bs-optional">(Optional)</span>
+              </label>
+              <div
+                className={`bs-dropzone ${isDragging ? "bs-dropzone--active" : ""}`}
+                onClick={() => fileInputRef.current?.click()}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  setIsDragging(true);
+                }}
+                onDragLeave={() => setIsDragging(false)}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  setIsDragging(false);
+                  addImages(e.dataTransfer.files);
+                }}
+              >
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/jpeg,image/png"
+                  multiple
+                  hidden
+                  onChange={(e) => addImages(e.target.files)}
+                />
+                <UploadCloud size={18} className="bs-dropzone__icon" />
+                <div className="bs-dropzone__text-group">
+                  <p className="bs-dropzone__text">Click to upload or drag and drop</p>
+                  <p className="bs-dropzone__hint">JPG, PNG up to 5MB each</p>
                 </div>
+
+                {images.length > 0 && (
+                  <div className="bs-dropzone__previews">
+                    {images.map((img) => (
+                      <div className="bs-preview" key={img.id}>
+                        <img src={img.url} alt="Uploaded pest issue" />
+                        <button
+                          type="button"
+                          className="bs-preview__remove"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            removeImage(img.id);
+                          }}
+                          aria-label="Remove image"
+                        >
+                          <X size={12} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
-            )}
-          </div>
-
-          <div className="form-card">
-            <div className="form-card-title">
-              <span className="title-icon">
-                <ClipboardList size={18} />
-              </span>
-              Booking Summary
             </div>
-            <div className="summary-list">
-              {SUMMARY_FIELDS.map((f) => (
-                <div className="summary-row" key={f.key}>
-                  <span>{f.label}</span>
-                  <span>{form[f.key] || '-'}</span>
-                </div>
-              ))}
-            </div>
-          </div>
+          </section>
 
-          <div className="note-card">
-            <span className="note-icon">
-              <ShieldCheck size={18} />
+          {submitted && (
+            <div className="bs-success-banner">
+              <CalendarCheck size={16} />
+              Your service has been booked successfully! We&apos;ll send a confirmation shortly.
+            </div>
+          )}
+
+          <div className="bs-form__actions">
+            <button type="button" className="bs-btn bs-btn--outline" onClick={resetForm} disabled={submitting}>
+              <RotateCcw size={15} />
+              Reset
+            </button>
+            <button type="submit" className="bs-btn bs-btn--primary" disabled={submitting}>
+              <CalendarCheck size={15} />
+              {submitting ? "Booking..." : "Book Service"}
+            </button>
+          </div>
+        </form>
+
+        {/* Booking summary sidebar */}
+        <aside className="bs-card bs-summary">
+          <div className="bs-summary__header">
+            <span className="bs-summary__icon">
+              <LayoutGrid size={18} />
             </span>
-            <div>
-              <div className="note-title">Important Note</div>
-              <p>Ensure all details are correct before saving the booking.</p>
+            <h3>Booking Summary</h3>
+          </div>
+
+          {selectedService ? (
+            <div className="bs-summary__service">
+              <span className="bs-summary__service-icon">
+                <ServiceIcon size={22} />
+              </span>
+              <div>
+                <p className="bs-summary__service-name">{form.service}</p>
+                {form.serviceType && <span className="bs-summary__service-tag">{form.serviceType}</span>}
+                <p className="bs-summary__service-duration">
+                  <Clock size={13} />
+                  {selectedService.duration}
+                </p>
+              </div>
             </div>
+          ) : (
+            <div className="bs-summary__empty">Select a service to see your booking summary.</div>
+          )}
+
+          <div className="bs-summary__rows">
+            <div className="bs-summary__row">
+              <span>Service Charges</span>
+              <span>&#8377;{pricing.serviceCharge.toLocaleString("en-IN")}.00</span>
+            </div>
+            <div className="bs-summary__row">
+              <span>Inspection Charges</span>
+              <span>&#8377;{pricing.inspectionCharge.toLocaleString("en-IN")}.00</span>
+            </div>
+            <div className="bs-summary__row">
+              <span>Convenience Fee</span>
+              <span>&#8377;{pricing.convenienceFee.toLocaleString("en-IN")}.00</span>
+            </div>
+          </div>
+
+          <div className="bs-summary__total">
+            <span>Total Amount</span>
+            <span>&#8377;{pricing.total.toLocaleString("en-IN")}.00</span>
+          </div>
+
+          <ul className="bs-summary__features">
+            <li>
+              <span className="bs-summary__feature-icon">
+                <UserCheck size={18} />
+              </span>
+              <div>
+                <p>Expert Technicians</p>
+                <span>Verified &amp; experienced professionals</span>
+              </div>
+            </li>
+            <li>
+              <span className="bs-summary__feature-icon">
+                <Leaf size={18} />
+              </span>
+              <div>
+                <p>Safe &amp; Eco-friendly</p>
+                <span>100% safe for your family and pets</span>
+              </div>
+            </li>
+            <li>
+              <span className="bs-summary__feature-icon">
+                <ShieldCheck size={18} />
+              </span>
+              <div>
+                <p>Satisfaction Guarantee</p>
+                <span>We ensure quality service</span>
+              </div>
+            </li>
+          </ul>
+
+          <div className="bs-summary__note">
+            <ShieldCheck size={16} />
+            You can cancel or reschedule your booking before the technician is assigned.
           </div>
         </aside>
       </div>

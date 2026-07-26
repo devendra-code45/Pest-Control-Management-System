@@ -30,7 +30,6 @@ import ViewRejectedBooking from "../Pages/booking/adminInterface/RBView";
 import MyBookings from "../Pages/booking/MyBookings";
 
 // Complaints
-import NewComplaint from "../Pages/complaint/newcomplaint";
 import ComplaintManagement from "../Pages/complaint/ViewComplaintDetails";
 import CustomerComplaints from "../Pages/complaint/CustomerComplaints";
 
@@ -65,6 +64,8 @@ import Profile from "../Pages/profile/profile";
 import CustomerProfile from "../Pages/profile/CostomerProfile";
 import EditCustomerProfile from "../Pages/profile/EditCustomerProfile";
 import Reports from "../Pages/reports/Reports";
+
+import CustomerContactSupport from "../Pages/login/CustomerContactSupport";
 
 function AppRoutes() {
   return (
@@ -228,7 +229,7 @@ function AppRoutes() {
 
               <Route
                 path="/customer/dashboard"
-                element={<Dashboard />}
+                element={<CustomerDashboard />}
               />
               <Route path="/customer/dashboard" element={<CustomerDashboard />} />
               {/* Services and bookings */}
@@ -258,7 +259,6 @@ function AppRoutes() {
               {/*complaints*/}
 
               <Route path="/customer/complaints" element={<CustomerComplaints />} />
-              <Route path="/customer/complaints/raise-new-complaint" element={<NewComplaint />} />
               <Route path="/customer/complaints/view-details" element={<ComplaintManagement />} />
 
               {/* Payments */}
@@ -283,6 +283,8 @@ function AppRoutes() {
                 path="/customer/change-password"
                 element={<ChangePassword />}
               />
+
+              <Route path="/customer/contact-support" element={<CustomerContactSupport />} />
             </Route>
           </Route>
 
