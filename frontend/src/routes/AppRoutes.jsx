@@ -12,10 +12,6 @@ import DashboardLayout from "../components/DashboardLayout/DashboardLayout";
 import Dashboard from "../Pages/dashboard/Dashboard";
 import CustomerDashboard from "../Pages/dashboard/CustomerDashboard";
 
-// Customer management
-import AddCustomer from "../Pages/customer/add-customer";
-import EditCustomer from "../Pages/customer/edit-customer";
-import CustomerDetails from "../Pages/customer/customer-details";
 
 // Booking management
 import CreateBooking from "../Pages/booking/Create-Booking";
