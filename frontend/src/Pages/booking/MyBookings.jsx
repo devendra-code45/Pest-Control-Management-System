@@ -1,5 +1,12 @@
-import React, { useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import React, {
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
+import {
+  useLocation,
+  useNavigate,
+} from "react-router-dom";
 import {
   ChevronRight,
   Plus,
@@ -21,136 +28,329 @@ import {
   MapPin,
   Headphones,
   ChevronLeft,
+  AlertCircle,
+  LoaderCircle,
+  Eye,
 } from "lucide-react";
-import "./MyBookings.css";
 
-const stats = [
-  { label: "Total Bookings", sub: "All Time", value: 12, icon: Calendar, tone: "neutral" },
-  { label: "Upcoming", sub: "Scheduled Services", value: 3, icon: Clock, tone: "warning" },
-  { label: "In Progress", sub: "Currently Active", value: 2, icon: UserCheck, tone: "info" },
-  { label: "Completed", sub: "Successfully Completed", value: 6, icon: CheckCircle2, tone: "success" },
-  { label: "Cancelled", sub: "Cancelled Bookings", value: 1, icon: XCircle, tone: "danger" },
-];
+import api from "../../api/axios";
+import "./MyBookings.css";
 
 const serviceIcons = {
   "Termite Control": Bug,
+  "General Pest Control": Bug,
   "Cockroach Control": Bug,
   "Mosquito Control": Bug,
   "Rodent Control": PawPrint,
   "Bed Bug Treatment": Bug,
 };
 
-const ALL_BOOKINGS = [
-  {
-    id: "BK-2025-0012",
-    bookedOn: "22 May 2025",
-    service: "Termite Control",
-    serviceArea: "Full Home Treatment",
-    date: "28 May 2025",
-    time: "10:00 AM",
-    status: "Upcoming",
-    statusNote: "Scheduled",
-    technician: "Rohit Sharma",
-    amount: "2,499",
-    paymentStatus: "Paid",
-  },
-  {
-    id: "BK-2025-0011",
-    bookedOn: "20 May 2025",
-    service: "Cockroach Control",
-    serviceArea: "Kitchen Area",
-    date: "20 May 2025",
-    time: "02:30 PM",
-    status: "In Progress",
-    statusNote: "Technician On Site",
-    technician: "Amit Patil",
-    amount: "1,299",
-    paymentStatus: "Paid",
-  },
-  {
-    id: "BK-2025-0010",
-    bookedOn: "18 May 2025",
-    service: "Mosquito Control",
-    serviceArea: "Monthly Spray",
-    date: "18 May 2025",
-    time: "09:00 AM",
-    status: "Completed",
-    statusNote: "Service Completed",
-    technician: "Sandeep Kumar",
-    amount: "999",
-    paymentStatus: "Paid",
-  },
-  {
-    id: "BK-2025-0009",
-    bookedOn: "12 May 2025",
-    service: "Rodent Control",
-    serviceArea: "Rat Treatment",
-    date: "12 May 2025",
-    time: "11:00 AM",
-    status: "Completed",
-    statusNote: "Service Completed",
-    technician: "Mahesh Yadav",
-    amount: "1,499",
-    paymentStatus: "Paid",
-  },
-  {
-    id: "BK-2025-0008",
-    bookedOn: "07 May 2025",
-    service: "Bed Bug Treatment",
-    serviceArea: "Bedroom Treatment",
-    date: "07 May 2025",
-    time: "03:30 PM",
-    status: "Cancelled",
-    statusNote: "Cancelled by You",
-    technician: null,
-    amount: "1,799",
-    paymentStatus: "Refunded",
-  },
-];
-
 const statusBadgeClass = {
+  Pending: "mb-badge-warning",
   Upcoming: "mb-badge-warning",
+  Accepted: "mb-badge-info",
+  Assigned: "mb-badge-info",
   "In Progress": "mb-badge-info",
   Completed: "mb-badge-success",
   Cancelled: "mb-badge-danger",
+  Rejected: "mb-badge-danger",
 };
 
 const paymentBadgeClass = {
   Paid: "mb-badge-success",
+  Pending: "mb-badge-warning",
   Refunded: "mb-badge-neutral",
 };
 
 const PAGE_SIZE = 5;
 
-export default function MyBookings({
-  onBookNewService,
-  onReschedule,
-  onCancelBooking,
-  onTrackTechnician,
-  onRebook,
-  onCallTechnician,
-  onContactSupport,
-}) {
+function formatDate(dateValue) {
+  if (!dateValue) {
+    return "Not available";
+  }
+
+  const date = new Date(`${dateValue}T00:00:00`);
+
+  return date.toLocaleDateString("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
+}
+
+function formatDateTime(dateValue) {
+  if (!dateValue) {
+    return "Not available";
+  }
+
+  const date = new Date(dateValue);
+
+  return date.toLocaleDateString("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
+}
+
+function formatMoney(amount) {
+  const numericAmount = Number(amount || 0);
+
+  return numericAmount.toLocaleString("en-IN", {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+  });
+}
+
+function getDisplayStatus(status) {
+  const statusMap = {
+    PENDING: "Pending",
+    ACCEPTED: "Accepted",
+    ASSIGNED: "Assigned",
+    IN_PROGRESS: "In Progress",
+    COMPLETED: "Completed",
+    CANCELLED: "Cancelled",
+    REJECTED: "Rejected",
+  };
+
+  return statusMap[status] || status || "Pending";
+}
+
+function getStatusNote(status) {
+  const statusNotes = {
+    PENDING: "Waiting for admin approval",
+    ACCEPTED: "Booking accepted",
+    ASSIGNED: "Technician assigned",
+    IN_PROGRESS: "Service currently active",
+    COMPLETED: "Service completed",
+    CANCELLED: "Booking cancelled",
+    REJECTED: "Booking rejected",
+  };
+
+  return statusNotes[status] || "Status unavailable";
+}
+
+function getPaymentStatus() {
+  // The Payment module is not connected yet.
+  return "Pending";
+}
+
+function transformBooking(booking) {
+  return {
+    rawId: booking.id,
+    id: `BK-${String(booking.id).padStart(4, "0")}`,
+    bookedOn: formatDateTime(booking.createdAt),
+    service: booking.serviceName || "Service",
+    serviceArea:
+      booking.serviceType ||
+      booking.propertyType ||
+      "Not available",
+    address: [
+      booking.serviceAddress,
+      booking.city,
+      booking.pincode,
+    ]
+      .filter(Boolean)
+      .join(", "),
+    date: formatDate(booking.preferredDate),
+    time: booking.preferredTimeSlot || "Not selected",
+    backendStatus: booking.status,
+    status: getDisplayStatus(booking.status),
+    statusNote: getStatusNote(booking.status),
+    technician: booking.technicianName || null,
+    technicianPhone: booking.technicianPhone || null,
+    amount: formatMoney(booking.totalAmount),
+    paymentStatus: getPaymentStatus(booking),
+    rejectionReason: booking.rejectionReason || null,
+  };
+}
+
+export default function MyBookings() {
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const [bookings, setBookings] = useState([]);
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState("All Status");
-  const [serviceFilter, setServiceFilter] = useState("All Services");
+  const [statusFilter, setStatusFilter] =
+    useState("All Status");
+  const [serviceFilter, setServiceFilter] =
+    useState("All Services");
   const [page, setPage] = useState(1);
 
-  const filtered = useMemo(() => {
-    return ALL_BOOKINGS.filter((b) => {
-      const matchesSearch =
-        !search.trim() ||
-        b.id.toLowerCase().includes(search.toLowerCase()) ||
-        b.service.toLowerCase().includes(search.toLowerCase()) ||
-        b.serviceArea.toLowerCase().includes(search.toLowerCase());
-      const matchesStatus = statusFilter === "All Status" || b.status === statusFilter;
-      const matchesService = serviceFilter === "All Services" || b.service === serviceFilter;
-      return matchesSearch && matchesStatus && matchesService;
-    });
-  }, [search, statusFilter, serviceFilter]);
+  const [loading, setLoading] = useState(true);
+  const [requestError, setRequestError] =
+    useState("");
+  const [successMessage, setSuccessMessage] =
+    useState(
+      location.state?.bookingCreated
+        ? "Your service was booked successfully."
+        : ""
+    );
 
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
-  const pageItems = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  useEffect(() => {
+    const fetchBookings = async () => {
+      try {
+        setLoading(true);
+        setRequestError("");
+
+        const response = await api.get(
+          "/customer/bookings"
+        );
+
+        const transformedBookings = Array.isArray(
+          response.data
+        )
+          ? response.data.map(transformBooking)
+          : [];
+
+        setBookings(transformedBookings);
+      } catch (error) {
+        const status = error.response?.status;
+
+        if (status === 401 || status === 403) {
+          localStorage.removeItem("pcmsAuth");
+          navigate("/login", { replace: true });
+          return;
+        }
+
+        setRequestError(
+          error.response?.data?.message ||
+            "Unable to load your bookings."
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchBookings();
+  }, [navigate]);
+
+  useEffect(() => {
+    if (!successMessage) {
+      return undefined;
+    }
+
+    const timer = window.setTimeout(() => {
+      setSuccessMessage("");
+    }, 3500);
+
+    return () => window.clearTimeout(timer);
+  }, [successMessage]);
+
+  const serviceOptions = useMemo(() => {
+    return [
+      ...new Set(
+        bookings
+          .map((booking) => booking.service)
+          .filter(Boolean)
+      ),
+    ];
+  }, [bookings]);
+
+  const stats = useMemo(() => {
+    const countByStatuses = (...statuses) =>
+      bookings.filter((booking) =>
+        statuses.includes(booking.backendStatus)
+      ).length;
+
+    return [
+      {
+        label: "Total Bookings",
+        sub: "All Time",
+        value: bookings.length,
+        icon: Calendar,
+        tone: "neutral",
+      },
+      {
+        label: "Upcoming",
+        sub: "Scheduled Services",
+        value: countByStatuses(
+          "PENDING",
+          "ACCEPTED",
+          "ASSIGNED"
+        ),
+        icon: Clock,
+        tone: "warning",
+      },
+      {
+        label: "In Progress",
+        sub: "Currently Active",
+        value: countByStatuses("IN_PROGRESS"),
+        icon: UserCheck,
+        tone: "info",
+      },
+      {
+        label: "Completed",
+        sub: "Successfully Completed",
+        value: countByStatuses("COMPLETED"),
+        icon: CheckCircle2,
+        tone: "success",
+      },
+      {
+        label: "Cancelled",
+        sub: "Cancelled or Rejected",
+        value: countByStatuses(
+          "CANCELLED",
+          "REJECTED"
+        ),
+        icon: XCircle,
+        tone: "danger",
+      },
+    ];
+  }, [bookings]);
+
+  const filtered = useMemo(() => {
+    const normalizedSearch = search
+      .trim()
+      .toLowerCase();
+
+    return bookings.filter((booking) => {
+      const matchesSearch =
+        !normalizedSearch ||
+        booking.id
+          .toLowerCase()
+          .includes(normalizedSearch) ||
+        booking.service
+          .toLowerCase()
+          .includes(normalizedSearch) ||
+        booking.serviceArea
+          .toLowerCase()
+          .includes(normalizedSearch) ||
+        booking.address
+          .toLowerCase()
+          .includes(normalizedSearch);
+
+      const matchesStatus =
+        statusFilter === "All Status" ||
+        booking.status === statusFilter;
+
+      const matchesService =
+        serviceFilter === "All Services" ||
+        booking.service === serviceFilter;
+
+      return (
+        matchesSearch &&
+        matchesStatus &&
+        matchesService
+      );
+    });
+  }, [
+    bookings,
+    search,
+    statusFilter,
+    serviceFilter,
+  ]);
+
+  const totalPages = Math.max(
+    1,
+    Math.ceil(filtered.length / PAGE_SIZE)
+  );
+
+  const safePage = Math.min(page, totalPages);
+
+  const pageItems = filtered.slice(
+    (safePage - 1) * PAGE_SIZE,
+    safePage * PAGE_SIZE
+  );
 
   const handleClearFilters = () => {
     setSearch("");
@@ -159,97 +359,192 @@ export default function MyBookings({
     setPage(1);
   };
 
-  const callHandler = (fn, fallbackLabel) => (bookingId) => {
-    if (typeof fn === "function") {
-      fn(bookingId);
-    } else {
-      console.log(fallbackLabel, bookingId);
-    }
+  const handleViewBooking = (bookingId) => {
+    navigate(`/customer/bookings/${bookingId}`);
   };
 
-  const handleBookNewService = () => {
-    if (typeof onBookNewService === "function") {
-      onBookNewService();
-    } else {
-      console.log("Navigate to Book New Service");
-    }
+  const handleReschedule = (bookingId) => {
+    navigate(
+      `/customer/bookings/${bookingId}?action=reschedule`
+    );
   };
 
-  const handleReschedule = callHandler(onReschedule, "Reschedule booking");
-  const handleCancel = callHandler(onCancelBooking, "Cancel booking");
-  const handleTrack = callHandler(onTrackTechnician, "Track technician for");
-  const handleRebook = callHandler(onRebook, "Rebook service for");
-  const handleCall = callHandler(onCallTechnician, "Call technician for");
+  const handleCancel = (bookingId) => {
+    navigate(
+      `/customer/bookings/${bookingId}?action=cancel`
+    );
+  };
+
+  const handleTrack = (bookingId) => {
+    navigate(
+      `/customer/bookings/${bookingId}?action=track`
+    );
+  };
+
+  const handleRebook = (bookingId) => {
+    navigate(
+      `/customer/create-booking?rebook=${bookingId}`
+    );
+  };
+
+  const handleCallTechnician = (booking) => {
+    if (!booking.technicianPhone) {
+      setRequestError(
+        "Technician phone number is not available."
+      );
+      return;
+    }
+
+    window.location.href = `tel:${booking.technicianPhone}`;
+  };
 
   const handleContactSupport = () => {
-    if (typeof onContactSupport === "function") {
-      onContactSupport();
-    } else {
-      console.log("Contact support clicked");
-    }
+    navigate("/customer/contact-support");
   };
 
   const renderActions = (booking) => {
-    switch (booking.status) {
-      case "Upcoming":
+    switch (booking.backendStatus) {
+      case "PENDING":
+      case "ACCEPTED":
         return (
           <div className="mb-actions-cell">
             <button
               type="button"
               className="mb-btn mb-btn-outline mb-btn-sm"
-              onClick={() => handleReschedule(booking.id)}
+              onClick={() =>
+                handleViewBooking(booking.rawId)
+              }
             >
-              <RefreshCw size={13} strokeWidth={2} />
-              Reschedule
+              <Eye size={13} strokeWidth={2} />
+              View
             </button>
+
             <button
               type="button"
               className="mb-icon-btn mb-icon-btn-danger"
-              onClick={() => handleCancel(booking.id)}
+              onClick={() =>
+                handleCancel(booking.rawId)
+              }
               aria-label="Cancel booking"
             >
               <Ban size={15} strokeWidth={2} />
             </button>
           </div>
         );
-      case "In Progress":
+
+      case "ASSIGNED":
+        return (
+          <div className="mb-actions-cell">
+            <button
+              type="button"
+              className="mb-btn mb-btn-outline mb-btn-sm"
+              onClick={() =>
+                handleViewBooking(booking.rawId)
+              }
+            >
+              <Eye size={13} strokeWidth={2} />
+              View
+            </button>
+
+            <button
+              type="button"
+              className="mb-icon-btn"
+              onClick={() =>
+                handleCallTechnician(booking)
+              }
+              aria-label="Call technician"
+            >
+              <Phone size={15} strokeWidth={2} />
+            </button>
+          </div>
+        );
+
+      case "IN_PROGRESS":
         return (
           <button
             type="button"
             className="mb-btn mb-btn-outline mb-btn-sm"
-            onClick={() => handleTrack(booking.id)}
+            onClick={() =>
+              handleTrack(booking.rawId)
+            }
           >
             <MapPin size={13} strokeWidth={2} />
             Track Technician
           </button>
         );
-      case "Completed":
-      case "Cancelled":
+
+      case "COMPLETED":
+      case "CANCELLED":
+      case "REJECTED":
+        return (
+          <div className="mb-actions-cell">
+            <button
+              type="button"
+              className="mb-btn mb-btn-outline mb-btn-sm"
+              onClick={() =>
+                handleViewBooking(booking.rawId)
+              }
+            >
+              <Eye size={13} strokeWidth={2} />
+              View
+            </button>
+
+            <button
+              type="button"
+              className="mb-icon-btn"
+              onClick={() =>
+                handleRebook(booking.rawId)
+              }
+              aria-label="Rebook service"
+            >
+              <RotateCcw
+                size={15}
+                strokeWidth={2}
+              />
+            </button>
+          </div>
+        );
+
+      default:
         return (
           <button
             type="button"
             className="mb-btn mb-btn-outline mb-btn-sm"
-            onClick={() => handleRebook(booking.id)}
+            onClick={() =>
+              handleViewBooking(booking.rawId)
+            }
           >
-            <RotateCcw size={13} strokeWidth={2} />
-            Rebook
+            <Eye size={13} strokeWidth={2} />
+            View
           </button>
         );
-      default:
-        return null;
     }
   };
 
-  const navigate = useNavigate();
-
   return (
     <div className="mb-page">
-      <nav className="mb-breadcrumb" aria-label="Breadcrumb">
-        <a href="#" className="mb-breadcrumb-link">
+      <nav
+        className="mb-breadcrumb"
+        aria-label="Breadcrumb"
+      >
+        <button
+          type="button"
+          className="mb-breadcrumb-link"
+          onClick={() =>
+            navigate("/customer/dashboard")
+          }
+        >
           Dashboard
-        </a>
-        <ChevronRight size={14} className="mb-breadcrumb-sep" />
-        <span className="mb-breadcrumb-current">My Bookings</span>
+        </button>
+
+        <ChevronRight
+          size={14}
+          className="mb-breadcrumb-sep"
+        />
+
+        <span className="mb-breadcrumb-current">
+          My Bookings
+        </span>
       </nav>
 
       <header className="mb-header">
@@ -257,43 +552,96 @@ export default function MyBookings({
           <span className="mb-header-icon">
             <Calendar size={26} strokeWidth={2} />
           </span>
+
           <div>
-            <h1 className="mb-title">My Bookings</h1>
-            <p className="mb-subtitle">View and track all your pest control service bookings.</p>
+            <h1 className="mb-title">
+              My Bookings
+            </h1>
+
+            <p className="mb-subtitle">
+              View and track all your pest control
+              service bookings.
+            </p>
           </div>
         </div>
 
-        <button type="button" className="mb-btn mb-btn-primary" onClick={() => navigate("/customer/create-booking")}>
+        <button
+          type="button"
+          className="mb-btn mb-btn-primary"
+          onClick={() =>
+            navigate("/customer/create-booking")
+          }
+        >
           <Plus size={16} strokeWidth={2} />
           Book New Service
         </button>
       </header>
 
+      {successMessage && (
+        <div className="mb-success-message">
+          <CheckCircle2 size={17} />
+          {successMessage}
+        </div>
+      )}
+
+      {requestError && (
+        <div className="mb-error-message">
+          <AlertCircle size={17} />
+          {requestError}
+        </div>
+      )}
+
       <section className="mb-stats-grid">
-        {stats.map(({ label, sub, value, icon: Icon, tone }) => (
-          <div className="mb-stat-card" key={label}>
-            <span className={`mb-stat-icon mb-stat-icon-${tone}`}>
-              <Icon size={22} strokeWidth={2} />
-            </span>
-            <div className="mb-stat-text">
-              <span className="mb-stat-label">{label}</span>
-              <span className="mb-stat-value">{value}</span>
-              <span className="mb-stat-sub">{sub}</span>
+        {stats.map(
+          ({
+            label,
+            sub,
+            value,
+            icon: Icon,
+            tone,
+          }) => (
+            <div
+              className="mb-stat-card"
+              key={label}
+            >
+              <span
+                className={`mb-stat-icon mb-stat-icon-${tone}`}
+              >
+                <Icon size={22} strokeWidth={2} />
+              </span>
+
+              <div className="mb-stat-text">
+                <span className="mb-stat-label">
+                  {label}
+                </span>
+
+                <span className="mb-stat-value">
+                  {value}
+                </span>
+
+                <span className="mb-stat-sub">
+                  {sub}
+                </span>
+              </div>
             </div>
-          </div>
-        ))}
+          )
+        )}
       </section>
 
       <section className="mb-filters-card">
         <div className="mb-search-wrap">
-          <Search size={16} className="mb-search-icon" />
+          <Search
+            size={16}
+            className="mb-search-icon"
+          />
+
           <input
             type="text"
             className="mb-search-input"
             placeholder="Search by booking ID, service or address..."
             value={search}
-            onChange={(e) => {
-              setSearch(e.target.value);
+            onChange={(event) => {
+              setSearch(event.target.value);
               setPage(1);
             }}
           />
@@ -302,44 +650,58 @@ export default function MyBookings({
         <div className="mb-select">
           <select
             value={statusFilter}
-            onChange={(e) => {
-              setStatusFilter(e.target.value);
+            onChange={(event) => {
+              setStatusFilter(event.target.value);
               setPage(1);
             }}
           >
             <option>All Status</option>
-            <option>Upcoming</option>
+            <option>Pending</option>
+            <option>Accepted</option>
+            <option>Assigned</option>
             <option>In Progress</option>
             <option>Completed</option>
             <option>Cancelled</option>
+            <option>Rejected</option>
           </select>
-          <ChevronDown size={16} className="mb-select-caret" />
+
+          <ChevronDown
+            size={16}
+            className="mb-select-caret"
+          />
         </div>
 
         <div className="mb-select">
           <select
             value={serviceFilter}
-            onChange={(e) => {
-              setServiceFilter(e.target.value);
+            onChange={(event) => {
+              setServiceFilter(event.target.value);
               setPage(1);
             }}
           >
             <option>All Services</option>
-            <option>Termite Control</option>
-            <option>Cockroach Control</option>
-            <option>Mosquito Control</option>
-            <option>Rodent Control</option>
-            <option>Bed Bug Treatment</option>
+
+            {serviceOptions.map((service) => (
+              <option
+                key={service}
+                value={service}
+              >
+                {service}
+              </option>
+            ))}
           </select>
-          <ChevronDown size={16} className="mb-select-caret" />
+
+          <ChevronDown
+            size={16}
+            className="mb-select-caret"
+          />
         </div>
 
-        <button type="button" className="mb-date-input">
-          <Calendar size={16} strokeWidth={2} />
-          Select Date Range
-        </button>
-
-        <button type="button" className="mb-btn mb-btn-outline mb-clear-btn" onClick={handleClearFilters}>
+        <button
+          type="button"
+          className="mb-btn mb-btn-outline mb-clear-btn"
+          onClick={handleClearFilters}
+        >
           <Filter size={16} strokeWidth={2} />
           Clear Filters
         </button>
@@ -359,93 +721,208 @@ export default function MyBookings({
                 <th>Actions</th>
               </tr>
             </thead>
+
             <tbody>
-              {pageItems.length === 0 ? (
+              {loading ? (
                 <tr>
-                  <td colSpan={7} className="mb-empty-state">
+                  <td
+                    colSpan={7}
+                    className="mb-empty-state"
+                  >
+                    <LoaderCircle
+                      size={21}
+                      className="mb-loading-icon"
+                    />
+                    Loading bookings...
+                  </td>
+                </tr>
+              ) : pageItems.length === 0 ? (
+                <tr>
+                  <td
+                    colSpan={7}
+                    className="mb-empty-state"
+                  >
                     No bookings match your filters.
                   </td>
                 </tr>
               ) : (
-                pageItems.map((b) => {
-                  const ServiceIcon = serviceIcons[b.service] || Bug;
+                pageItems.map((booking) => {
+                  const ServiceIcon =
+                    serviceIcons[booking.service] ||
+                    Bug;
+
                   return (
-                    <tr key={b.id}>
+                    <tr key={booking.rawId}>
                       <td>
                         <div className="mb-id-cell">
                           <span className="mb-id-icon">
-                            <Calendar size={16} strokeWidth={2} />
+                            <Calendar
+                              size={16}
+                              strokeWidth={2}
+                            />
                           </span>
+
                           <div className="mb-cell-text">
-                            <span className="mb-booking-id">{b.id}</span>
-                            <span className="mb-cell-secondary">{b.bookedOn}</span>
+                            <span className="mb-booking-id">
+                              {booking.id}
+                            </span>
+
+                            <span className="mb-cell-secondary">
+                              {booking.bookedOn}
+                            </span>
                           </div>
                         </div>
                       </td>
+
                       <td>
                         <div className="mb-cell-with-icon">
                           <span className="mb-service-icon">
-                            <ServiceIcon size={18} strokeWidth={1.75} />
+                            <ServiceIcon
+                              size={18}
+                              strokeWidth={1.75}
+                            />
                           </span>
+
                           <div className="mb-cell-text">
-                            <span className="mb-cell-primary">{b.service}</span>
-                            <span className="mb-cell-secondary">{b.serviceArea}</span>
+                            <span className="mb-cell-primary">
+                              {booking.service}
+                            </span>
+
+                            <span className="mb-cell-secondary">
+                              {booking.serviceArea}
+                            </span>
                           </div>
                         </div>
                       </td>
+
                       <td>
                         <div className="mb-cell-with-icon">
-                          <Calendar size={14} strokeWidth={2} className="mb-inline-icon" />
+                          <Calendar
+                            size={14}
+                            strokeWidth={2}
+                            className="mb-inline-icon"
+                          />
+
                           <div className="mb-cell-text">
-                            <span className="mb-cell-primary">{b.date}</span>
+                            <span className="mb-cell-primary">
+                              {booking.date}
+                            </span>
+
                             <span className="mb-cell-secondary">
-                              <Clock size={12} strokeWidth={2} className="mb-inline-icon" />
-                              {b.time}
+                              <Clock
+                                size={12}
+                                strokeWidth={2}
+                                className="mb-inline-icon"
+                              />
+                              {booking.time}
                             </span>
                           </div>
                         </div>
                       </td>
+
                       <td>
                         <div className="mb-status-cell">
-                          <span className={`mb-badge ${statusBadgeClass[b.status]}`}>{b.status}</span>
-                          <span className="mb-status-note">{b.statusNote}</span>
+                          <span
+                            className={`mb-badge ${
+                              statusBadgeClass[
+                                booking.status
+                              ] || "mb-badge-neutral"
+                            }`}
+                          >
+                            {booking.status}
+                          </span>
+
+                          <span className="mb-status-note">
+                            {booking.statusNote}
+                          </span>
+
+                          {booking.rejectionReason && (
+                            <span className="mb-status-note">
+                              {
+                                booking.rejectionReason
+                              }
+                            </span>
+                          )}
                         </div>
                       </td>
+
                       <td>
-                        {b.technician ? (
+                        {booking.technician ? (
                           <div className="mb-technician-cell">
                             <span className="mb-tech-avatar">
-                              <User size={16} strokeWidth={2} />
+                              <User
+                                size={16}
+                                strokeWidth={2}
+                              />
                             </span>
+
                             <div className="mb-cell-text">
-                              <span className="mb-cell-primary">{b.technician}</span>
-                              <span className="mb-cell-secondary">Technician</span>
+                              <span className="mb-cell-primary">
+                                {
+                                  booking.technician
+                                }
+                              </span>
+
+                              <span className="mb-cell-secondary">
+                                Technician
+                              </span>
                             </div>
-                            <button
-                              type="button"
-                              className="mb-call-btn"
-                              onClick={() => handleCall(b.id)}
-                              aria-label={`Call ${b.technician}`}
-                            >
-                              <Phone size={13} strokeWidth={2} />
-                            </button>
+
+                            {booking.technicianPhone && (
+                              <button
+                                type="button"
+                                className="mb-call-btn"
+                                onClick={() =>
+                                  handleCallTechnician(
+                                    booking
+                                  )
+                                }
+                                aria-label={`Call ${booking.technician}`}
+                              >
+                                <Phone
+                                  size={13}
+                                  strokeWidth={2}
+                                />
+                              </button>
+                            )}
                           </div>
                         ) : (
                           <div className="mb-technician-cell mb-technician-empty">
-                            <span className="mb-tech-avatar mb-tech-avatar-empty">—</span>
-                            <span className="mb-cell-secondary">Not Assigned</span>
+                            <span className="mb-tech-avatar mb-tech-avatar-empty">
+                              —
+                            </span>
+
+                            <span className="mb-cell-secondary">
+                              Not Assigned
+                            </span>
                           </div>
                         )}
                       </td>
+
                       <td>
                         <div className="mb-amount-cell">
-                          <span className="mb-amount">₹{b.amount}</span>
-                          <span className={`mb-badge ${paymentBadgeClass[b.paymentStatus]}`}>
-                            {b.paymentStatus}
+                          <span className="mb-amount">
+                            ₹{booking.amount}
+                          </span>
+
+                          <span
+                            className={`mb-badge ${
+                              paymentBadgeClass[
+                                booking.paymentStatus
+                              ] ||
+                              "mb-badge-neutral"
+                            }`}
+                          >
+                            {
+                              booking.paymentStatus
+                            }
                           </span>
                         </div>
                       </td>
-                      <td>{renderActions(b)}</td>
+
+                      <td>
+                        {renderActions(booking)}
+                      </td>
                     </tr>
                   );
                 })
@@ -456,36 +933,69 @@ export default function MyBookings({
 
         <div className="mb-table-footer">
           <span className="mb-showing-text">
-            Showing {pageItems.length === 0 ? 0 : (page - 1) * PAGE_SIZE + 1} to{" "}
-            {(page - 1) * PAGE_SIZE + pageItems.length} of {filtered.length} bookings
+            Showing{" "}
+            {pageItems.length === 0
+              ? 0
+              : (safePage - 1) * PAGE_SIZE + 1}{" "}
+            to{" "}
+            {(safePage - 1) * PAGE_SIZE +
+              pageItems.length}{" "}
+            of {filtered.length} bookings
           </span>
 
           <div className="mb-pagination">
             <button
               type="button"
               className="mb-page-btn mb-page-nav"
-              disabled={page === 1}
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={safePage === 1}
+              onClick={() =>
+                setPage((currentPage) =>
+                  Math.max(1, currentPage - 1)
+                )
+              }
             >
-              <ChevronLeft size={14} strokeWidth={2} />
+              <ChevronLeft
+                size={14}
+                strokeWidth={2}
+              />
             </button>
-            {Array.from({ length: totalPages }).map((_, i) => (
+
+            {Array.from({
+              length: totalPages,
+            }).map((_, index) => (
               <button
-                key={i + 1}
+                key={index + 1}
                 type="button"
-                className={`mb-page-btn ${page === i + 1 ? "mb-page-btn-active" : ""}`}
-                onClick={() => setPage(i + 1)}
+                className={`mb-page-btn ${
+                  safePage === index + 1
+                    ? "mb-page-btn-active"
+                    : ""
+                }`}
+                onClick={() =>
+                  setPage(index + 1)
+                }
               >
-                {i + 1}
+                {index + 1}
               </button>
             ))}
+
             <button
               type="button"
               className="mb-page-btn mb-page-nav"
-              disabled={page === totalPages}
-              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              disabled={safePage === totalPages}
+              onClick={() =>
+                setPage((currentPage) =>
+                  Math.min(
+                    totalPages,
+                    currentPage + 1
+                  )
+                )
+              }
             >
-              <ChevronRight size={14} strokeWidth={2} />
+              <ChevronRight
+                size={14}
+                strokeWidth={2}
+              />
             </button>
           </div>
         </div>
@@ -494,15 +1004,33 @@ export default function MyBookings({
       <section className="mb-help-band">
         <div className="mb-help-left">
           <span className="mb-help-icon">
-            <Headphones size={20} strokeWidth={2} />
+            <Headphones
+              size={20}
+              strokeWidth={2}
+            />
           </span>
+
           <div>
-            <h3 className="mb-help-title">Need help with your booking?</h3>
-            <p className="mb-help-desc">Our support team is here to help you with any booking related queries.</p>
+            <h3 className="mb-help-title">
+              Need help with your booking?
+            </h3>
+
+            <p className="mb-help-desc">
+              Our support team is here to help you
+              with any booking-related queries.
+            </p>
           </div>
         </div>
-        <button type="button" className="mb-btn mb-btn-outline mb-support-btn" onClick={handleContactSupport}>
-          <Headphones size={16} strokeWidth={2} />
+
+        <button
+          type="button"
+          className="mb-btn mb-btn-outline mb-support-btn"
+          onClick={handleContactSupport}
+        >
+          <Headphones
+            size={16}
+            strokeWidth={2}
+          />
           Contact Support
         </button>
       </section>
