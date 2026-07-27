@@ -797,3 +797,48 @@
     justify-content: center;
   }
 }
+
+.mb-success-message,
+.mb-error-message {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 12px 16px;
+  margin-bottom: 18px;
+  border-radius: 9px;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.mb-success-message {
+  color: #15803d;
+  background: rgba(22, 163, 74, 0.08);
+  border: 1px solid rgba(22, 163, 74, 0.2);
+}
+
+.mb-error-message {
+  color: #dc2626;
+  background: rgba(220, 38, 38, 0.08);
+  border: 1px solid rgba(220, 38, 38, 0.2);
+}
+
+.mb-loading-icon {
+  margin-right: 8px;
+  vertical-align: middle;
+  animation: mb-spin 0.8s linear infinite;
+}
+
+.mb-breadcrumb-link {
+  border: none;
+  padding: 0;
+  background: transparent;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+@keyframes mb-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

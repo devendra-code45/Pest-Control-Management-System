@@ -13,6 +13,7 @@ import {
   UserCircle,
 } from "lucide-react";
 
+import { useAuth } from "../../context/AuthContext";
 import "./Navbar.css";
 
 function useBreadcrumb(pathname) {
@@ -48,6 +49,7 @@ export default function CustomerNavbar({
 }) {
   const location = useLocation();
   const navigate = useNavigate();
+  const { auth, logout } = useAuth();
 
   const crumbs = useBreadcrumb(location.pathname);
 
@@ -60,10 +62,23 @@ export default function CustomerNavbar({
   const profileRef = useRef(null);
   const notificationRef = useRef(null);
 
+  const loggedInUser = user || auth?.user || {};
+
   const customerUser = {
-    name: user?.name || "Rahul Sharma",
-    role: "Customer",
-    avatarUrl: user?.avatarUrl || "",
+    name:
+      loggedInUser.fullName ||
+      loggedInUser.name ||
+      "Customer",
+
+    role:
+      loggedInUser.role === "CUSTOMER"
+        ? "Customer"
+        : loggedInUser.role || "Customer",
+
+    avatarUrl:
+      loggedInUser.profileImage ||
+      loggedInUser.avatarUrl ||
+      "",
   };
 
   useEffect(() => {
@@ -98,8 +113,15 @@ export default function CustomerNavbar({
     };
   }, []);
 
+  useEffect(() => {
+    setProfileOpen(false);
+    setNotificationOpen(false);
+  }, [location.pathname]);
+
   const initials = customerUser.name
-    .split(" ")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
     .map((name) => name[0])
     .join("")
     .slice(0, 2)
@@ -107,10 +129,12 @@ export default function CustomerNavbar({
 
   const handleLogout = () => {
     setProfileOpen(false);
+    setNotificationOpen(false);
 
-    if (onLogout) {
+    logout();
+
+    if (typeof onLogout === "function") {
       onLogout();
-      return;
     }
 
     navigate("/login", { replace: true });
@@ -173,6 +197,7 @@ export default function CustomerNavbar({
               setNotificationOpen(
                 (current) => !current
               );
+
               setProfileOpen(false);
             }}
           >
@@ -204,8 +229,7 @@ export default function CustomerNavbar({
                   </strong>
 
                   <p>
-                    Booking BK-2025-0012 has been
-                    confirmed.
+                    Your booking has been confirmed.
                   </p>
 
                   <small>5 minutes ago</small>
@@ -221,8 +245,8 @@ export default function CustomerNavbar({
                   </strong>
 
                   <p>
-                    Amit Patil was assigned to your
-                    booking.
+                    A technician was assigned to
+                    your booking.
                   </p>
 
                   <small>20 minutes ago</small>
@@ -238,8 +262,8 @@ export default function CustomerNavbar({
                   </strong>
 
                   <p>
-                    Your payment of ₹1,299 was
-                    successful.
+                    Your payment was completed
+                    successfully.
                   </p>
 
                   <small>1 hour ago</small>
@@ -262,6 +286,7 @@ export default function CustomerNavbar({
               setProfileOpen(
                 (current) => !current
               );
+
               setNotificationOpen(false);
             }}
             aria-haspopup="true"
@@ -275,7 +300,7 @@ export default function CustomerNavbar({
               />
             ) : (
               <span className="nb-avatar nb-avatar-fallback">
-                {initials}
+                {initials || "CU"}
               </span>
             )}
 
