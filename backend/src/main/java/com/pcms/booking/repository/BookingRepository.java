@@ -13,11 +13,21 @@ import com.pcms.user.entity.User;
 public interface BookingRepository
         extends JpaRepository<Booking, Long> {
 
-    List<Booking> findByCustomer(User customer);
+    List<Booking> findByCustomer(
+            User customer
+    );
 
-    List<Booking> findByStatus(BookingStatus status);
+    List<Booking> findByStatus(
+            BookingStatus status
+    );
 
     List<Booking> findByCustomerOrderByCreatedAtDesc(
             User customer
     );
+
+    List<Booking> findByStatusOrderByCreatedAtDesc(
+            BookingStatus status
+    );
+
+    List<Booking> findAllByOrderByCreatedAtDesc();
 }

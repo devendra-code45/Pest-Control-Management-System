@@ -61,10 +61,13 @@ public class SecurityConfig {
                 .authenticationProvider(authenticationProvider())
 
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(
-                                "/api/users/register",
-                                "/api/users/login"
-                        ).permitAll()
+                		.requestMatchers(
+                		        "/api/users/register",
+                		        "/api/users/login",
+                		        "/api/users/forgot-password",
+                		        "/api/users/verify-otp",
+                		        "/api/users/reset-password"
+                		).permitAll()
 
                         .requestMatchers("/api/admin/**")
                         .hasRole("ADMIN")

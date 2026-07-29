@@ -613,3 +613,90 @@ html, body, #root {
     font-size: 13px;
   }
 }
+/* =========================================================
+   LOGIN BUTTON FIX
+   Keep this at the bottom of Login.css
+   ========================================================= */
+
+.login-form .btn {
+  width: 100%;
+  min-height: 52px;
+  padding: 0 20px;
+
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+
+  border-radius: 10px;
+  font-family: "Poppins", sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  text-decoration: none;
+
+  opacity: 1 !important;
+  visibility: visible !important;
+
+  cursor: pointer;
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.2s ease;
+}
+
+/* Main Login button */
+.login-form .btn-primary {
+  color: #ffffff !important;
+  background-color: #15803d !important;
+  border: 1px solid #15803d !important;
+}
+
+.login-form .btn-primary:hover:not(:disabled) {
+  color: #ffffff !important;
+  background-color: #166534 !important;
+  border-color: #166534 !important;
+  transform: translateY(-1px);
+}
+
+.login-form .btn-primary:disabled {
+  color: #ffffff !important;
+  background-color: #86b995 !important;
+  border-color: #86b995 !important;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Icon inside Login button */
+.login-form .btn svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+/* Google Login button */
+.login-form .google-login-btn {
+  width: 100%;
+  min-height: 52px;
+
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+
+  color: #111827 !important;
+  background-color: #d1fae5 !important;
+  border: 1px solid #bbf7d0 !important;
+  border-radius: 10px;
+
+  font-family: "Poppins", sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+
+  opacity: 1 !important;
+  visibility: visible !important;
+  cursor: pointer;
+}
+
+.login-form .google-login-btn:hover {
+  background-color: #bbf7d0 !important;
+}

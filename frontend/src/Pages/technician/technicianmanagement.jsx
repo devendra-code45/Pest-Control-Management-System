@@ -1,11 +1,13 @@
-import React, { useState } from "react";
-import {useNavigate} from 'react-router-dom';
+import React, {
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Home,
   ChevronRight,
   Plus,
-  Download,
-  Filter as FilterIcon,
   Users,
   CheckCircle,
   Truck,
@@ -18,238 +20,852 @@ import {
   Clock,
   Eye,
   Pencil,
-  CalendarClock,
-  MoreVertical,
   ChevronLeft,
+  RefreshCw,
+  Ban,
+  UserCheck,
+  LoaderCircle,
+  AlertCircle,
 } from "lucide-react";
+import api from "../../api/axios";
 import "./technicianmanagement.css";
 
-/* ---------------- Mock Data ---------------- */
-const STAT_CARDS = [
-  {
-    icon: Users,
-    label: "Total Technicians",
-    value: "186",
-    note: "+12 this month",
-    tone: "primary",
-    positive: true,
-  },
-  {
-    icon: CheckCircle,
-    label: "Available",
-    value: "102",
-    note: "Ready for assignment",
-    tone: "success",
-  },
-  {
-    icon: Truck,
-    label: "On Service",
-    value: "58",
-    note: "Currently working",
-    tone: "primary",
-  },
-  {
-    icon: Calendar,
-    label: "Scheduled Today",
-    value: "74",
-    note: "Today's visits",
-    tone: "primary",
-  },
-  {
-    icon: AlertTriangle,
-    label: "Emergency Assigned",
-    value: "8",
-    note: "High priority",
-    tone: "danger",
-  },
-];
+const PAGE_SIZE = 10;
 
-const TECHNICIANS = [
-  {
-    id: "EMP-1004",
-    name: "Rahul Sharma",
-    role: "Senior Technician",
-    phone: "9876543210",
-    region: "North Zone",
-    skills: ["General Pest", "Termite"],
-    experience: "5 Years",
-    jobs: "6 Jobs",
-    availability: "Available",
-    status: "Active",
-    lastActivity: "10 min ago",
-  },
-  {
-    id: "EMP-1007",
-    name: "Amit Verma",
-    role: "Field Technician",
-    phone: "9876543211",
-    region: "West Zone",
-    skills: ["Rodent", "General Pest"],
-    experience: "3 Years",
-    jobs: "4 Jobs",
-    availability: "Busy",
-    status: "Active",
-    lastActivity: "25 min ago",
-  },
-  {
-    id: "EMP-1012",
-    name: "Sunil Patil",
-    role: "Pest Control Tech",
-    phone: "9876543212",
-    region: "South Zone",
-    skills: ["Rodent", "Bed Bug"],
-    experience: "4 Years",
-    jobs: "5 Jobs",
-    availability: "On Service",
-    status: "Active",
-    lastActivity: "5 min ago",
-  },
-  {
-    id: "EMP-1016",
-    name: "Neha Gupta",
-    role: "Junior Technician",
-    phone: "9876543213",
-    region: "East Zone",
-    skills: ["General Pest", "Cockroach"],
-    experience: "2 Years",
-    jobs: "3 Jobs",
-    availability: "Available",
-    status: "Training",
-    lastActivity: "1 hour ago",
-  },
-  {
-    id: "EMP-1021",
-    name: "Rakesh Singh",
-    role: "Senior Technician",
-    phone: "9876543214",
-    region: "Central Zone",
-    skills: ["Termite", "Wood Pest"],
-    experience: "6 Years",
-    jobs: "7 Jobs",
-    availability: "Busy",
-    status: "Active",
-    lastActivity: "15 min ago",
-  },
+const SKILL_TONES = [
+  "green",
+  "amber",
+  "slate",
+  "blue",
+  "violet",
 ];
-
-const SKILL_TONE = {
-  "General Pest": "green",
-  Termite: "amber",
-  Rodent: "slate",
-  "Bed Bug": "blue",
-  Cockroach: "violet",
-  "Wood Pest": "amber",
-};
 
 const AVAILABILITY_TONE = {
   Available: "success",
   Busy: "warning",
-  "On Service": "danger",
+  Inactive: "danger",
 };
 
 const STATUS_TONE = {
   Active: "success",
-  Training: "info",
+  Inactive: "danger",
+};
+
+const safeText = (value, fallback = "—") => {
+  const text = String(value ?? "").trim();
+  return text || fallback;
 };
 
 const initials = (name) =>
-  name
+  String(name || "")
     .split(" ")
-    .map((p) => p[0])
+    .filter(Boolean)
+    .map((part) => part[0])
     .join("")
     .slice(0, 2)
-    .toUpperCase();
+    .toUpperCase() || "NA";
 
-/* ---------------- Small Reusable Bits ---------------- */
-// Compact inline filter: label + select live inside one small bordered
-// pill so the whole toolbar reads as a single row instead of stacked
-// label/control pairs.
-const FilterSelect = ({ label, options }) => (
+const splitSkills = (value) => {
+  const skills = String(value || "")
+    .split(/[,|/]/)
+    .map((skill) => skill.trim())
+    .filter(Boolean);
+
+  return skills.length > 0
+    ? skills
+    : ["General Pest"];
+};
+
+const normalizeBackendStatus = (technician) => {
+  if (technician?.active === false) {
+    return "INACTIVE";
+  }
+
+  return String(
+    technician?.status || "AVAILABLE"
+  ).toUpperCase();
+};
+
+const getAvailability = (technician) => {
+  const status = normalizeBackendStatus(technician);
+
+  if (status === "BUSY") return "Busy";
+  if (status === "INACTIVE") return "Inactive";
+
+  return "Available";
+};
+
+const getAccountStatus = (technician) =>
+  normalizeBackendStatus(technician) === "INACTIVE"
+    ? "Inactive"
+    : "Active";
+
+const getRelativeTime = (value) => {
+  if (!value) return "Not recorded";
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return "Not recorded";
+  }
+
+  const difference =
+    Date.now() - date.getTime();
+
+  const minutes = Math.max(
+    0,
+    Math.floor(difference / 60000)
+  );
+
+  if (minutes < 1) return "Just now";
+  if (minutes < 60) return `${minutes} min ago`;
+
+  const hours = Math.floor(minutes / 60);
+
+  if (hours < 24) {
+    return `${hours} hour${hours === 1 ? "" : "s"} ago`;
+  }
+
+  const days = Math.floor(hours / 24);
+
+  return `${days} day${days === 1 ? "" : "s"} ago`;
+};
+
+const isToday = (dateValue) => {
+  if (!dateValue) return false;
+
+  const date = new Date(`${dateValue}T00:00:00`);
+
+  if (Number.isNaN(date.getTime())) {
+    return false;
+  }
+
+  const today = new Date();
+
+  return (
+    date.getFullYear() === today.getFullYear() &&
+    date.getMonth() === today.getMonth() &&
+    date.getDate() === today.getDate()
+  );
+};
+
+const getErrorMessage = (error) => {
+  const data = error.response?.data;
+
+  if (
+    typeof data === "string" &&
+    data.trim()
+  ) {
+    return data;
+  }
+
+  if (data?.message) return data.message;
+  if (data?.error) return data.error;
+
+  if (!error.response) {
+    return "Unable to connect to the backend.";
+  }
+
+  return "Unable to load technicians.";
+};
+
+const FilterSelect = ({
+  label,
+  value,
+  options,
+  onChange,
+}) => (
   <div className="tm-filter">
-    <span className="tm-filter-label">{label}</span>
+    <span className="tm-filter-label">
+      {label}
+    </span>
+
     <div className="tm-select-wrap">
-      <select className="tm-select" defaultValue={options[0]} title={label}>
-        {options.map((opt) => (
-          <option key={opt} value={opt}>
-            {opt}
+      <select
+        className="tm-select"
+        value={value}
+        title={label}
+        onChange={(event) =>
+          onChange(event.target.value)
+        }
+      >
+        {options.map((option) => (
+          <option
+            key={option}
+            value={option}
+          >
+            {option}
           </option>
         ))}
       </select>
-      <ChevronDown size={13} className="tm-select-caret" />
+
+      <ChevronDown
+        size={13}
+        className="tm-select-caret"
+      />
     </div>
   </div>
 );
 
-const Badge = ({ tone, children, dot }) => (
-  <span className={`tm-badge tm-badge-${tone}`}>
-    {dot && <span className="tm-badge-dot" />}
+const Badge = ({
+  tone,
+  children,
+  dot,
+}) => (
+  <span
+    className={`tm-badge tm-badge-${tone}`}
+  >
+    {dot && (
+      <span className="tm-badge-dot" />
+    )}
     {children}
   </span>
 );
 
 export default function TechniciansManagement() {
-  const [selected, setSelected] = useState([]);
-  const [selectAll, setSelectAll] = useState(false);
   const navigate = useNavigate();
 
-  const toggleAll = () => {
-    if (selectAll) {
-      setSelected([]);
-    } else {
-      setSelected(TECHNICIANS.map((t) => t.id));
+  const [technicians, setTechnicians] =
+    useState([]);
+  const [bookings, setBookings] =
+    useState([]);
+
+  const [selected, setSelected] =
+    useState([]);
+  const [selectAll, setSelectAll] =
+    useState(false);
+
+  const [search, setSearch] =
+    useState("");
+  const [roleFilter, setRoleFilter] =
+    useState("All Roles");
+  const [regionFilter, setRegionFilter] =
+    useState("All Regions");
+  const [
+    availabilityFilter,
+    setAvailabilityFilter,
+  ] = useState("All");
+  const [statusFilter, setStatusFilter] =
+    useState("All Status");
+  const [skillFilter, setSkillFilter] =
+    useState("All Skills");
+
+  const [page, setPage] = useState(1);
+  const [loading, setLoading] =
+    useState(true);
+  const [updatingId, setUpdatingId] =
+    useState(null);
+  const [error, setError] =
+    useState("");
+
+  const loadData = async () => {
+    try {
+      setLoading(true);
+      setError("");
+
+      const technicianResponse =
+        await api.get(
+          "/admin/technicians"
+        );
+
+      const technicianData =
+        Array.isArray(
+          technicianResponse.data
+        )
+          ? technicianResponse.data
+          : [];
+
+      setTechnicians(technicianData);
+
+      try {
+        const bookingResponse =
+          await api.get(
+            "/admin/bookings"
+          );
+
+        setBookings(
+          Array.isArray(
+            bookingResponse.data
+          )
+            ? bookingResponse.data
+            : []
+        );
+      } catch {
+        setBookings([]);
+      }
+    } catch (requestError) {
+      setTechnicians([]);
+      setBookings([]);
+      setError(
+        getErrorMessage(requestError)
+      );
+    } finally {
+      setLoading(false);
     }
-    setSelectAll(!selectAll);
+  };
+
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const mappedTechnicians =
+    useMemo(() => {
+      return technicians.map(
+        (technician) => {
+          const technicianId =
+            Number(technician.id);
+
+          const technicianBookings =
+            bookings.filter(
+              (booking) =>
+                Number(
+                  booking.technicianId
+                ) === technicianId
+            );
+
+          const todayJobs =
+            technicianBookings.filter(
+              (booking) =>
+                isToday(
+                  booking.preferredDate
+                ) &&
+                ![
+                  "REJECTED",
+                  "CANCELLED",
+                ].includes(
+                  booking.status
+                )
+            ).length;
+
+          const role =
+            safeText(
+              technician.designation ||
+                technician.role ||
+                technician.specialization,
+              "Pest Control Technician"
+            );
+
+          const region =
+            safeText(
+              technician.region ||
+                technician.city ||
+                technician.address,
+              "Not specified"
+            );
+
+          return {
+            rawId: technician.id,
+            id: `TECH-${technician.id}`,
+            name: safeText(
+              technician.fullName,
+              "Unnamed Technician"
+            ),
+            role,
+            email: safeText(
+              technician.email
+            ),
+            phone: safeText(
+              technician.phone
+            ),
+            profilePhoto:
+              technician.profilePhoto ||
+              null,
+            region,
+            skills: splitSkills(
+              technician.specialization
+            ),
+            experience: `${
+              Number(
+                technician.experienceYears ||
+                  0
+              )
+            } Years`,
+            jobs: `${todayJobs} ${
+              todayJobs === 1
+                ? "Job"
+                : "Jobs"
+            }`,
+            availability:
+              getAvailability(
+                technician
+              ),
+            status:
+              getAccountStatus(
+                technician
+              ),
+            backendStatus:
+              normalizeBackendStatus(
+                technician
+              ),
+            lastActivity:
+              getRelativeTime(
+                technician.updatedAt ||
+                  technician.createdAt
+              ),
+          };
+        }
+      );
+    }, [technicians, bookings]);
+
+  const roleOptions = useMemo(
+    () => [
+      "All Roles",
+      ...new Set(
+        mappedTechnicians.map(
+          (technician) =>
+            technician.role
+        )
+      ),
+    ],
+    [mappedTechnicians]
+  );
+
+  const regionOptions = useMemo(
+    () => [
+      "All Regions",
+      ...new Set(
+        mappedTechnicians.map(
+          (technician) =>
+            technician.region
+        )
+      ),
+    ],
+    [mappedTechnicians]
+  );
+
+  const skillOptions = useMemo(
+    () => [
+      "All Skills",
+      ...new Set(
+        mappedTechnicians.flatMap(
+          (technician) =>
+            technician.skills
+        )
+      ),
+    ],
+    [mappedTechnicians]
+  );
+
+  const filteredTechnicians =
+    useMemo(() => {
+      const query = search
+        .trim()
+        .toLowerCase();
+
+      return mappedTechnicians.filter(
+        (technician) => {
+          const matchesSearch =
+            !query ||
+            technician.id
+              .toLowerCase()
+              .includes(query) ||
+            technician.name
+              .toLowerCase()
+              .includes(query) ||
+            technician.phone
+              .toLowerCase()
+              .includes(query) ||
+            technician.email
+              .toLowerCase()
+              .includes(query);
+
+          const matchesRole =
+            roleFilter ===
+              "All Roles" ||
+            technician.role ===
+              roleFilter;
+
+          const matchesRegion =
+            regionFilter ===
+              "All Regions" ||
+            technician.region ===
+              regionFilter;
+
+          const matchesAvailability =
+            availabilityFilter ===
+              "All" ||
+            technician.availability ===
+              availabilityFilter;
+
+          const matchesStatus =
+            statusFilter ===
+              "All Status" ||
+            technician.status ===
+              statusFilter;
+
+          const matchesSkill =
+            skillFilter ===
+              "All Skills" ||
+            technician.skills.includes(
+              skillFilter
+            );
+
+          return (
+            matchesSearch &&
+            matchesRole &&
+            matchesRegion &&
+            matchesAvailability &&
+            matchesStatus &&
+            matchesSkill
+          );
+        }
+      );
+    }, [
+      mappedTechnicians,
+      search,
+      roleFilter,
+      regionFilter,
+      availabilityFilter,
+      statusFilter,
+      skillFilter,
+    ]);
+
+  const totalPages = Math.max(
+    1,
+    Math.ceil(
+      filteredTechnicians.length /
+        PAGE_SIZE
+    )
+  );
+
+  const safePage = Math.min(
+    page,
+    totalPages
+  );
+
+  const pageItems =
+    filteredTechnicians.slice(
+      (safePage - 1) *
+        PAGE_SIZE,
+      safePage * PAGE_SIZE
+    );
+
+  useEffect(() => {
+    if (page > totalPages) {
+      setPage(totalPages);
+    }
+  }, [page, totalPages]);
+
+  const stats = useMemo(() => {
+    const available =
+      mappedTechnicians.filter(
+        (technician) =>
+          technician.availability ===
+          "Available"
+      ).length;
+
+    const busy =
+      mappedTechnicians.filter(
+        (technician) =>
+          technician.availability ===
+          "Busy"
+      ).length;
+
+    const inactive =
+      mappedTechnicians.filter(
+        (technician) =>
+          technician.status ===
+          "Inactive"
+      ).length;
+
+    const todayJobs =
+      bookings.filter(
+        (booking) =>
+          isToday(
+            booking.preferredDate
+          ) &&
+          ![
+            "REJECTED",
+            "CANCELLED",
+          ].includes(
+            booking.status
+          )
+      ).length;
+
+    return [
+      {
+        icon: Users,
+        label: "Total Technicians",
+        value:
+          mappedTechnicians.length,
+        note: "Registered technicians",
+        tone: "primary",
+      },
+      {
+        icon: CheckCircle,
+        label: "Available",
+        value: available,
+        note: "Ready for assignment",
+        tone: "success",
+      },
+      {
+        icon: Truck,
+        label: "On Service",
+        value: busy,
+        note: "Currently busy",
+        tone: "primary",
+      },
+      {
+        icon: Calendar,
+        label: "Scheduled Today",
+        value: todayJobs,
+        note: "Today's bookings",
+        tone: "primary",
+      },
+      {
+        icon: AlertTriangle,
+        label: "Inactive",
+        value: inactive,
+        note: "Cannot be assigned",
+        tone: "danger",
+      },
+    ];
+  }, [
+    mappedTechnicians,
+    bookings,
+  ]);
+
+  const visibleIds = pageItems.map(
+    (technician) =>
+      technician.rawId
+  );
+
+  const toggleAll = () => {
+    const allVisibleSelected =
+      visibleIds.length > 0 &&
+      visibleIds.every((id) =>
+        selected.includes(id)
+      );
+
+    if (allVisibleSelected) {
+      setSelected((previous) =>
+        previous.filter(
+          (id) =>
+            !visibleIds.includes(id)
+        )
+      );
+      setSelectAll(false);
+    } else {
+      setSelected((previous) => [
+        ...new Set([
+          ...previous,
+          ...visibleIds,
+        ]),
+      ]);
+      setSelectAll(true);
+    }
   };
 
   const toggleRow = (id) => {
-    setSelected((prev) =>
-      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    setSelected((previous) =>
+      previous.includes(id)
+        ? previous.filter(
+            (selectedId) =>
+              selectedId !== id
+          )
+        : [...previous, id]
     );
   };
 
+  const resetFilters = () => {
+    setSearch("");
+    setRoleFilter("All Roles");
+    setRegionFilter("All Regions");
+    setAvailabilityFilter("All");
+    setStatusFilter("All Status");
+    setSkillFilter("All Skills");
+    setPage(1);
+  };
+
+  const openProfile = (
+    technicianId
+  ) => {
+    sessionStorage.setItem(
+      "pcmsTechnicianId",
+      String(technicianId)
+    );
+
+    navigate(
+      "/admin/technicians/profile/",
+      {
+        state: {
+          technicianId,
+        },
+      }
+    );
+  };
+
+  const openEdit = (
+    technicianId
+  ) => {
+    sessionStorage.setItem(
+      "pcmsTechnicianId",
+      String(technicianId)
+    );
+
+    navigate(
+      "/admin/technicians/edit/",
+      {
+        state: {
+          technicianId,
+        },
+      }
+    );
+  };
+
+  const deactivateTechnician =
+    async (technician) => {
+      const confirmed =
+        window.confirm(
+          `Deactivate ${technician.name}?`
+        );
+
+      if (!confirmed) return;
+
+      try {
+        setUpdatingId(
+          technician.rawId
+        );
+        setError("");
+
+        await api.delete(
+          `/admin/technicians/${technician.rawId}`
+        );
+
+        await loadData();
+      } catch (requestError) {
+        setError(
+          getErrorMessage(
+            requestError
+          )
+        );
+      } finally {
+        setUpdatingId(null);
+      }
+    };
+
+  const activateTechnician =
+    async (technician) => {
+      try {
+        setUpdatingId(
+          technician.rawId
+        );
+        setError("");
+
+        await api.put(
+          `/admin/technicians/${technician.rawId}/activate`
+        );
+
+        await loadData();
+      } catch (requestError) {
+        setError(
+          getErrorMessage(
+            requestError
+          )
+        );
+      } finally {
+        setUpdatingId(null);
+      }
+    };
+
+  const firstRecord =
+    filteredTechnicians.length === 0
+      ? 0
+      : (safePage - 1) *
+          PAGE_SIZE +
+        1;
+
+  const lastRecord = Math.min(
+    safePage * PAGE_SIZE,
+    filteredTechnicians.length
+  );
+
   return (
     <div className="tm-page">
-      {/* Breadcrumb */}
       <div className="tm-breadcrumb">
         <Home size={14} />
         <span>Home</span>
-        <ChevronRight size={13} className="tm-crumb-sep" />
+        <ChevronRight
+          size={13}
+          className="tm-crumb-sep"
+        />
         <span>Technicians</span>
-        <ChevronRight size={13} className="tm-crumb-sep" />
-        <span className="tm-crumb-active">Management</span>
+        <ChevronRight
+          size={13}
+          className="tm-crumb-sep"
+        />
+        <span className="tm-crumb-active">
+          Management
+        </span>
       </div>
 
-      {/* Page Header */}
       <div className="tm-page-header">
         <div>
-          <h1 className="tm-title">Technicians Management</h1>
+          <h1 className="tm-title">
+            Technicians Management
+          </h1>
+
           <p className="tm-subtitle">
-            Manage technician profiles, assignments and schedules.
+            Manage technician profiles,
+            availability and assignments.
           </p>
         </div>
+
         <div className="tm-header-actions">
-          <button type="button" className="tm-btn tm-btn-primary" onClick={() => navigate("/admin/technicians/add")}>
+          <button
+            type="button"
+            className="tm-btn tm-btn-outline"
+            onClick={loadData}
+            disabled={loading}
+          >
+            <RefreshCw size={16} />
+            Refresh
+          </button>
+
+          <button
+            type="button"
+            className="tm-btn tm-btn-primary"
+            onClick={() =>
+              navigate(
+                "/admin/technicians/add"
+              )
+            }
+          >
             <Plus size={16} />
             Add Technician
           </button>
         </div>
       </div>
 
-      {/* Statistics Cards */}
+      {error && (
+        <div className="tm-error-message">
+          <AlertCircle size={17} />
+          {error}
+        </div>
+      )}
+
       <div className="tm-stats-grid">
-        {STAT_CARDS.map((card) => (
-          <div className="tm-stat-card" key={card.label}>
-            <span className={`tm-stat-icon tm-tone-${card.tone}`}>
+        {stats.map((card) => (
+          <div
+            className="tm-stat-card"
+            key={card.label}
+          >
+            <span
+              className={`tm-stat-icon tm-tone-${card.tone}`}
+            >
               <card.icon size={19} />
             </span>
+
             <div className="tm-stat-body">
-              <span className="tm-stat-label">{card.label}</span>
-              <span className="tm-stat-value">{card.value}</span>
-              <span
-                className={`tm-stat-note ${
-                  card.positive ? "is-positive" : ""
-                }`}
-              >
+              <span className="tm-stat-label">
+                {card.label}
+              </span>
+
+              <span className="tm-stat-value">
+                {card.value}
+              </span>
+
+              <span className="tm-stat-note">
                 {card.note}
               </span>
             </div>
@@ -257,36 +873,101 @@ export default function TechniciansManagement() {
         ))}
       </div>
 
-      {/* Search + Filters — single compact row */}
       <div className="tm-toolbar">
         <div className="tm-search">
-          <Search size={15} className="tm-search-icon" />
+          <Search
+            size={15}
+            className="tm-search-icon"
+          />
+
           <input
             type="text"
             className="tm-search-input"
             placeholder="Search name, ID, phone..."
+            value={search}
+            onChange={(event) => {
+              setSearch(
+                event.target.value
+              );
+              setPage(1);
+            }}
           />
         </div>
 
         <div className="tm-toolbar-divider" />
 
-        <FilterSelect label="Dept" options={["All Departments", "Residential", "Commercial", "Termite Control"]} />
-        <FilterSelect label="Region" options={["All Regions", "North Zone", "South Zone", "East Zone", "West Zone", "Central Zone"]} />
-        <FilterSelect label="Availability" options={["All", "Available", "Busy", "On Service"]} />
-        <FilterSelect label="Status" options={["All Status", "Active", "Training", "Inactive"]} />
-        <FilterSelect label="Skill" options={["All Skills", "General Pest", "Termite", "Rodent", "Bed Bug"]} />
+        <FilterSelect
+          label="Role"
+          value={roleFilter}
+          options={roleOptions}
+          onChange={(value) => {
+            setRoleFilter(value);
+            setPage(1);
+          }}
+        />
+
+        <FilterSelect
+          label="Region"
+          value={regionFilter}
+          options={regionOptions}
+          onChange={(value) => {
+            setRegionFilter(value);
+            setPage(1);
+          }}
+        />
+
+        <FilterSelect
+          label="Availability"
+          value={availabilityFilter}
+          options={[
+            "All",
+            "Available",
+            "Busy",
+            "Inactive",
+          ]}
+          onChange={(value) => {
+            setAvailabilityFilter(
+              value
+            );
+            setPage(1);
+          }}
+        />
+
+        <FilterSelect
+          label="Status"
+          value={statusFilter}
+          options={[
+            "All Status",
+            "Active",
+            "Inactive",
+          ]}
+          onChange={(value) => {
+            setStatusFilter(value);
+            setPage(1);
+          }}
+        />
+
+        <FilterSelect
+          label="Skill"
+          value={skillFilter}
+          options={skillOptions}
+          onChange={(value) => {
+            setSkillFilter(value);
+            setPage(1);
+          }}
+        />
 
         <div className="tm-toolbar-actions">
-          <button type="button" className="tm-btn tm-btn-primary tm-btn-sm">
-            Search
-          </button>
-          <button type="button" className="tm-btn tm-btn-outline tm-btn-sm">
+          <button
+            type="button"
+            className="tm-btn tm-btn-outline tm-btn-sm"
+            onClick={resetFilters}
+          >
             Reset
           </button>
         </div>
       </div>
 
-      {/* Table Card */}
       <div className="tm-table-card">
         <div className="tm-table-header">
           <h3>Technicians List</h3>
@@ -299,7 +980,16 @@ export default function TechniciansManagement() {
                 <th className="tm-col-check">
                   <input
                     type="checkbox"
-                    checked={selectAll}
+                    checked={
+                      pageItems.length >
+                        0 &&
+                      pageItems.every(
+                        (technician) =>
+                          selected.includes(
+                            technician.rawId
+                          )
+                      )
+                    }
                     onChange={toggleAll}
                   />
                 </th>
@@ -313,117 +1003,328 @@ export default function TechniciansManagement() {
                 <th>Availability</th>
                 <th>Status</th>
                 <th>Last Activity</th>
-                <th className="tm-col-actions">Actions</th>
+                <th className="tm-col-actions">
+                  Actions
+                </th>
               </tr>
             </thead>
+
             <tbody>
-              {TECHNICIANS.map((tech) => (
-                <tr key={tech.id}>
-                  <td>
-                    <input
-                      type="checkbox"
-                      checked={selected.includes(tech.id)}
-                      onChange={() => toggleRow(tech.id)}
+              {loading ? (
+                <tr>
+                  <td
+                    colSpan={12}
+                    className="tm-empty-row"
+                  >
+                    <LoaderCircle
+                      size={20}
+                      className="tm-loading-icon"
                     />
-                  </td>
-                  <td>
-                    <div className="tm-tech-cell">
-                      <span className="tm-avatar">{initials(tech.name)}</span>
-                      <div className="tm-tech-info">
-                        <span className="tm-tech-name">{tech.name}</span>
-                        <span className="tm-tech-role">{tech.role}</span>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="tm-muted">{tech.id}</td>
-                  <td>
-                    <span className="tm-cell-icon-text">
-                      <Phone size={14} />
-                      {tech.phone}
-                    </span>
-                  </td>
-                  <td>
-                    <span className="tm-cell-icon-text">
-                      <MapPin size={14} />
-                      {tech.region}
-                    </span>
-                  </td>
-                  <td>
-                    <div className="tm-skill-list">
-                      {tech.skills.map((skill) => (
-                        <span
-                          key={skill}
-                          className={`tm-skill-chip tm-skill-${
-                            SKILL_TONE[skill] || "slate"
-                          }`}
-                        >
-                          {skill}
-                        </span>
-                      ))}
-                    </div>
-                  </td>
-                  <td className="tm-muted">{tech.experience}</td>
-                  <td className="tm-muted">{tech.jobs}</td>
-                  <td>
-                    <Badge tone={AVAILABILITY_TONE[tech.availability]} dot>
-                      {tech.availability}
-                    </Badge>
-                  </td>
-                  <td>
-                    <Badge tone={STATUS_TONE[tech.status] || "success"}>
-                      {tech.status}
-                    </Badge>
-                  </td>
-                  <td>
-                    <span className="tm-cell-icon-text tm-muted">
-                      <Clock size={14} />
-                      {tech.lastActivity}
-                    </span>
-                  </td>
-                  <td>
-                    <div className="tm-actions">
-                      <button type="button" className="tm-icon-btn" title="View" onClick={() => navigate("/admin/technicians/profile/")}>
-                        <Eye size={16} />
-                      </button>
-                      <button type="button" className="tm-icon-btn" title="Edit" onClick={() => navigate("/admin/technicians/edit/")}>
-                        <Pencil size={16} />
-                      </button>
-                    </div>
+                    Loading technicians...
                   </td>
                 </tr>
-              ))}
+              ) : pageItems.length === 0 ? (
+                <tr>
+                  <td
+                    colSpan={12}
+                    className="tm-empty-row"
+                  >
+                    No technicians found.
+                  </td>
+                </tr>
+              ) : (
+                pageItems.map(
+                  (technician) => (
+                    <tr
+                      key={
+                        technician.rawId
+                      }
+                    >
+                      <td>
+                        <input
+                          type="checkbox"
+                          checked={selected.includes(
+                            technician.rawId
+                          )}
+                          onChange={() =>
+                            toggleRow(
+                              technician.rawId
+                            )
+                          }
+                        />
+                      </td>
+
+                      <td>
+                        <div className="tm-tech-cell">
+                          <span className="tm-avatar">
+                            {technician.profilePhoto ? (
+                              <img
+                                src={technician.profilePhoto}
+                                alt={technician.name}
+                                className="tm-avatar-image"
+                              />
+                            ) : (
+                              initials(technician.name)
+                            )}
+                          </span>
+
+                          <div className="tm-tech-info">
+                            <span className="tm-tech-name">
+                              {
+                                technician.name
+                              }
+                            </span>
+
+                            <span className="tm-tech-role">
+                              {
+                                technician.role
+                              }
+                            </span>
+                          </div>
+                        </div>
+                      </td>
+
+                      <td className="tm-muted">
+                        {technician.id}
+                      </td>
+
+                      <td>
+                        <span className="tm-cell-icon-text">
+                          <Phone size={14} />
+                          {
+                            technician.phone
+                          }
+                        </span>
+                      </td>
+
+                      <td>
+                        <span className="tm-cell-icon-text">
+                          <MapPin size={14} />
+                          {
+                            technician.region
+                          }
+                        </span>
+                      </td>
+
+                      <td>
+                        <div className="tm-skill-list">
+                          {technician.skills.map(
+                            (
+                              skill,
+                              index
+                            ) => (
+                              <span
+                                key={`${technician.rawId}-${skill}`}
+                                className={`tm-skill-chip tm-skill-${
+                                  SKILL_TONES[
+                                    index %
+                                      SKILL_TONES.length
+                                  ]
+                                }`}
+                              >
+                                {skill}
+                              </span>
+                            )
+                          )}
+                        </div>
+                      </td>
+
+                      <td className="tm-muted">
+                        {
+                          technician.experience
+                        }
+                      </td>
+
+                      <td className="tm-muted">
+                        {technician.jobs}
+                      </td>
+
+                      <td>
+                        <Badge
+                          tone={
+                            AVAILABILITY_TONE[
+                              technician.availability
+                            ]
+                          }
+                          dot
+                        >
+                          {
+                            technician.availability
+                          }
+                        </Badge>
+                      </td>
+
+                      <td>
+                        <Badge
+                          tone={
+                            STATUS_TONE[
+                              technician.status
+                            ]
+                          }
+                        >
+                          {
+                            technician.status
+                          }
+                        </Badge>
+                      </td>
+
+                      <td>
+                        <span className="tm-cell-icon-text tm-muted">
+                          <Clock size={14} />
+                          {
+                            technician.lastActivity
+                          }
+                        </span>
+                      </td>
+
+                      <td>
+                        <div className="tm-actions">
+                          <button
+                            type="button"
+                            className="tm-icon-btn"
+                            title="View"
+                            onClick={() =>
+                              openProfile(
+                                technician.rawId
+                              )
+                            }
+                          >
+                            <Eye size={16} />
+                          </button>
+
+                          <button
+                            type="button"
+                            className="tm-icon-btn"
+                            title="Edit"
+                            onClick={() =>
+                              openEdit(
+                                technician.rawId
+                              )
+                            }
+                          >
+                            <Pencil
+                              size={16}
+                            />
+                          </button>
+
+                          {technician.status ===
+                          "Inactive" ? (
+                            <button
+                              type="button"
+                              className="tm-icon-btn tm-icon-btn-success"
+                              title="Activate"
+                              disabled={
+                                updatingId ===
+                                technician.rawId
+                              }
+                              onClick={() =>
+                                activateTechnician(
+                                  technician
+                                )
+                              }
+                            >
+                              <UserCheck
+                                size={16}
+                              />
+                            </button>
+                          ) : (
+                            <button
+                              type="button"
+                              className="tm-icon-btn tm-icon-btn-danger"
+                              title="Deactivate"
+                              disabled={
+                                updatingId ===
+                                technician.rawId
+                              }
+                              onClick={() =>
+                                deactivateTechnician(
+                                  technician
+                                )
+                              }
+                            >
+                              <Ban size={16} />
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  )
+                )
+              )}
             </tbody>
           </table>
         </div>
 
-        {/* Footer: Pagination */}
         <div className="tm-table-footer">
-          <span className="tm-entries-info">Showing 1 to 10 of 186 entries</span>
+          <span className="tm-entries-info">
+            Showing {firstRecord} to{" "}
+            {lastRecord} of{" "}
+            {filteredTechnicians.length}{" "}
+            entries
+          </span>
 
           <div className="tm-pagination">
-            <button type="button" className="tm-page-btn" aria-label="Previous page">
+            <button
+              type="button"
+              className="tm-page-btn"
+              aria-label="Previous page"
+              disabled={safePage === 1}
+              onClick={() =>
+                setPage((current) =>
+                  Math.max(
+                    1,
+                    current - 1
+                  )
+                )
+              }
+            >
               <ChevronLeft size={16} />
             </button>
-            <button type="button" className="tm-page-btn is-active">1</button>
-            <button type="button" className="tm-page-btn">2</button>
-            <button type="button" className="tm-page-btn">3</button>
-            <span className="tm-page-ellipsis">…</span>
-            <button type="button" className="tm-page-btn">19</button>
-            <button type="button" className="tm-page-btn" aria-label="Next page">
+
+            {Array.from({
+              length: totalPages,
+            }).map((_, index) => (
+              <button
+                type="button"
+                key={index + 1}
+                className={`tm-page-btn ${
+                  safePage ===
+                  index + 1
+                    ? "is-active"
+                    : ""
+                }`}
+                onClick={() =>
+                  setPage(index + 1)
+                }
+              >
+                {index + 1}
+              </button>
+            ))}
+
+            <button
+              type="button"
+              className="tm-page-btn"
+              aria-label="Next page"
+              disabled={
+                safePage === totalPages
+              }
+              onClick={() =>
+                setPage((current) =>
+                  Math.min(
+                    totalPages,
+                    current + 1
+                  )
+                )
+              }
+            >
               <ChevronRight size={16} />
             </button>
           </div>
 
           <div className="tm-rows-per-page">
-            <span>Rows per page</span>
-            <div className="tm-select-wrap tm-select-wrap-sm">
-              <select className="tm-select tm-select-standalone" defaultValue="10">
-                <option value="10">10</option>
-                <option value="25">25</option>
-                <option value="50">50</option>
-              </select>
-              <ChevronDown size={14} className="tm-select-caret" />
-            </div>
+            <span>
+              {PAGE_SIZE} rows per page
+            </span>
           </div>
         </div>
       </div>

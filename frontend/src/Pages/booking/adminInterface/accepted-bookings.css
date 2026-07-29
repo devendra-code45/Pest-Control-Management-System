@@ -648,3 +648,15 @@
     padding: 16px;
   }
 }
+
+.ab-btn-primary.ab-btn-sm {
+  background-color: var(--ab-primary);
+  border-color: var(--ab-primary);
+  color: #ffffff;
+}
+
+.ab-btn-primary.ab-btn-sm:hover {
+  background-color: var(--ab-secondary);
+  border-color: var(--ab-secondary);
+  color: #ffffff;
+}

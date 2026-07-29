@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   ChevronRight,
@@ -6,8 +6,6 @@ import {
   RefreshCw,
   XCircle,
   Calendar,
-  AlertCircle,
-  User,
   Clock,
   Search,
   ChevronDown,
@@ -21,15 +19,10 @@ import {
   MoreVertical,
   ChevronLeft,
 } from "lucide-react";
+import api from "../../../api/axios";
 import "./rejected-bookings.css";
 
-const stats = [
-  { label: "Total Rejected", sub: "All Time", value: 24, icon: Calendar },
-  { label: "Rejected This Month", sub: "This Month", value: 12, icon: Calendar },
-  { label: "High Priority Rejections", sub: "This Month", value: 6, icon: AlertCircle, danger: true },
-  { label: "Affected Customers", sub: "All Time", value: 18, icon: User },
-  { label: "Resubmitted Bookings", sub: "This Month", value: 4, icon: Clock },
-];
+const PAGE_SIZE = 6;
 
 const serviceIcons = {
   "Termite Control": Bug,
@@ -39,111 +32,6 @@ const serviceIcons = {
   "Mosquito Control": Bug,
   "Bed Bug Treatment": HomeIcon,
 };
-
-const bookings = [
-  {
-    id: "BK-2025-0109",
-    customer: "Rahul Sharma",
-    phone: "9876543210",
-    initials: "RS",
-    property: "Green Valley Apartments",
-    propertyType: "Pune",
-    service: "Termite Control",
-    serviceArea: "Residential",
-    date: "22 May 2025",
-    time: "11:30 AM",
-    reason: "Service Not Available",
-    reasonNote: "Service not available for the selected date.",
-    priority: "High",
-    rejectedBy: "Admin",
-    rejectedByName: "John Doe",
-  },
-  {
-    id: "BK-2025-0108",
-    customer: "Sneha Patil",
-    phone: "9023456781",
-    initials: "SP",
-    property: "Sai Residency",
-    propertyType: "Building A-302",
-    service: "Cockroach Control",
-    serviceArea: "Kitchen",
-    date: "22 May 2025",
-    time: "10:15 AM",
-    reason: "Invalid Contact Information",
-    reasonNote: "Customer phone number is invalid or unreachable.",
-    priority: "Medium",
-    rejectedBy: "Admin",
-    rejectedByName: "John Doe",
-  },
-  {
-    id: "BK-2025-0107",
-    customer: "Vikram Singh",
-    phone: "9156784321",
-    initials: "VS",
-    property: "ABC Corporate Office",
-    propertyType: "Baner, Pune",
-    service: "Rodent Control",
-    serviceArea: "Commercial",
-    date: "21 May 2025",
-    time: "04:00 PM",
-    reason: "Duplicate Booking",
-    reasonNote: "A booking with the same details already exists.",
-    priority: "Medium",
-    rejectedBy: "Admin",
-    rejectedByName: "John Doe",
-  },
-  {
-    id: "BK-2025-0106",
-    customer: "Anita Deshmukh",
-    phone: "9898765432",
-    initials: "AD",
-    property: "Shree Plaza",
-    propertyType: "Shop No. 12",
-    service: "General Pest Control",
-    serviceArea: "Office",
-    date: "21 May 2025",
-    time: "02:45 PM",
-    reason: "Payment Issue",
-    reasonNote: "Advance payment is required for this service.",
-    priority: "High",
-    rejectedBy: "Admin",
-    rejectedByName: "John Doe",
-  },
-  {
-    id: "BK-2025-0105",
-    customer: "Neha Joshi",
-    phone: "9123456780",
-    initials: "NJ",
-    property: "Sunrise Villa",
-    propertyType: "House No. 45",
-    service: "Mosquito Control",
-    serviceArea: "Residential",
-    date: "20 May 2025",
-    time: "11:20 AM",
-    reason: "Out of Service Area",
-    reasonNote: "Service is not available in this location.",
-    priority: "Low",
-    rejectedBy: "Admin",
-    rejectedByName: "John Doe",
-  },
-  {
-    id: "BK-2025-0104",
-    customer: "Sandeep Yadav",
-    phone: "9356789012",
-    initials: "SY",
-    property: "City Homes",
-    propertyType: "Block B-101",
-    service: "Bed Bug Treatment",
-    serviceArea: "Bedroom",
-    date: "20 May 2025",
-    time: "09:10 AM",
-    reason: "Customer Cancelled",
-    reasonNote: "Customer requested cancellation.",
-    priority: "Low",
-    rejectedBy: "Admin",
-    rejectedByName: "John Doe",
-  },
-];
 
 const columns = [
   { key: "id", label: "Booking ID" },
@@ -162,12 +50,244 @@ const priorityClass = {
   Low: "rjb-badge-success",
 };
 
-const pages = [1, 2, 3, 4];
+const initials = (name = "") =>
+  name
+    .split(" ")
+    .filter(Boolean)
+    .map((part) => part[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase() || "NA";
+
+const formatDate = (value) => {
+  if (!value) return "—";
+
+  return new Intl.DateTimeFormat("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  }).format(new Date(value));
+};
+
+const formatTime = (value) => {
+  if (!value) return "—";
+
+  return new Intl.DateTimeFormat("en-IN", {
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(new Date(value));
+};
+
+const getPriority = (preferredDate) => {
+  if (!preferredDate) return "Low";
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const serviceDate = new Date(`${preferredDate}T00:00:00`);
+  const differenceInDays = Math.ceil(
+    (serviceDate.getTime() - today.getTime()) / 86400000
+  );
+
+  if (differenceInDays <= 1) return "High";
+  if (differenceInDays <= 3) return "Medium";
+  return "Low";
+};
+
+const splitReason = (value) => {
+  if (!value) {
+    return {
+      title: "No reason provided",
+      note: "No additional details available.",
+    };
+  }
+
+  const separatorIndex = value.indexOf(":");
+
+  if (separatorIndex === -1) {
+    return {
+      title: value,
+      note: value,
+    };
+  }
+
+  return {
+    title: value.slice(0, separatorIndex).trim(),
+    note:
+      value.slice(separatorIndex + 1).trim() ||
+      value.slice(0, separatorIndex).trim(),
+  };
+};
+
+const getErrorMessage = (error) => {
+  const responseData = error.response?.data;
+
+  if (typeof responseData === "string" && responseData.trim()) {
+    return responseData;
+  }
+
+  if (responseData?.message) return responseData.message;
+  if (responseData?.error) return responseData.error;
+
+  if (!error.response) {
+    return "Unable to connect to the backend.";
+  }
+
+  return "Unable to load rejected bookings.";
+};
+
+const mapBooking = (booking) => {
+  const reason = splitReason(booking.rejectionReason);
+
+  return {
+    backendId: booking.id,
+    id: `BK-${booking.id}`,
+    customer: booking.customerName || "—",
+    phone: booking.customerPhone || "—",
+    initials: initials(booking.customerName),
+    property:
+      [booking.propertyType, booking.propertySize]
+        .filter(Boolean)
+        .join(" - ") || "Property",
+    propertyType:
+      [booking.city, booking.pincode].filter(Boolean).join(" - ") ||
+      booking.serviceAddress ||
+      "—",
+    service: booking.serviceName || "—",
+    serviceArea: booking.serviceType || "—",
+    date: formatDate(booking.updatedAt || booking.createdAt),
+    time: formatTime(booking.updatedAt || booking.createdAt),
+    reason: reason.title,
+    reasonNote: reason.note,
+    priority: getPriority(booking.preferredDate),
+    rejectedBy: "Admin",
+    rejectedByName: "PCMS Administrator",
+    customerEmail: booking.customerEmail || "",
+    rawUpdatedAt: booking.updatedAt || booking.createdAt,
+  };
+};
 
 export default function RejectedBookings() {
-  const [activePage, setActivePage] = useState(1);
-
   const navigate = useNavigate();
+
+  const [bookings, setBookings] = useState([]);
+  const [activePage, setActivePage] = useState(1);
+  const [searchValue, setSearchValue] = useState("");
+  const [serviceFilter, setServiceFilter] = useState("All Services");
+  const [reasonFilter, setReasonFilter] = useState("All Reasons");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  const loadRejectedBookings = async () => {
+    try {
+      setLoading(true);
+      setError("");
+
+      const response = await api.get("/admin/bookings/rejected");
+
+      const realBookings = Array.isArray(response.data)
+        ? response.data
+            .map(mapBooking)
+            .sort(
+              (first, second) =>
+                new Date(second.rawUpdatedAt) -
+                new Date(first.rawUpdatedAt)
+            )
+        : [];
+
+      setBookings(realBookings);
+    } catch (requestError) {
+      setBookings([]);
+      setError(getErrorMessage(requestError));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadRejectedBookings();
+  }, []);
+
+  const filteredBookings = useMemo(() => {
+    const search = searchValue.trim().toLowerCase();
+
+    return bookings.filter((booking) => {
+      const matchesSearch =
+        search === "" ||
+        booking.id.toLowerCase().includes(search) ||
+        booking.customer.toLowerCase().includes(search) ||
+        booking.phone.toLowerCase().includes(search) ||
+        booking.property.toLowerCase().includes(search) ||
+        booking.propertyType.toLowerCase().includes(search);
+
+      const matchesService =
+        serviceFilter === "All Services" ||
+        booking.service === serviceFilter;
+
+      const matchesReason =
+        reasonFilter === "All Reasons" ||
+        booking.reason === reasonFilter;
+
+      return matchesSearch && matchesService && matchesReason;
+    });
+  }, [bookings, searchValue, serviceFilter, reasonFilter]);
+
+  const totalPages = Math.max(
+    1,
+    Math.ceil(filteredBookings.length / PAGE_SIZE)
+  );
+
+  const visibleBookings = filteredBookings.slice(
+    (activePage - 1) * PAGE_SIZE,
+    activePage * PAGE_SIZE
+  );
+
+  useEffect(() => {
+    if (activePage > totalPages) {
+      setActivePage(totalPages);
+    }
+  }, [activePage, totalPages]);
+
+  const serviceOptions = [
+    ...new Set(bookings.map((booking) => booking.service).filter(Boolean)),
+  ];
+
+  const reasonOptions = [
+    ...new Set(bookings.map((booking) => booking.reason).filter(Boolean)),
+  ];
+
+  const pages = Array.from(
+    { length: totalPages },
+    (_, index) => index + 1
+  ).slice(0, 5);
+
+  const clearFilters = () => {
+    setSearchValue("");
+    setServiceFilter("All Services");
+    setReasonFilter("All Reasons");
+    setActivePage(1);
+  };
+
+  const openRejectedBooking = (bookingId) => {
+    sessionStorage.setItem(
+      "pcmsRejectedViewId",
+      String(bookingId)
+    );
+
+    navigate("/admin/bookings/rejected-bookings/view", {
+      state: { bookingId },
+    });
+  };
+
+  const firstVisibleRecord =
+    filteredBookings.length === 0
+      ? 0
+      : (activePage - 1) * PAGE_SIZE + 1;
+
+  const lastVisibleRecord = Math.min(
+    activePage * PAGE_SIZE,
+    filteredBookings.length
+  );
 
   return (
     <div className="rjb-page">
@@ -190,23 +310,32 @@ export default function RejectedBookings() {
           </span>
           <div>
             <h1 className="rjb-title">Rejected Bookings</h1>
-            <p className="rjb-subtitle">View all rejected service bookings and reasons</p>
+            <p className="rjb-subtitle">
+              View all rejected service bookings and reasons
+            </p>
           </div>
         </div>
 
         <div className="rjb-header-actions">
-          <button type="button" className="rjb-btn rjb-btn-outline">
+          <button
+            type="button"
+            className="rjb-btn rjb-btn-outline"
+            onClick={() => window.print()}
+          >
             <Download size={16} strokeWidth={2} />
             Export
           </button>
-          <button type="button" className="rjb-btn rjb-btn-primary">
+          <button
+            type="button"
+            className="rjb-btn rjb-btn-primary"
+            onClick={loadRejectedBookings}
+            disabled={loading}
+          >
             <RefreshCw size={16} strokeWidth={2} />
-            Refresh
+            {loading ? "Loading..." : "Refresh"}
           </button>
         </div>
       </header>
-
-
 
       <section className="rjb-filters-card">
         <div className="rjb-search-wrap">
@@ -215,20 +344,28 @@ export default function RejectedBookings() {
             type="text"
             className="rjb-search-input"
             placeholder="Search by booking ID, customer, phone or property..."
+            value={searchValue}
+            onChange={(event) => {
+              setSearchValue(event.target.value);
+              setActivePage(1);
+            }}
           />
         </div>
 
         <div className="rjb-filter-field">
           <label className="rjb-filter-label">Service Type</label>
           <div className="rjb-select">
-            <select defaultValue="All Services">
+            <select
+              value={serviceFilter}
+              onChange={(event) => {
+                setServiceFilter(event.target.value);
+                setActivePage(1);
+              }}
+            >
               <option>All Services</option>
-              <option>Termite Control</option>
-              <option>Cockroach Control</option>
-              <option>Rodent Control</option>
-              <option>General Pest Control</option>
-              <option>Mosquito Control</option>
-              <option>Bed Bug Treatment</option>
+              {serviceOptions.map((service) => (
+                <option key={service}>{service}</option>
+              ))}
             </select>
             <ChevronDown size={16} className="rjb-select-caret" />
           </div>
@@ -237,14 +374,17 @@ export default function RejectedBookings() {
         <div className="rjb-filter-field">
           <label className="rjb-filter-label">Reason</label>
           <div className="rjb-select">
-            <select defaultValue="All Reasons">
+            <select
+              value={reasonFilter}
+              onChange={(event) => {
+                setReasonFilter(event.target.value);
+                setActivePage(1);
+              }}
+            >
               <option>All Reasons</option>
-              <option>Service Not Available</option>
-              <option>Invalid Contact Information</option>
-              <option>Duplicate Booking</option>
-              <option>Payment Issue</option>
-              <option>Out of Service Area</option>
-              <option>Customer Cancelled</option>
+              {reasonOptions.map((reason) => (
+                <option key={reason}>{reason}</option>
+              ))}
             </select>
             <ChevronDown size={16} className="rjb-select-caret" />
           </div>
@@ -254,11 +394,15 @@ export default function RejectedBookings() {
           <label className="rjb-filter-label">Date Range</label>
           <button type="button" className="rjb-date-input">
             <Calendar size={16} strokeWidth={2} />
-            Select Date Range
+            All Dates
           </button>
         </div>
 
-        <button type="button" className="rjb-btn rjb-btn-outline rjb-clear-btn">
+        <button
+          type="button"
+          className="rjb-btn rjb-btn-outline rjb-clear-btn"
+          onClick={clearFilters}
+        >
           <Filter size={16} strokeWidth={2} />
           Clear Filters
         </button>
@@ -269,10 +413,10 @@ export default function RejectedBookings() {
           <table className="rjb-table">
             <thead>
               <tr>
-                {columns.map((col) => (
-                  <th key={col.key}>
+                {columns.map((column) => (
+                  <th key={column.key}>
                     <span className="rjb-th-content">
-                      {col.label}
+                      {column.label}
                       <ArrowUpDown size={12} strokeWidth={2} />
                     </span>
                   </th>
@@ -280,84 +424,143 @@ export default function RejectedBookings() {
                 <th>Actions</th>
               </tr>
             </thead>
+
             <tbody>
-              {bookings.map((b) => {
-                const ServiceIcon = serviceIcons[b.service] || Bug;
+              {visibleBookings.map((booking) => {
+                const ServiceIcon =
+                  serviceIcons[booking.service] || Bug;
+
                 return (
-                  <tr key={b.id} className="rjb-row">
+                  <tr key={booking.backendId} className="rjb-row">
                     <td>
-                      <span className="rjb-booking-id">{b.id}</span>
+                      <span className="rjb-booking-id">
+                        {booking.id}
+                      </span>
                     </td>
+
                     <td>
                       <div className="rjb-cell-with-avatar">
-                        <span className="rjb-avatar">{b.initials}</span>
+                        <span className="rjb-avatar">
+                          {booking.initials}
+                        </span>
                         <div className="rjb-cell-text">
-                          <span className="rjb-cell-primary">{b.customer}</span>
-                          <span className="rjb-cell-secondary">{b.phone}</span>
+                          <span className="rjb-cell-primary">
+                            {booking.customer}
+                          </span>
+                          <span className="rjb-cell-secondary">
+                            {booking.phone}
+                          </span>
                         </div>
                       </div>
                     </td>
+
                     <td>
                       <div className="rjb-cell-with-icon">
                         <span className="rjb-cell-icon">
                           <Building2 size={16} strokeWidth={2} />
                         </span>
                         <div className="rjb-cell-text">
-                          <span className="rjb-cell-primary">{b.property}</span>
-                          <span className="rjb-cell-secondary">{b.propertyType}</span>
+                          <span className="rjb-cell-primary">
+                            {booking.property}
+                          </span>
+                          <span className="rjb-cell-secondary">
+                            {booking.propertyType}
+                          </span>
                         </div>
                       </div>
                     </td>
+
                     <td>
                       <div className="rjb-cell-with-icon">
                         <span className="rjb-cell-icon">
                           <ServiceIcon size={16} strokeWidth={2} />
                         </span>
                         <div className="rjb-cell-text">
-                          <span className="rjb-cell-primary">{b.service}</span>
-                          <span className="rjb-cell-secondary">{b.serviceArea}</span>
+                          <span className="rjb-cell-primary">
+                            {booking.service}
+                          </span>
+                          <span className="rjb-cell-secondary">
+                            {booking.serviceArea}
+                          </span>
                         </div>
                       </div>
                     </td>
+
                     <td>
                       <div className="rjb-cell-with-icon">
                         <span className="rjb-cell-icon">
                           <Calendar size={16} strokeWidth={2} />
                         </span>
                         <div className="rjb-cell-text">
-                          <span className="rjb-cell-primary">{b.date}</span>
+                          <span className="rjb-cell-primary">
+                            {booking.date}
+                          </span>
                           <span className="rjb-cell-secondary">
-                            <Clock size={12} strokeWidth={2} className="rjb-inline-icon" />
-                            {b.time}
+                            <Clock
+                              size={12}
+                              strokeWidth={2}
+                              className="rjb-inline-icon"
+                            />
+                            {booking.time}
                           </span>
                         </div>
                       </div>
                     </td>
+
                     <td>
                       <div className="rjb-reason-cell">
-                        <button type="button" className="rjb-reason-select">
-                          {b.reason}
+                        <button
+                          type="button"
+                          className="rjb-reason-select"
+                        >
+                          {booking.reason}
                           <ChevronDown size={14} strokeWidth={2} />
                         </button>
-                        <span className="rjb-reason-note">{b.reasonNote}</span>
+                        <span className="rjb-reason-note">
+                          {booking.reasonNote}
+                        </span>
                       </div>
                     </td>
+
                     <td>
-                      <span className={`rjb-badge ${priorityClass[b.priority]}`}>{b.priority}</span>
+                      <span
+                        className={`rjb-badge ${
+                          priorityClass[booking.priority]
+                        }`}
+                      >
+                        {booking.priority}
+                      </span>
                     </td>
+
                     <td>
                       <div className="rjb-cell-text">
-                        <span className="rjb-cell-primary">{b.rejectedBy}</span>
-                        <span className="rjb-cell-secondary">{b.rejectedByName}</span>
+                        <span className="rjb-cell-primary">
+                          {booking.rejectedBy}
+                        </span>
+                        <span className="rjb-cell-secondary">
+                          {booking.rejectedByName}
+                        </span>
                       </div>
                     </td>
+
                     <td>
                       <div className="rjb-actions-cell">
-                        <button type="button" className="rjb-btn rjb-btn-outline rjb-btn-sm" onClick={() => navigate("/admin/bookings/rejected-bookings/view")}>
+                        <button
+                          type="button"
+                          className="rjb-btn rjb-btn-outline rjb-btn-sm"
+                          onClick={() =>
+                            openRejectedBooking(booking.backendId)
+                          }
+                        >
                           <Eye size={14} strokeWidth={2} />
                           View
                         </button>
-                        <button type="button" className="rjb-icon-btn" aria-label="More actions">
+
+                        <button
+                          type="button"
+                          className="rjb-icon-btn"
+                          aria-label="More actions"
+                        >
                           <MoreVertical size={16} strokeWidth={2} />
                         </button>
                       </div>
@@ -365,29 +568,76 @@ export default function RejectedBookings() {
                   </tr>
                 );
               })}
+
+              {!loading && visibleBookings.length === 0 && (
+                <tr>
+                  <td
+                    colSpan={9}
+                    style={{ textAlign: "center", padding: "32px" }}
+                  >
+                    {error || "No rejected bookings found."}
+                  </td>
+                </tr>
+              )}
+
+              {loading && (
+                <tr>
+                  <td
+                    colSpan={9}
+                    style={{ textAlign: "center", padding: "32px" }}
+                  >
+                    Loading rejected bookings...
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
 
         <div className="rjb-table-footer">
-          <span className="rjb-showing-text">Showing 1 to 6 of 24 bookings</span>
+          <span className="rjb-showing-text">
+            Showing {firstVisibleRecord} to {lastVisibleRecord} of{" "}
+            {filteredBookings.length} bookings
+          </span>
 
           <div className="rjb-pagination">
-            <button type="button" className="rjb-page-btn rjb-page-nav" disabled={activePage === 1}>
+            <button
+              type="button"
+              className="rjb-page-btn rjb-page-nav"
+              disabled={activePage === 1}
+              onClick={() =>
+                setActivePage((page) => Math.max(1, page - 1))
+              }
+            >
               <ChevronLeft size={14} strokeWidth={2} />
               Previous
             </button>
-            {pages.map((p) => (
+
+            {pages.map((page) => (
               <button
-                key={p}
+                key={page}
                 type="button"
-                className={`rjb-page-btn ${activePage === p ? "rjb-page-btn-active" : ""}`}
-                onClick={() => setActivePage(p)}
+                className={`rjb-page-btn ${
+                  activePage === page
+                    ? "rjb-page-btn-active"
+                    : ""
+                }`}
+                onClick={() => setActivePage(page)}
               >
-                {p}
+                {page}
               </button>
             ))}
-            <button type="button" className="rjb-page-btn rjb-page-nav">
+
+            <button
+              type="button"
+              className="rjb-page-btn rjb-page-nav"
+              disabled={activePage === totalPages}
+              onClick={() =>
+                setActivePage((page) =>
+                  Math.min(totalPages, page + 1)
+                )
+              }
+            >
               Next
               <ChevronRight size={14} strokeWidth={2} />
             </button>
