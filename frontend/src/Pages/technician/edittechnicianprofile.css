@@ -510,3 +510,72 @@
     grid-template-columns: repeat(2, 1fr);
   }
 }
+
+/* Backend-connected states -------------------------------------------------- */
+
+.breadcrumb__link {
+  border: none;
+  padding: 0;
+  background: transparent;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.field-grid--2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.field-error {
+  display: block;
+  margin-top: 6px;
+  color: var(--danger);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.edit-message,
+.edit-loading {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 13px 16px;
+  margin-bottom: 18px;
+  border-radius: 9px;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.edit-message--error {
+  border: 1px solid rgba(220, 38, 38, 0.22);
+  background-color: rgba(220, 38, 38, 0.07);
+  color: var(--danger);
+}
+
+.edit-message--success {
+  border: 1px solid rgba(22, 163, 74, 0.22);
+  background-color: rgba(22, 163, 74, 0.08);
+  color: var(--success);
+}
+
+.edit-loading {
+  justify-content: center;
+  min-height: 160px;
+  border: 1px solid var(--border);
+  background-color: var(--card);
+  color: var(--text-muted);
+}
+
+.edit-loading-icon {
+  animation: edit-spin 0.8s linear infinite;
+}
+
+.btn:disabled {
+  opacity: 0.58;
+  cursor: not-allowed;
+}
+
+@keyframes edit-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

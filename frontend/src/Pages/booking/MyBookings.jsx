@@ -22,7 +22,6 @@ import {
   PawPrint,
   User,
   Phone,
-  RefreshCw,
   Ban,
   RotateCcw,
   MapPin,
@@ -359,26 +358,37 @@ export default function MyBookings() {
     setPage(1);
   };
 
+  const openBookingDetails = (
+    bookingId,
+    action = "view"
+  ) => {
+    sessionStorage.setItem(
+      "pcmsCustomerBookingId",
+      String(bookingId)
+    );
+
+    navigate("/customer/bookings/details", {
+      state: {
+        bookingId,
+        action,
+      },
+    });
+  };
+
   const handleViewBooking = (bookingId) => {
-    navigate(`/customer/bookings/${bookingId}`);
+    openBookingDetails(bookingId, "view");
   };
 
   const handleReschedule = (bookingId) => {
-    navigate(
-      `/customer/bookings/${bookingId}?action=reschedule`
-    );
+    openBookingDetails(bookingId, "reschedule");
   };
 
   const handleCancel = (bookingId) => {
-    navigate(
-      `/customer/bookings/${bookingId}?action=cancel`
-    );
+    openBookingDetails(bookingId, "cancel");
   };
 
   const handleTrack = (bookingId) => {
-    navigate(
-      `/customer/bookings/${bookingId}?action=track`
-    );
+    openBookingDetails(bookingId, "track");
   };
 
   const handleRebook = (bookingId) => {

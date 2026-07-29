@@ -1,4 +1,5 @@
-import React from "react";
+import React, { useEffect, useMemo, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import {
   ChevronRight,
   XCircle,
@@ -26,55 +27,96 @@ import {
   History,
   CheckCircle,
   X,
+  AlertCircle,
 } from "lucide-react";
+import api from "../../../api/axios";
 import "./RBView.css";
 
-const booking = {
-  id: "BK-2025-0109",
-  status: "Rejected",
-  priority: "High",
-  rejectedByRole: "Admin",
-  rejectedByName: "John Doe",
-  rejectedAt: "22 May 2025, 11:30 AM",
+const formatDate = (value) => {
+  if (!value) return "—";
+
+  return new Intl.DateTimeFormat("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  }).format(new Date(`${value}T00:00:00`));
 };
 
-const bookingInfo = {
-  customerName: "Rahul Sharma",
-  phoneNumber: "9876543210",
-  emailAddress: "rahul.sharma@email.com",
-  propertyName: "Green Valley Apartments",
-  propertyAddress: "Pune, Maharashtra - 411001",
-  pestType: "Termite",
-  serviceType: "Termite Control",
-  serviceCategory: "Residential",
-  preferredDateTime: "22 May 2025, 11:30 AM",
-  preferredContactMethod: "Phone Call",
+const formatDateTime = (value) => {
+  if (!value) return "—";
+
+  return new Intl.DateTimeFormat("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(new Date(value));
 };
 
-const requestDetails = {
-  problemDescription: "We are facing termite issues in the kitchen and wooden doors. Need immediate inspection and treatment.",
-  specialNotes: "—",
-  imageCount: 3,
+const formatAmount = (value) =>
+  Number(value || 0).toLocaleString("en-IN", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+
+const getPriority = (preferredDate) => {
+  if (!preferredDate) return "Low";
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const serviceDate = new Date(`${preferredDate}T00:00:00`);
+  const differenceInDays = Math.ceil(
+    (serviceDate.getTime() - today.getTime()) / 86400000
+  );
+
+  if (differenceInDays <= 1) return "High";
+  if (differenceInDays <= 3) return "Medium";
+  return "Low";
 };
 
-const rejectionInfo = {
-  reason: "Service Not Available",
-  remarks: "Service not available for the selected date. Please choose another available date.",
-  alternativeSuggestion: "Please select a date after 25 May 2025 or contact support for assistance.",
+const splitReason = (value) => {
+  if (!value) {
+    return {
+      reason: "No reason provided",
+      remarks: "No additional remarks provided.",
+    };
+  }
+
+  const separatorIndex = value.indexOf(":");
+
+  if (separatorIndex === -1) {
+    return {
+      reason: value,
+      remarks: value,
+    };
+  }
+
+  return {
+    reason: value.slice(0, separatorIndex).trim(),
+    remarks:
+      value.slice(separatorIndex + 1).trim() ||
+      value.slice(0, separatorIndex).trim(),
+  };
 };
 
-const serviceSummary = {
-  serviceCategory: "Termite Control",
-  estimatedDuration: "2 - 3 Hours",
-  estimatedPrice: "₹150.00",
-  applicableFor: "Residential",
-};
+const getErrorMessage = (error) => {
+  const responseData = error.response?.data;
 
-const timeline = [
-  { title: "Booking Created", date: "19 May 2025, 10:15 AM", by: "By Rahul Sharma", status: "done" },
-  { title: "Admin Reviewed", date: "22 May 2025, 10:45 AM", by: "By John Doe (Admin)", status: "done" },
-  { title: "Booking Rejected", date: "22 May 2025, 11:30 AM", by: "By John Doe (Admin)", status: "rejected" },
-];
+  if (typeof responseData === "string" && responseData.trim()) {
+    return responseData;
+  }
+
+  if (responseData?.message) return responseData.message;
+  if (responseData?.error) return responseData.error;
+
+  if (!error.response) {
+    return "Unable to connect to the backend.";
+  }
+
+  return "Unable to load rejected booking details.";
+};
 
 const InfoRow = ({ icon: Icon, label, value }) => (
   <div className="rbd-info-row">
@@ -83,26 +125,227 @@ const InfoRow = ({ icon: Icon, label, value }) => (
     </span>
     <span className="rbd-info-label">{label}</span>
     <span className="rbd-info-colon">:</span>
-    <span className="rbd-info-value">{value}</span>
+    <span className="rbd-info-value">{value || "—"}</span>
   </div>
 );
 
 export default function RejectedBookingDetails({ onBack, onPrint }) {
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const bookingId =
+    location.state?.bookingId ||
+    Number(sessionStorage.getItem("pcmsRejectedViewId"));
+
+  const [bookingData, setBookingData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    const loadBooking = async () => {
+      if (!bookingId) {
+        setError("No booking was selected.");
+        setLoading(false);
+        return;
+      }
+
+      try {
+        setLoading(true);
+        setError("");
+
+        sessionStorage.setItem(
+          "pcmsRejectedViewId",
+          String(bookingId)
+        );
+
+        const response = await api.get(
+          `/admin/bookings/${bookingId}`
+        );
+
+        setBookingData(response.data);
+      } catch (requestError) {
+        setBookingData(null);
+        setError(getErrorMessage(requestError));
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadBooking();
+  }, [bookingId]);
+
+  const rejection = useMemo(
+    () => splitReason(bookingData?.rejectionReason),
+    [bookingData]
+  );
+
+  const booking = useMemo(() => {
+    if (!bookingData) return null;
+
+    return {
+      id: `BK-${bookingData.id}`,
+      status: "Rejected",
+      priority: getPriority(bookingData.preferredDate),
+      rejectedByRole: "Admin",
+      rejectedByName: "PCMS Administrator",
+      rejectedAt: formatDateTime(
+        bookingData.updatedAt || bookingData.createdAt
+      ),
+    };
+  }, [bookingData]);
+
+  const bookingInfo = useMemo(() => {
+    if (!bookingData) return null;
+
+    return {
+      customerName: bookingData.customerName || "—",
+      phoneNumber: bookingData.customerPhone || "—",
+      emailAddress: bookingData.customerEmail || "—",
+      propertyName:
+        [bookingData.propertyType, bookingData.propertySize]
+          .filter(Boolean)
+          .join(" - ") || "Property",
+      propertyAddress:
+        [
+          bookingData.serviceAddress,
+          bookingData.landmark,
+          bookingData.city,
+          bookingData.pincode,
+        ]
+          .filter(Boolean)
+          .join(", ") || "—",
+      pestType: bookingData.pestType || "—",
+      serviceType:
+        [bookingData.serviceName, bookingData.serviceType]
+          .filter(Boolean)
+          .join(" - ") || "—",
+      serviceCategory: bookingData.propertyType || "—",
+      preferredDateTime:
+        `${formatDate(bookingData.preferredDate)} • ${
+          bookingData.preferredTimeSlot || "—"
+        }`,
+      preferredContactMethod: "Not recorded",
+    };
+  }, [bookingData]);
+
+  const requestDetails = useMemo(() => {
+    if (!bookingData) return null;
+
+    return {
+      problemDescription:
+        bookingData.problemDescription || "—",
+      specialNotes: bookingData.landmark
+        ? `Landmark: ${bookingData.landmark}`
+        : "—",
+      imageCount: 0,
+    };
+  }, [bookingData]);
+
+  const rejectionInfo = useMemo(
+    () => ({
+      reason: rejection.reason,
+      remarks: rejection.remarks,
+      alternativeSuggestion:
+        "Customer can submit another booking with updated details.",
+    }),
+    [rejection]
+  );
+
+  const serviceSummary = useMemo(() => {
+    if (!bookingData) return null;
+
+    return {
+      serviceCategory: bookingData.serviceName || "—",
+      estimatedDuration: "Not recorded",
+      estimatedPrice: `₹${formatAmount(
+        bookingData.totalAmount
+      )}`,
+      applicableFor: bookingData.propertyType || "—",
+    };
+  }, [bookingData]);
+
+  const timeline = useMemo(() => {
+    if (!bookingData) return [];
+
+    return [
+      {
+        title: "Booking Created",
+        date: formatDateTime(bookingData.createdAt),
+        by: `By ${bookingData.customerName || "Customer"}`,
+        status: "done",
+      },
+      {
+        title: "Admin Reviewed",
+        date: formatDateTime(
+          bookingData.updatedAt || bookingData.createdAt
+        ),
+        by: "By PCMS Administrator",
+        status: "done",
+      },
+      {
+        title: "Booking Rejected",
+        date: formatDateTime(
+          bookingData.updatedAt || bookingData.createdAt
+        ),
+        by: "By PCMS Administrator",
+        status: "rejected",
+      },
+    ];
+  }, [bookingData]);
+
   const handleBack = () => {
     if (typeof onBack === "function") {
       onBack();
-    } else if (typeof window !== "undefined" && window.history.length > 1) {
-      window.history.back();
+      return;
     }
+
+    navigate("/admin/bookings/rejected");
   };
 
   const handlePrint = () => {
     if (typeof onPrint === "function") {
-      onPrint(booking.id);
-    } else if (typeof window !== "undefined") {
-      window.print();
+      onPrint(booking?.id);
+      return;
     }
+
+    window.print();
   };
+
+  if (loading) {
+    return (
+      <div className="rbd-page">
+        <section className="rbd-card">
+          Loading rejected booking details...
+        </section>
+      </div>
+    );
+  }
+
+  if (!bookingData) {
+    return (
+      <div className="rbd-page">
+        <section className="rbd-card">
+          <div className="rbd-card-header">
+            <span className="rbd-card-header-icon rbd-icon-danger">
+              <AlertCircle size={18} strokeWidth={2} />
+            </span>
+            <h2 className="rbd-card-title">
+              {error || "Booking not found."}
+            </h2>
+          </div>
+
+          <button
+            type="button"
+            className="rbd-btn rbd-btn-outline"
+            onClick={handleBack}
+          >
+            <ArrowLeft size={16} strokeWidth={2} />
+            Back to Rejected Bookings
+          </button>
+        </section>
+      </div>
+    );
+  }
 
   return (
     <div className="rbd-page">
@@ -136,11 +379,19 @@ export default function RejectedBookingDetails({ onBack, onPrint }) {
         </div>
 
         <div className="rbd-header-actions">
-          <button type="button" className="rbd-btn rbd-btn-outline" onClick={handleBack}>
+          <button
+            type="button"
+            className="rbd-btn rbd-btn-outline"
+            onClick={handleBack}
+          >
             <ArrowLeft size={16} strokeWidth={2} />
             Back to Rejected Bookings
           </button>
-          <button type="button" className="rbd-btn rbd-btn-outline-primary" onClick={handlePrint}>
+          <button
+            type="button"
+            className="rbd-btn rbd-btn-outline-primary"
+            onClick={handlePrint}
+          >
             <Printer size={16} strokeWidth={2} />
             Print Details
           </button>
@@ -155,12 +406,16 @@ export default function RejectedBookingDetails({ onBack, onPrint }) {
 
         <div className="rbd-summary-field">
           <span className="rbd-summary-label">Status</span>
-          <span className="rbd-badge rbd-badge-danger">{booking.status}</span>
+          <span className="rbd-badge rbd-badge-danger">
+            {booking.status}
+          </span>
         </div>
 
         <div className="rbd-summary-field">
           <span className="rbd-summary-label">Priority</span>
-          <span className="rbd-badge rbd-badge-danger">{booking.priority}</span>
+          <span className="rbd-badge rbd-badge-danger">
+            {booking.priority}
+          </span>
         </div>
 
         <div className="rbd-summary-field">
@@ -170,14 +425,20 @@ export default function RejectedBookingDetails({ onBack, onPrint }) {
               <User size={15} strokeWidth={2} />
             </span>
             <span className="rbd-summary-person-text">
-              <span className="rbd-summary-person-role">{booking.rejectedByRole}</span>
-              <span className="rbd-summary-person-name">{booking.rejectedByName}</span>
+              <span className="rbd-summary-person-role">
+                {booking.rejectedByRole}
+              </span>
+              <span className="rbd-summary-person-name">
+                {booking.rejectedByName}
+              </span>
             </span>
           </span>
         </div>
 
         <div className="rbd-summary-field">
-          <span className="rbd-summary-label">Rejected Date &amp; Time</span>
+          <span className="rbd-summary-label">
+            Rejected Date &amp; Time
+          </span>
           <span className="rbd-summary-date">
             <Calendar size={14} strokeWidth={2} />
             {booking.rejectedAt}
@@ -197,19 +458,59 @@ export default function RejectedBookingDetails({ onBack, onPrint }) {
 
             <div className="rbd-info-columns">
               <div className="rbd-info-list">
-                <InfoRow icon={User} label="Customer Name" value={bookingInfo.customerName} />
-                <InfoRow icon={Phone} label="Phone Number" value={bookingInfo.phoneNumber} />
-                <InfoRow icon={Mail} label="Email Address" value={bookingInfo.emailAddress} />
-                <InfoRow icon={Building2} label="Property Name" value={bookingInfo.propertyName} />
-                <InfoRow icon={MapPin} label="Property Address" value={bookingInfo.propertyAddress} />
+                <InfoRow
+                  icon={User}
+                  label="Customer Name"
+                  value={bookingInfo.customerName}
+                />
+                <InfoRow
+                  icon={Phone}
+                  label="Phone Number"
+                  value={bookingInfo.phoneNumber}
+                />
+                <InfoRow
+                  icon={Mail}
+                  label="Email Address"
+                  value={bookingInfo.emailAddress}
+                />
+                <InfoRow
+                  icon={Building2}
+                  label="Property Name"
+                  value={bookingInfo.propertyName}
+                />
+                <InfoRow
+                  icon={MapPin}
+                  label="Property Address"
+                  value={bookingInfo.propertyAddress}
+                />
               </div>
 
               <div className="rbd-info-list">
-                <InfoRow icon={Bug} label="Pest Type" value={bookingInfo.pestType} />
-                <InfoRow icon={Wrench} label="Service Type" value={bookingInfo.serviceType} />
-                <InfoRow icon={Grid3x3} label="Service Category" value={bookingInfo.serviceCategory} />
-                <InfoRow icon={Calendar} label="Preferred Date & Time" value={bookingInfo.preferredDateTime} />
-                <InfoRow icon={PhoneCall} label="Preferred Contact Method" value={bookingInfo.preferredContactMethod} />
+                <InfoRow
+                  icon={Bug}
+                  label="Pest Type"
+                  value={bookingInfo.pestType}
+                />
+                <InfoRow
+                  icon={Wrench}
+                  label="Service Type"
+                  value={bookingInfo.serviceType}
+                />
+                <InfoRow
+                  icon={Grid3x3}
+                  label="Service Category"
+                  value={bookingInfo.serviceCategory}
+                />
+                <InfoRow
+                  icon={Calendar}
+                  label="Preferred Date & Time"
+                  value={bookingInfo.preferredDateTime}
+                />
+                <InfoRow
+                  icon={PhoneCall}
+                  label="Preferred Contact Method"
+                  value={bookingInfo.preferredContactMethod}
+                />
               </div>
             </div>
           </section>
@@ -219,12 +520,22 @@ export default function RejectedBookingDetails({ onBack, onPrint }) {
               <span className="rbd-card-header-icon">
                 <FileText size={18} strokeWidth={2} />
               </span>
-              <h2 className="rbd-card-title">Customer Request Details</h2>
+              <h2 className="rbd-card-title">
+                Customer Request Details
+              </h2>
             </div>
 
             <div className="rbd-info-list rbd-info-list-wide">
-              <InfoRow icon={FileText} label="Problem Description" value={requestDetails.problemDescription} />
-              <InfoRow icon={StickyNote} label="Special Notes" value={requestDetails.specialNotes} />
+              <InfoRow
+                icon={FileText}
+                label="Problem Description"
+                value={requestDetails.problemDescription}
+              />
+              <InfoRow
+                icon={StickyNote}
+                label="Special Notes"
+                value={requestDetails.specialNotes}
+              />
               <div className="rbd-info-row">
                 <span className="rbd-info-icon">
                   <Camera size={16} strokeWidth={2} />
@@ -232,11 +543,22 @@ export default function RejectedBookingDetails({ onBack, onPrint }) {
                 <span className="rbd-info-label">Uploaded Images</span>
                 <span className="rbd-info-colon">:</span>
                 <div className="rbd-image-gallery">
-                  {Array.from({ length: requestDetails.imageCount }).map((_, i) => (
-                    <div className="rbd-image-thumb" key={i}>
-                      <Camera size={20} strokeWidth={1.5} />
-                    </div>
-                  ))}
+                  {requestDetails.imageCount > 0 ? (
+                    Array.from({
+                      length: requestDetails.imageCount,
+                    }).map((_, index) => (
+                      <div
+                        className="rbd-image-thumb"
+                        key={index}
+                      >
+                        <Camera size={20} strokeWidth={1.5} />
+                      </div>
+                    ))
+                  ) : (
+                    <span className="rbd-info-value">
+                      No images uploaded
+                    </span>
+                  )}
                 </div>
               </div>
             </div>
@@ -256,7 +578,9 @@ export default function RejectedBookingDetails({ onBack, onPrint }) {
                   <div className="rbd-timeline-step">
                     <span
                       className={`rbd-timeline-dot ${
-                        step.status === "rejected" ? "rbd-timeline-dot-danger" : "rbd-timeline-dot-success"
+                        step.status === "rejected"
+                          ? "rbd-timeline-dot-danger"
+                          : "rbd-timeline-dot-success"
                       }`}
                     >
                       {step.status === "rejected" ? (
@@ -266,15 +590,23 @@ export default function RejectedBookingDetails({ onBack, onPrint }) {
                       )}
                     </span>
                     <div className="rbd-timeline-text">
-                      <span className="rbd-timeline-title">{step.title}</span>
-                      <span className="rbd-timeline-date">{step.date}</span>
-                      <span className="rbd-timeline-by">{step.by}</span>
+                      <span className="rbd-timeline-title">
+                        {step.title}
+                      </span>
+                      <span className="rbd-timeline-date">
+                        {step.date}
+                      </span>
+                      <span className="rbd-timeline-by">
+                        {step.by}
+                      </span>
                     </div>
                   </div>
                   {index < timeline.length - 1 && (
                     <span
                       className={`rbd-timeline-connector ${
-                        timeline[index + 1].status === "rejected" ? "rbd-connector-danger" : ""
+                        timeline[index + 1].status === "rejected"
+                          ? "rbd-connector-danger"
+                          : ""
                       }`}
                     />
                   )}
@@ -290,17 +622,31 @@ export default function RejectedBookingDetails({ onBack, onPrint }) {
               <span className="rbd-card-header-icon rbd-icon-danger">
                 <XCircle size={18} strokeWidth={2} />
               </span>
-              <h2 className="rbd-card-title">Rejection Information</h2>
+              <h2 className="rbd-card-title">
+                Rejection Information
+              </h2>
             </div>
 
             <div className="rbd-info-list">
               <InfoRow
                 icon={XCircle}
                 label="Rejection Reason"
-                value={<span className="rbd-reason-text">{rejectionInfo.reason}</span>}
+                value={
+                  <span className="rbd-reason-text">
+                    {rejectionInfo.reason}
+                  </span>
+                }
               />
-              <InfoRow icon={MessageSquare} label="Remarks" value={rejectionInfo.remarks} />
-              <InfoRow icon={CalendarClock} label="Alternative Suggestion" value={rejectionInfo.alternativeSuggestion} />
+              <InfoRow
+                icon={MessageSquare}
+                label="Remarks"
+                value={rejectionInfo.remarks}
+              />
+              <InfoRow
+                icon={CalendarClock}
+                label="Alternative Suggestion"
+                value={rejectionInfo.alternativeSuggestion}
+              />
             </div>
           </section>
 
@@ -313,10 +659,26 @@ export default function RejectedBookingDetails({ onBack, onPrint }) {
             </div>
 
             <div className="rbd-info-list">
-              <InfoRow icon={Grid3x3} label="Service Category" value={serviceSummary.serviceCategory} />
-              <InfoRow icon={Clock} label="Estimated Duration" value={serviceSummary.estimatedDuration} />
-              <InfoRow icon={IndianRupee} label="Estimated Price" value={serviceSummary.estimatedPrice} />
-              <InfoRow icon={Home} label="Applicable For" value={serviceSummary.applicableFor} />
+              <InfoRow
+                icon={Grid3x3}
+                label="Service Category"
+                value={serviceSummary.serviceCategory}
+              />
+              <InfoRow
+                icon={Clock}
+                label="Estimated Duration"
+                value={serviceSummary.estimatedDuration}
+              />
+              <InfoRow
+                icon={IndianRupee}
+                label="Estimated Price"
+                value={serviceSummary.estimatedPrice}
+              />
+              <InfoRow
+                icon={Home}
+                label="Applicable For"
+                value={serviceSummary.applicableFor}
+              />
             </div>
           </section>
         </aside>

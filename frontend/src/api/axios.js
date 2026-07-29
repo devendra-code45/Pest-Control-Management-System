@@ -15,8 +15,12 @@ api.interceptors.request.use(
       try {
         const auth = JSON.parse(storedAuth);
 
-        if (auth.token) {
-          config.headers.Authorization = `Bearer ${auth.token}`;
+        const token =
+          auth?.token ||
+          auth?.user?.token;
+
+        if (token) {
+          config.headers.Authorization = `Bearer ${token}`;
         }
       } catch {
         localStorage.removeItem("pcmsAuth");

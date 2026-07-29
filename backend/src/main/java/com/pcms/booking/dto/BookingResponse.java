@@ -19,6 +19,10 @@ public class BookingResponse {
 
     private String customerName;
 
+    private String customerEmail;
+
+    private String customerPhone;
+
     private String serviceName;
 
     private String serviceType;
@@ -51,6 +55,8 @@ public class BookingResponse {
 
     private String problemDescription;
 
+    private Long technicianId;
+
     private String technicianName;
 
     private String technicianPhone;
@@ -60,4 +66,6 @@ public class BookingResponse {
     private String rejectionReason;
 
     private LocalDateTime createdAt;
+
+    private LocalDateTime updatedAt;
 }

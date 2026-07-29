@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.pcms.booking.dto.BookingRequest;
 import com.pcms.booking.dto.BookingResponse;
@@ -11,39 +12,51 @@ import com.pcms.booking.entity.Booking;
 import com.pcms.booking.entity.BookingStatus;
 import com.pcms.booking.repository.BookingRepository;
 import com.pcms.booking.service.BookingService;
+import com.pcms.technician.entity.Technician;
+import com.pcms.technician.entity.TechnicianStatus;
+import com.pcms.technician.repository.TechnicianRepository;
 import com.pcms.user.entity.User;
 import com.pcms.user.repository.UserRepository;
 
 @Service
-public class BookingServiceImpl implements BookingService {
+public class BookingServiceImpl
+        implements BookingService {
 
     private static final BigDecimal CONVENIENCE_FEE =
             BigDecimal.valueOf(49);
 
     private final BookingRepository bookingRepository;
     private final UserRepository userRepository;
+    private final TechnicianRepository technicianRepository;
 
     public BookingServiceImpl(
             BookingRepository bookingRepository,
-            UserRepository userRepository) {
+            UserRepository userRepository,
+            TechnicianRepository technicianRepository) {
 
         this.bookingRepository = bookingRepository;
         this.userRepository = userRepository;
+        this.technicianRepository = technicianRepository;
     }
 
+    // =====================================================
+    // CUSTOMER OPERATIONS
+    // =====================================================
+
     @Override
+    @Transactional
     public BookingResponse createBooking(
             String customerEmail,
             BookingRequest request) {
 
-        User customer = userRepository
-                .findByEmail(customerEmail.trim().toLowerCase())
-                .orElseThrow(() ->
-                        new RuntimeException("Customer not found.")
-                );
+        User customer = findCustomerByEmail(
+                customerEmail
+        );
 
         BigDecimal servicePrice =
-                getServicePrice(request.getServiceName());
+                getServicePrice(
+                        request.getServiceName()
+                );
 
         BigDecimal inspectionCharge =
                 getInspectionCharge(
@@ -57,23 +70,45 @@ public class BookingServiceImpl implements BookingService {
 
         Booking booking = Booking.builder()
                 .customer(customer)
-                .serviceName(request.getServiceName().trim())
-                .serviceType(request.getServiceType().trim())
+                .serviceName(
+                        request.getServiceName().trim()
+                )
+                .serviceType(
+                        request.getServiceType().trim()
+                )
                 .servicePrice(servicePrice)
                 .inspectionCharge(inspectionCharge)
                 .convenienceFee(CONVENIENCE_FEE)
                 .totalAmount(totalAmount)
-                .propertyType(request.getPropertyType().trim())
-                .propertySize(request.getPropertySize().trim())
-                .serviceAddress(request.getServiceAddress().trim())
-                .landmark(cleanOptional(request.getLandmark()))
-                .city(request.getCity().trim())
-                .pincode(request.getPincode().trim())
-                .preferredDate(request.getPreferredDate())
+                .propertyType(
+                        request.getPropertyType().trim()
+                )
+                .propertySize(
+                        request.getPropertySize().trim()
+                )
+                .serviceAddress(
+                        request.getServiceAddress().trim()
+                )
+                .landmark(
+                        cleanOptional(
+                                request.getLandmark()
+                        )
+                )
+                .city(
+                        request.getCity().trim()
+                )
+                .pincode(
+                        request.getPincode().trim()
+                )
+                .preferredDate(
+                        request.getPreferredDate()
+                )
                 .preferredTimeSlot(
                         request.getPreferredTimeSlot().trim()
                 )
-                .pestType(request.getPestType().trim())
+                .pestType(
+                        request.getPestType().trim()
+                )
                 .problemDescription(
                         request.getProblemDescription().trim()
                 )
@@ -87,36 +122,41 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<BookingResponse> getMyBookings(
             String customerEmail) {
 
-        User customer = userRepository
-                .findByEmail(customerEmail.trim().toLowerCase())
-                .orElseThrow(() ->
-                        new RuntimeException("Customer not found.")
-                );
+        User customer = findCustomerByEmail(
+                customerEmail
+        );
 
         return bookingRepository
-                .findByCustomerOrderByCreatedAtDesc(customer)
+                .findByCustomerOrderByCreatedAtDesc(
+                        customer
+                )
                 .stream()
                 .map(this::convertToResponse)
                 .toList();
     }
 
     @Override
+    @Transactional(readOnly = true)
     public BookingResponse getBookingById(
             Long bookingId,
             String customerEmail) {
 
-        Booking booking = bookingRepository
-                .findById(bookingId)
-                .orElseThrow(() ->
-                        new RuntimeException("Booking not found.")
-                );
+        Booking booking =
+                findBookingById(bookingId);
 
-        if (!booking.getCustomer()
-                .getEmail()
-                .equalsIgnoreCase(customerEmail)) {
+        String loggedInEmail =
+                normalizeEmail(customerEmail);
+
+        String bookingCustomerEmail =
+                booking.getCustomer().getEmail();
+
+        if (!bookingCustomerEmail.equalsIgnoreCase(
+                loggedInEmail
+        )) {
 
             throw new RuntimeException(
                     "You are not allowed to view this booking."
@@ -126,10 +166,333 @@ public class BookingServiceImpl implements BookingService {
         return convertToResponse(booking);
     }
 
+    // =====================================================
+    // ADMIN OPERATIONS
+    // =====================================================
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<BookingResponse> getAllBookings() {
+
+        return bookingRepository
+                .findAllByOrderByCreatedAtDesc()
+                .stream()
+                .map(this::convertToResponse)
+                .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<BookingResponse> getBookingsByStatus(
+            BookingStatus status) {
+
+        return bookingRepository
+                .findByStatusOrderByCreatedAtDesc(
+                        status
+                )
+                .stream()
+                .map(this::convertToResponse)
+                .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public BookingResponse getBookingByIdForAdmin(
+            Long bookingId) {
+
+        return convertToResponse(
+                findBookingById(bookingId)
+        );
+    }
+
+    @Override
+    @Transactional
+    public BookingResponse acceptBooking(
+            Long bookingId) {
+
+        Booking booking =
+                findBookingById(bookingId);
+
+        if (booking.getStatus()
+                != BookingStatus.PENDING) {
+
+            throw new RuntimeException(
+                    "Only pending bookings can be accepted."
+            );
+        }
+
+        booking.setStatus(
+                BookingStatus.ACCEPTED
+        );
+
+        booking.setRejectionReason(null);
+
+        Booking updatedBooking =
+                bookingRepository.save(booking);
+
+        return convertToResponse(
+                updatedBooking
+        );
+    }
+
+    @Override
+    @Transactional
+    public BookingResponse rejectBooking(
+            Long bookingId,
+            String rejectionReason) {
+
+        Booking booking =
+                findBookingById(bookingId);
+
+        if (
+            booking.getStatus()
+                    != BookingStatus.PENDING
+            &&
+            booking.getStatus()
+                    != BookingStatus.ACCEPTED
+        ) {
+
+            throw new RuntimeException(
+                    "Only pending or accepted bookings can be rejected."
+            );
+        }
+
+        if (booking.getTechnicianId() != null) {
+
+            throw new RuntimeException(
+                    "Booking cannot be rejected after technician assignment."
+            );
+        }
+
+        if (rejectionReason == null
+                || rejectionReason.isBlank()) {
+
+            throw new RuntimeException(
+                    "Rejection reason is required."
+            );
+        }
+
+        booking.setStatus(
+                BookingStatus.REJECTED
+        );
+
+        booking.setRejectionReason(
+                rejectionReason.trim()
+        );
+
+        booking.setTechnicianId(null);
+        booking.setTechnicianName(null);
+        booking.setTechnicianPhone(null);
+
+        Booking updatedBooking =
+                bookingRepository.save(booking);
+
+        return convertToResponse(
+                updatedBooking
+        );
+    }
+
+    @Override
+    @Transactional
+    public BookingResponse assignTechnician(
+            Long bookingId,
+            Long technicianId) {
+
+        Booking booking =
+                findBookingById(bookingId);
+
+        if (booking.getStatus()
+                != BookingStatus.ACCEPTED) {
+
+            throw new RuntimeException(
+                    "Technician can only be assigned to an accepted booking."
+            );
+        }
+
+        Technician technician =
+                findTechnicianById(technicianId);
+
+        if (technician.getStatus()
+                != TechnicianStatus.AVAILABLE) {
+
+            throw new RuntimeException(
+                    "Selected technician is not available."
+            );
+        }
+
+        booking.setTechnicianId(
+                technician.getId()
+        );
+
+        booking.setTechnicianName(
+                technician.getFullName()
+        );
+
+        booking.setTechnicianPhone(
+                technician.getPhone()
+        );
+
+        booking.setStatus(
+                BookingStatus.ASSIGNED
+        );
+
+        booking.setRejectionReason(null);
+
+        technician.setStatus(
+                TechnicianStatus.BUSY
+        );
+
+        technicianRepository.save(technician);
+
+        Booking updatedBooking =
+                bookingRepository.save(booking);
+
+        return convertToResponse(
+                updatedBooking
+        );
+    }
+
+    @Override
+    @Transactional
+    public BookingResponse startBooking(
+            Long bookingId) {
+
+        Booking booking =
+                findBookingById(bookingId);
+
+        if (booking.getStatus()
+                != BookingStatus.ASSIGNED) {
+
+            throw new RuntimeException(
+                    "Only assigned bookings can be started."
+            );
+        }
+
+        if (booking.getTechnicianId() == null) {
+            throw new RuntimeException(
+                    "No technician is assigned to this booking."
+            );
+        }
+
+        booking.setStatus(
+                BookingStatus.IN_PROGRESS
+        );
+
+        Booking updatedBooking =
+                bookingRepository.save(booking);
+
+        return convertToResponse(
+                updatedBooking
+        );
+    }
+
+    @Override
+    @Transactional
+    public BookingResponse completeBooking(
+            Long bookingId) {
+
+        Booking booking =
+                findBookingById(bookingId);
+
+        if (booking.getStatus()
+                != BookingStatus.IN_PROGRESS) {
+
+            throw new RuntimeException(
+                    "Only in-progress bookings can be completed."
+            );
+        }
+
+        if (booking.getTechnicianId() == null) {
+            throw new RuntimeException(
+                    "No technician is assigned to this booking."
+            );
+        }
+
+        Technician technician =
+                findTechnicianById(
+                        booking.getTechnicianId()
+                );
+
+        booking.setStatus(
+                BookingStatus.COMPLETED
+        );
+
+        technician.setStatus(
+                TechnicianStatus.AVAILABLE
+        );
+
+        technicianRepository.save(technician);
+
+        Booking updatedBooking =
+                bookingRepository.save(booking);
+
+        return convertToResponse(
+                updatedBooking
+        );
+    }
+
+    // =====================================================
+    // HELPER METHODS
+    // =====================================================
+
+    private User findCustomerByEmail(
+            String customerEmail) {
+
+        String email =
+                normalizeEmail(customerEmail);
+
+        return userRepository
+                .findByEmail(email)
+                .orElseThrow(() ->
+                        new RuntimeException(
+                                "Customer not found."
+                        )
+                );
+    }
+
+    private Booking findBookingById(
+            Long bookingId) {
+
+        return bookingRepository
+                .findById(bookingId)
+                .orElseThrow(() ->
+                        new RuntimeException(
+                                "Booking not found."
+                        )
+                );
+    }
+
+    private Technician findTechnicianById(
+            Long technicianId) {
+
+        return technicianRepository
+                .findById(technicianId)
+                .orElseThrow(() ->
+                        new RuntimeException(
+                                "Technician not found."
+                        )
+                );
+    }
+
+    private String normalizeEmail(
+            String email) {
+
+        if (email == null || email.isBlank()) {
+            throw new RuntimeException(
+                    "Customer email is required."
+            );
+        }
+
+        return email
+                .trim()
+                .toLowerCase();
+    }
+
     private BigDecimal getServicePrice(
             String serviceName) {
 
         return switch (serviceName.trim()) {
+
             case "Termite Control" ->
                     BigDecimal.valueOf(1299);
 
@@ -160,21 +523,31 @@ public class BookingServiceImpl implements BookingService {
         String type = serviceType.trim();
 
         if (service.equals("Termite Control")
-                && type.equals("Inspection & Treatment")) {
+                && type.equals(
+                        "Inspection & Treatment"
+                )) {
 
             return BigDecimal.valueOf(199);
         }
 
-        if (service.equals("General Pest Control")
-                && type.equals("Deep Treatment")) {
+        if (service.equals(
+                "General Pest Control"
+        )
+                && type.equals(
+                        "Deep Treatment"
+                )) {
 
             return BigDecimal.valueOf(149);
         }
 
         if (service.equals("Rodent Control")
                 && (
-                    type.equals("Trap Installation")
-                    || type.equals("Baiting Treatment")
+                    type.equals(
+                            "Trap Installation"
+                    )
+                    || type.equals(
+                            "Baiting Treatment"
+                    )
                 )) {
 
             return BigDecimal.valueOf(99);
@@ -183,7 +556,8 @@ public class BookingServiceImpl implements BookingService {
         return BigDecimal.ZERO;
     }
 
-    private String cleanOptional(String value) {
+    private String cleanOptional(
+            String value) {
 
         if (value == null || value.isBlank()) {
             return null;
@@ -195,38 +569,71 @@ public class BookingServiceImpl implements BookingService {
     private BookingResponse convertToResponse(
             Booking booking) {
 
+        User customer = booking.getCustomer();
+
         return BookingResponse.builder()
-                .id(booking.getId())
-                .customerName(
-                        booking.getCustomer().getFullName()
+                .id(
+                        booking.getId()
                 )
-                .serviceName(booking.getServiceName())
-                .serviceType(booking.getServiceType())
-                .servicePrice(booking.getServicePrice())
+                .customerName(
+                        customer.getFullName()
+                )
+                .customerEmail(
+                        customer.getEmail()
+                )
+                .customerPhone(
+                        customer.getPhone()
+                )
+                .serviceName(
+                        booking.getServiceName()
+                )
+                .serviceType(
+                        booking.getServiceType()
+                )
+                .servicePrice(
+                        booking.getServicePrice()
+                )
                 .inspectionCharge(
                         booking.getInspectionCharge()
                 )
                 .convenienceFee(
                         booking.getConvenienceFee()
                 )
-                .totalAmount(booking.getTotalAmount())
-                .propertyType(booking.getPropertyType())
-                .propertySize(booking.getPropertySize())
+                .totalAmount(
+                        booking.getTotalAmount()
+                )
+                .propertyType(
+                        booking.getPropertyType()
+                )
+                .propertySize(
+                        booking.getPropertySize()
+                )
                 .serviceAddress(
                         booking.getServiceAddress()
                 )
-                .landmark(booking.getLandmark())
-                .city(booking.getCity())
-                .pincode(booking.getPincode())
+                .landmark(
+                        booking.getLandmark()
+                )
+                .city(
+                        booking.getCity()
+                )
+                .pincode(
+                        booking.getPincode()
+                )
                 .preferredDate(
                         booking.getPreferredDate()
                 )
                 .preferredTimeSlot(
                         booking.getPreferredTimeSlot()
                 )
-                .pestType(booking.getPestType())
+                .pestType(
+                        booking.getPestType()
+                )
                 .problemDescription(
                         booking.getProblemDescription()
+                )
+                .technicianId(
+                        booking.getTechnicianId()
                 )
                 .technicianName(
                         booking.getTechnicianName()
@@ -234,11 +641,18 @@ public class BookingServiceImpl implements BookingService {
                 .technicianPhone(
                         booking.getTechnicianPhone()
                 )
-                .status(booking.getStatus())
+                .status(
+                        booking.getStatus()
+                )
                 .rejectionReason(
                         booking.getRejectionReason()
                 )
-                .createdAt(booking.getCreatedAt())
+                .createdAt(
+                        booking.getCreatedAt()
+                )
+                .updatedAt(
+                        booking.getUpdatedAt()
+                )
                 .build();
     }
 }

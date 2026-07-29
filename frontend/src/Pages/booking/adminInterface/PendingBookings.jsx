@@ -1,11 +1,8 @@
-import React, { useState, useMemo } from "react";
-import { useNavigate } from "react-router-dom"
+import React, { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   ClipboardList,
   Clock,
-  CalendarDays,
-  AlertTriangle,
-  UserX,
   Search,
   Filter,
   Columns,
@@ -19,7 +16,6 @@ import {
   ChevronRight,
   Check,
   X,
-  MoreVertical,
   Phone,
   Mail,
   MapPin,
@@ -27,133 +23,10 @@ import {
   Bug,
   ShieldCheck,
 } from "lucide-react";
+import api from "../../../api/axios";
 import "./PendingBookings.css";
 
-const STAT_CARDS = [
-  {
-    id: "total",
-    label: "Total Pending",
-    value: 48,
-    caption: "All pending bookings",
-    icon: ClipboardList,
-    tone: "green",
-  },
-  {
-    id: "today",
-    label: "Scheduled Today",
-    value: 12,
-    caption: "Due for today",
-    icon: Clock,
-    tone: "amber",
-  },
-  {
-    id: "week",
-    label: "Scheduled This Week",
-    value: 26,
-    caption: "Due this week",
-    icon: CalendarDays,
-    tone: "green",
-  },
-  {
-    id: "priority",
-    label: "High Priority",
-    value: 8,
-    caption: "Urgent bookings",
-    icon: AlertTriangle,
-    tone: "red",
-  },
-  {
-    id: "unassigned",
-    label: "Unassigned",
-    value: 15,
-    caption: "Need technician",
-    icon: UserX,
-    tone: "blue",
-  },
-];
-
-const BOOKINGS = [
-  {
-    id: "BK-250515-001",
-    requestedOn: "14 May 2025, 04:30 PM",
-    customer: "Rajesh Sharma",
-    phone: "9876543210",
-    email: "rajesh@gmail.com",
-    property: "Sharma Residency",
-    location: "Pune, Maharashtra",
-    pest: "Cockroach",
-    service: "General Pest Control",
-    date: "15 May 2025",
-    time: "10:00 AM",
-    priority: "High",
-    assignedTo: null,
-    remarks: "Severe infestation in kitchen area",
-  },
-  {
-    id: "BK-250515-002",
-    requestedOn: "14 May 2025, 03:15 PM",
-    customer: "Priya Patel",
-    phone: "9876543211",
-    email: "priya@gmail.com",
-    property: "Patel Villa",
-    location: "Pimpri, Pune",
-    pest: "Termite",
-    service: "Termite Treatment",
-    date: "15 May 2025",
-    time: "02:00 PM",
-    priority: "Medium",
-    assignedTo: null,
-    remarks: "Pre-construction treatment",
-  },
-  {
-    id: "BK-250515-003",
-    requestedOn: "14 May 2025, 02:50 PM",
-    customer: "Sunil Gupta",
-    phone: "9876543212",
-    email: "sunil@gmail.com",
-    property: "Gupta Apartments",
-    location: "Wakad, Pune",
-    pest: "Rodent",
-    service: "Rodent Control",
-    date: "16 May 2025",
-    time: "11:00 AM",
-    priority: "High",
-    assignedTo: null,
-    remarks: "Rat activity in basement",
-  },
-  {
-    id: "BK-250515-004",
-    requestedOn: "14 May 2025, 01:40 PM",
-    customer: "Anita Singh",
-    phone: "9876543213",
-    email: "anita@gmail.com",
-    property: "Singh Villa",
-    location: "Hinjewadi, Pune",
-    pest: "Mosquito",
-    service: "Mosquito Control",
-    date: "16 May 2025",
-    time: "03:30 PM",
-    priority: "Low",
-    assignedTo: null,
-    remarks: "Mosquito breeding in garden",
-  },
-  {
-    id: "BK-250515-005",
-    requestedOn: "14 May 2025, 12:20 PM",
-    customer: "Vikram Mehta",
-    phone: "9876543214",
-    email: "vikram@gmail.com",
-    property: "Mehta House",
-    location: "Baner, Pune",
-    pest: "Ant",
-    service: "General Pest Control",
-    date: "17 May 2025",
-    time: "09:00 AM",
-    priority: "Medium",
-    assignedTo: null,
-    remarks: "Ants in kitchen and pantry",
-  },
-];
+const PAGE_SIZE = 5;
 
 const PEST_ICONS = {
   Cockroach: Bug,
@@ -163,10 +36,99 @@ const PEST_ICONS = {
   Ant: Bug,
 };
 
-const TOTAL_RECORDS = 48;
-const TOTAL_PAGES = 10;
+const formatDate = (value) => {
+  if (!value) return "—";
+
+  return new Intl.DateTimeFormat("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  }).format(new Date(`${value}T00:00:00`));
+};
+
+const formatDateTime = (value) => {
+  if (!value) return "—";
+
+  return new Intl.DateTimeFormat("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(new Date(value));
+};
+
+const getPriority = (preferredDate) => {
+  if (!preferredDate) return "Low";
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const serviceDate = new Date(`${preferredDate}T00:00:00`);
+  const differenceInDays = Math.ceil(
+    (serviceDate.getTime() - today.getTime()) / 86400000
+  );
+
+  if (differenceInDays <= 1) return "High";
+  if (differenceInDays <= 3) return "Medium";
+  return "Low";
+};
+
+const getErrorMessage = (error) => {
+  const responseData = error.response?.data;
+
+  if (typeof responseData === "string" && responseData.trim()) {
+    return responseData;
+  }
+
+  if (responseData?.message) {
+    return responseData.message;
+  }
+
+  if (responseData?.error) {
+    return responseData.error;
+  }
+
+  if (!error.response) {
+    return "Unable to connect to the backend.";
+  }
+
+  return "Unable to load pending bookings.";
+};
+
+const mapBooking = (booking) => ({
+  backendId: booking.id,
+  id: `BK-${booking.id}`,
+  requestedOn: formatDateTime(booking.createdAt),
+  customer: booking.customerName || "—",
+  phone: booking.customerPhone || "—",
+  email: booking.customerEmail || "—",
+  property:
+    [booking.propertyType, booking.propertySize].filter(Boolean).join(" - ") ||
+    "Property",
+  location:
+    [
+      booking.serviceAddress,
+      booking.landmark,
+      booking.city,
+      booking.pincode,
+    ]
+      .filter(Boolean)
+      .join(", ") || "—",
+  pest: booking.pestType || "Other",
+  service:
+    [booking.serviceName, booking.serviceType].filter(Boolean).join(" - ") || "—",
+  date: formatDate(booking.preferredDate),
+  time: booking.preferredTimeSlot || "—",
+  priority: getPriority(booking.preferredDate),
+  assignedTo: booking.technicianName || null,
+  remarks: booking.problemDescription || "—",
+});
 
 const PendingBooking = () => {
+  const navigate = useNavigate();
+
+  const [bookings, setBookings] = useState([]);
   const [searchValue, setSearchValue] = useState("");
   const [statusFilter, setStatusFilter] = useState("Pending");
   const [priorityFilter, setPriorityFilter] = useState("All Priority");
@@ -174,43 +136,118 @@ const PendingBooking = () => {
   const [serviceFilter, setServiceFilter] = useState("All Service");
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedRows, setSelectedRows] = useState([]);
-  const [openMenuId, setOpenMenuId] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [actionId, setActionId] = useState(null);
+  const [error, setError] = useState("");
+
+  const loadPendingBookings = async () => {
+    try {
+      setLoading(true);
+      setError("");
+
+      const response = await api.get("/admin/bookings/pending");
+      const responseBookings = Array.isArray(response.data)
+        ? response.data
+        : [];
+
+      setBookings(responseBookings.map(mapBooking));
+      setSelectedRows([]);
+    } catch (requestError) {
+      setBookings([]);
+      setError(getErrorMessage(requestError));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadPendingBookings();
+  }, []);
 
   const filteredBookings = useMemo(() => {
-    return BOOKINGS.filter((booking) => {
+    const search = searchValue.trim().toLowerCase();
+
+    return bookings.filter((booking) => {
       const matchesSearch =
-        searchValue.trim() === "" ||
-        booking.id.toLowerCase().includes(searchValue.toLowerCase()) ||
-        booking.customer.toLowerCase().includes(searchValue.toLowerCase()) ||
-        booking.pest.toLowerCase().includes(searchValue.toLowerCase());
+        search === "" ||
+        booking.id.toLowerCase().includes(search) ||
+        booking.customer.toLowerCase().includes(search) ||
+        booking.phone.toLowerCase().includes(search) ||
+        booking.email.toLowerCase().includes(search) ||
+        booking.pest.toLowerCase().includes(search);
+
+      const matchesStatus = statusFilter === "Pending";
 
       const matchesPriority =
-        priorityFilter === "All Priority" || booking.priority === priorityFilter;
+        priorityFilter === "All Priority" ||
+        booking.priority === priorityFilter;
 
       const matchesPest =
         pestFilter === "All Pest Type" || booking.pest === pestFilter;
 
       const matchesService =
-        serviceFilter === "All Service" || booking.service === serviceFilter;
+        serviceFilter === "All Service" ||
+        booking.service.toLowerCase().includes(serviceFilter.toLowerCase());
 
-      return matchesSearch && matchesPriority && matchesPest && matchesService;
+      return (
+        matchesSearch &&
+        matchesStatus &&
+        matchesPriority &&
+        matchesPest &&
+        matchesService
+      );
     });
-  }, [searchValue, priorityFilter, pestFilter, serviceFilter]);
+  }, [
+    bookings,
+    searchValue,
+    statusFilter,
+    priorityFilter,
+    pestFilter,
+    serviceFilter,
+  ]);
+
+  const totalPages = Math.max(
+    1,
+    Math.ceil(filteredBookings.length / PAGE_SIZE)
+  );
+
+  const paginatedBookings = filteredBookings.slice(
+    (currentPage - 1) * PAGE_SIZE,
+    currentPage * PAGE_SIZE
+  );
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
 
   const allSelected =
-    filteredBookings.length > 0 && selectedRows.length === filteredBookings.length;
+    paginatedBookings.length > 0 &&
+    paginatedBookings.every((booking) =>
+      selectedRows.includes(booking.backendId)
+    );
 
   const toggleSelectAll = () => {
+    const pageIds = paginatedBookings.map((booking) => booking.backendId);
+
     if (allSelected) {
-      setSelectedRows([]);
-    } else {
-      setSelectedRows(filteredBookings.map((b) => b.id));
+      setSelectedRows((previousRows) =>
+        previousRows.filter((id) => !pageIds.includes(id))
+      );
+      return;
     }
+
+    setSelectedRows((previousRows) => [
+      ...new Set([...previousRows, ...pageIds]),
+    ]);
   };
 
   const toggleSelectRow = (id) => {
-    setSelectedRows((prev) =>
-      prev.includes(id) ? prev.filter((rowId) => rowId !== id) : [...prev, id]
+    setSelectedRows((previousRows) =>
+      previousRows.includes(id)
+        ? previousRows.filter((rowId) => rowId !== id)
+        : [...previousRows, id]
     );
   };
 
@@ -220,25 +257,73 @@ const PendingBooking = () => {
     setPriorityFilter("All Priority");
     setPestFilter("All Pest Type");
     setServiceFilter("All Service");
+    setCurrentPage(1);
   };
 
-  const handleAccept = (id) => {
-    console.log("Accepted booking:", id);
+  const handleAccept = async (bookingId) => {
+    try {
+      setActionId(bookingId);
+      setError("");
+
+      await api.put(`/admin/bookings/${bookingId}/accept`);
+
+      sessionStorage.setItem(
+        "pcmsAssignBookingId",
+        String(bookingId)
+      );
+
+      navigate("/admin/bookings/assign-technician", {
+        state: { bookingId },
+      });
+    } catch (requestError) {
+      setError(getErrorMessage(requestError));
+      setActionId(null);
+    }
   };
 
-  const handleReject = (id) => {
-    console.log("Rejected booking:", id);
+  const handleReject = (bookingId) => {
+    sessionStorage.setItem(
+      "pcmsRejectBookingId",
+      String(bookingId)
+    );
+
+    navigate("/admin/bookings/rejection-reason", {
+      state: { bookingId },
+    });
   };
 
   const goToPage = (page) => {
-    if (page >= 1 && page <= TOTAL_PAGES) {
+    if (page >= 1 && page <= totalPages) {
       setCurrentPage(page);
     }
   };
 
-  const pageNumbers = [1, 2, 3];
+  const pageNumbers = Array.from(
+    { length: Math.min(totalPages, 3) },
+    (_, index) => index + 1
+  );
 
-  const navigate = useNavigate();
+  const pestOptions = [
+    ...new Set(bookings.map((booking) => booking.pest).filter(Boolean)),
+  ];
+
+  const serviceOptions = [
+    ...new Set(
+      bookings
+        .map((booking) => booking.service.split(" - ")[0])
+        .filter(Boolean)
+    ),
+  ];
+
+  const firstVisibleRecord =
+    filteredBookings.length === 0
+      ? 0
+      : (currentPage - 1) * PAGE_SIZE + 1;
+
+  const lastVisibleRecord = Math.min(
+    currentPage * PAGE_SIZE,
+    filteredBookings.length
+  );
 
   return (
     <div className="pb-page">
@@ -255,13 +340,22 @@ const PendingBooking = () => {
           </div>
         </div>
         <div className="pb-header-actions">
-          <button type="button" className="pb-btn pb-btn-outline">
+          <button
+            type="button"
+            className="pb-btn pb-btn-outline"
+            onClick={() => window.print()}
+          >
             <Upload size={16} />
             Export
           </button>
-          <button type="button" className="pb-btn pb-btn-primary">
+          <button
+            type="button"
+            className="pb-btn pb-btn-primary"
+            onClick={loadPendingBookings}
+            disabled={loading}
+          >
             <RefreshCw size={16} />
-            Refresh
+            {loading ? "Loading..." : "Refresh"}
           </button>
         </div>
       </div>
@@ -274,7 +368,10 @@ const PendingBooking = () => {
             type="text"
             placeholder="Search booking ID, customer, pest type..."
             value={searchValue}
-            onChange={(e) => setSearchValue(e.target.value)}
+            onChange={(e) => {
+              setSearchValue(e.target.value);
+              setCurrentPage(1);
+            }}
             className="pb-search-input"
           />
         </div>
@@ -285,7 +382,10 @@ const PendingBooking = () => {
             <select
               className="pb-select"
               value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
+              onChange={(e) => {
+                setStatusFilter(e.target.value);
+                setCurrentPage(1);
+              }}
             >
               <option>Pending</option>
               <option>Confirmed</option>
@@ -302,7 +402,10 @@ const PendingBooking = () => {
             <select
               className="pb-select"
               value={priorityFilter}
-              onChange={(e) => setPriorityFilter(e.target.value)}
+              onChange={(e) => {
+                setPriorityFilter(e.target.value);
+                setCurrentPage(1);
+              }}
             >
               <option>All Priority</option>
               <option>High</option>
@@ -319,14 +422,15 @@ const PendingBooking = () => {
             <select
               className="pb-select"
               value={pestFilter}
-              onChange={(e) => setPestFilter(e.target.value)}
+              onChange={(e) => {
+                setPestFilter(e.target.value);
+                setCurrentPage(1);
+              }}
             >
               <option>All Pest Type</option>
-              <option>Cockroach</option>
-              <option>Termite</option>
-              <option>Rodent</option>
-              <option>Mosquito</option>
-              <option>Ant</option>
+              {pestOptions.map((pest) => (
+                <option key={pest}>{pest}</option>
+              ))}
             </select>
             <ChevronDown size={16} className="pb-select-icon" />
           </div>
@@ -338,13 +442,15 @@ const PendingBooking = () => {
             <select
               className="pb-select"
               value={serviceFilter}
-              onChange={(e) => setServiceFilter(e.target.value)}
+              onChange={(e) => {
+                setServiceFilter(e.target.value);
+                setCurrentPage(1);
+              }}
             >
               <option>All Service</option>
-              <option>General Pest Control</option>
-              <option>Termite Treatment</option>
-              <option>Rodent Control</option>
-              <option>Mosquito Control</option>
+              {serviceOptions.map((service) => (
+                <option key={service}>{service}</option>
+              ))}
             </select>
             <ChevronDown size={16} className="pb-select-icon" />
           </div>
@@ -354,11 +460,15 @@ const PendingBooking = () => {
           <label className="pb-filter-label">Date Range</label>
           <div className="pb-date-input">
             <Calendar size={16} className="pb-date-icon" />
-            <span>01 May 2025 - 31 May 2025</span>
+            <span>All Dates</span>
           </div>
         </div>
 
-        <button type="button" className="pb-btn pb-btn-ghost pb-clear-btn" onClick={clearFilters}>
+        <button
+          type="button"
+          className="pb-btn pb-btn-ghost pb-clear-btn"
+          onClick={clearFilters}
+        >
           <RefreshCw size={15} />
           Clear Filters
         </button>
@@ -369,22 +479,42 @@ const PendingBooking = () => {
         <div className="pb-table-header">
           <div className="pb-table-title-group">
             <h2 className="pb-table-title">Pending Bookings</h2>
-            <span className="pb-records-badge">{TOTAL_RECORDS} Records</span>
+            <span className="pb-records-badge">
+              {bookings.length} Records
+            </span>
           </div>
           <div className="pb-table-actions">
-            <button type="button" className="pb-btn pb-btn-outline pb-btn-sm">
+            <button
+              type="button"
+              className="pb-btn pb-btn-outline pb-btn-sm"
+            >
               <Filter size={15} />
               Filter
             </button>
-            <button type="button" className="pb-btn pb-btn-outline pb-btn-sm">
+            <button
+              type="button"
+              className="pb-btn pb-btn-outline pb-btn-sm"
+            >
               <Columns size={15} />
               Columns
             </button>
-            <button type="button" className="pb-btn pb-btn-icon-only">
+            <button
+              type="button"
+              className="pb-btn pb-btn-icon-only"
+            >
               <Menu size={16} />
             </button>
           </div>
         </div>
+
+        {error && (
+          <div
+            className="pb-empty-state"
+            style={{ padding: "16px" }}
+          >
+            <p>{error}</p>
+          </div>
+        )}
 
         <div className="pb-table-scroll">
           <table className="pb-table">
@@ -399,54 +529,96 @@ const PendingBooking = () => {
                   />
                 </th>
                 <th>
-                  Booking ID <ChevronUp size={12} className="pb-sort-icon" />
+                  Booking ID{" "}
+                  <ChevronUp
+                    size={12}
+                    className="pb-sort-icon"
+                  />
                 </th>
                 <th>
-                  Customer Details <ChevronUp size={12} className="pb-sort-icon" />
+                  Customer Details{" "}
+                  <ChevronUp
+                    size={12}
+                    className="pb-sort-icon"
+                  />
                 </th>
                 <th>
-                  Property Details <ChevronUp size={12} className="pb-sort-icon" />
+                  Property Details{" "}
+                  <ChevronUp
+                    size={12}
+                    className="pb-sort-icon"
+                  />
                 </th>
                 <th>
-                  Pest Type <ChevronUp size={12} className="pb-sort-icon" />
+                  Pest Type{" "}
+                  <ChevronUp
+                    size={12}
+                    className="pb-sort-icon"
+                  />
                 </th>
                 <th>
-                  Service Type <ChevronUp size={12} className="pb-sort-icon" />
+                  Service Type{" "}
+                  <ChevronUp
+                    size={12}
+                    className="pb-sort-icon"
+                  />
                 </th>
                 <th>
-                  Schedule <ChevronUp size={12} className="pb-sort-icon" />
+                  Schedule{" "}
+                  <ChevronUp
+                    size={12}
+                    className="pb-sort-icon"
+                  />
                 </th>
                 <th>
-                  Priority <ChevronUp size={12} className="pb-sort-icon" />
+                  Priority{" "}
+                  <ChevronUp
+                    size={12}
+                    className="pb-sort-icon"
+                  />
                 </th>
                 <th>
-                  Assigned To <ChevronUp size={12} className="pb-sort-icon" />
+                  Assigned To{" "}
+                  <ChevronUp
+                    size={12}
+                    className="pb-sort-icon"
+                  />
                 </th>
                 <th>Remarks</th>
                 <th className="pb-th-actions">Actions</th>
               </tr>
             </thead>
             <tbody>
-              {filteredBookings.map((booking) => {
-                const PestIcon = PEST_ICONS[booking.pest] || Bug;
+              {paginatedBookings.map((booking) => {
+                const PestIcon =
+                  PEST_ICONS[booking.pest] || Bug;
+
                 return (
-                  <tr key={booking.id}>
+                  <tr key={booking.backendId}>
                     <td>
                       <input
                         type="checkbox"
-                        checked={selectedRows.includes(booking.id)}
-                        onChange={() => toggleSelectRow(booking.id)}
+                        checked={selectedRows.includes(
+                          booking.backendId
+                        )}
+                        onChange={() =>
+                          toggleSelectRow(booking.backendId)
+                        }
                         className="pb-checkbox"
                       />
                     </td>
                     <td>
-                      <span className="pb-booking-id">{booking.id}</span>
+                      <span className="pb-booking-id">
+                        {booking.id}
+                      </span>
                       <span className="pb-requested-on">
                         Requested on {booking.requestedOn}
                       </span>
                     </td>
                     <td>
-                      <span className="pb-customer-name">{booking.customer}</span>
+                      <span className="pb-customer-name">
+                        {booking.customer}
+                      </span>
                       <span className="pb-customer-sub">
                         <Phone size={12} /> {booking.phone}
                       </span>
@@ -455,7 +627,9 @@ const PendingBooking = () => {
                       </span>
                     </td>
                     <td>
-                      <span className="pb-property-name">{booking.property}</span>
+                      <span className="pb-property-name">
+                        {booking.property}
+                      </span>
                       <span className="pb-customer-sub">
                         {booking.location}
                         <MapPin size={12} />
@@ -495,22 +669,36 @@ const PendingBooking = () => {
                       </span>
                     </td>
                     <td>
-                      <span className="pb-remarks-cell">{booking.remarks}</span>
+                      <span className="pb-remarks-cell">
+                        {booking.remarks}
+                      </span>
                     </td>
                     <td>
                       <div className="pb-action-cell">
                         <button
                           type="button"
                           className="pb-btn pb-btn-success pb-btn-xs"
-                          onClick={() => navigate("/admin/bookings/assign-technician")}
+                          onClick={() =>
+                            handleAccept(booking.backendId)
+                          }
+                          disabled={
+                            actionId === booking.backendId
+                          }
                         >
                           <Check size={14} />
-                          Accept
+                          {actionId === booking.backendId
+                            ? "Accepting..."
+                            : "Accept"}
                         </button>
                         <button
                           type="button"
                           className="pb-btn pb-btn-danger-outline pb-btn-xs"
-                          onClick={() => navigate("/admin/bookings/rejection-reason")}
+                          onClick={() =>
+                            handleReject(booking.backendId)
+                          }
+                          disabled={
+                            actionId === booking.backendId
+                          }
                         >
                           <X size={14} />
                           Reject
@@ -521,13 +709,27 @@ const PendingBooking = () => {
                 );
               })}
 
-              {filteredBookings.length === 0 && (
+              {!loading && paginatedBookings.length === 0 && (
                 <tr>
                   <td colSpan={11}>
                     <div className="pb-empty-state">
                       <ClipboardList size={40} />
                       <h3>No pending bookings found</h3>
-                      <p>Try adjusting your search or filters to find what you're looking for.</p>
+                      <p>
+                        Try adjusting your search or filters to
+                        find what you&apos;re looking for.
+                      </p>
+                    </div>
+                  </td>
+                </tr>
+              )}
+
+              {loading && (
+                <tr>
+                  <td colSpan={11}>
+                    <div className="pb-empty-state">
+                      <RefreshCw size={40} />
+                      <h3>Loading pending bookings...</h3>
                     </div>
                   </td>
                 </tr>
@@ -539,7 +741,9 @@ const PendingBooking = () => {
         {/* Pagination */}
         <div className="pb-pagination">
           <span className="pb-pagination-info">
-            Showing 1 to {filteredBookings.length} of {TOTAL_RECORDS} entries
+            Showing {firstVisibleRecord} to{" "}
+            {lastVisibleRecord} of{" "}
+            {filteredBookings.length} entries
           </span>
           <div className="pb-pagination-controls">
             <button
@@ -550,29 +754,44 @@ const PendingBooking = () => {
             >
               <ChevronLeft size={16} />
             </button>
+
             {pageNumbers.map((page) => (
               <button
                 key={page}
                 type="button"
-                className={`pb-page-btn ${currentPage === page ? "pb-page-btn--active" : ""}`}
+                className={`pb-page-btn ${
+                  currentPage === page
+                    ? "pb-page-btn--active"
+                    : ""
+                }`}
                 onClick={() => goToPage(page)}
               >
                 {page}
               </button>
             ))}
-            <span className="pb-page-ellipsis">...</span>
-            <button
-              type="button"
-              className={`pb-page-btn ${currentPage === TOTAL_PAGES ? "pb-page-btn--active" : ""}`}
-              onClick={() => goToPage(TOTAL_PAGES)}
-            >
-              {TOTAL_PAGES}
-            </button>
+
+            {totalPages > 3 && (
+              <>
+                <span className="pb-page-ellipsis">...</span>
+                <button
+                  type="button"
+                  className={`pb-page-btn ${
+                    currentPage === totalPages
+                      ? "pb-page-btn--active"
+                      : ""
+                  }`}
+                  onClick={() => goToPage(totalPages)}
+                >
+                  {totalPages}
+                </button>
+              </>
+            )}
+
             <button
               type="button"
               className="pb-page-btn"
               onClick={() => goToPage(currentPage + 1)}
-              disabled={currentPage === TOTAL_PAGES}
+              disabled={currentPage === totalPages}
             >
               <ChevronRight size={16} />
             </button>

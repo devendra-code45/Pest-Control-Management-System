@@ -250,7 +250,7 @@
   padding: 24px;
   margin-bottom: 24px;
   display: grid;
-  grid-template-columns: 1.6fr 1fr 1fr 1fr auto;
+  grid-template-columns: 1.6fr 1fr 1fr auto;
   gap: 16px;
   align-items: center;
   box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
@@ -585,6 +585,38 @@
 
 /* Actions cell ---------------------------------------------------------------------- */
 
+
+.mb-icon-btn {
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  border-radius: 8px;
+  border: 1px solid var(--mb-border);
+  background-color: var(--mb-card);
+  color: var(--mb-primary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.mb-icon-btn:hover {
+  background-color: var(--mb-accent-soft);
+  border-color: var(--mb-primary);
+}
+
+.mb-btn:disabled,
+.mb-icon-btn:disabled,
+.mb-call-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+
 .mb-actions-cell {
   display: flex;
   align-items: center;
@@ -833,7 +865,7 @@
   padding: 0;
   background: transparent;
   font: inherit;
-  color: inherit;
+  color: var(--mb-primary);
   cursor: pointer;
 }
 
