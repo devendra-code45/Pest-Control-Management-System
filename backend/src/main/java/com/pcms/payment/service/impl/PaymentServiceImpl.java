@@ -7,6 +7,8 @@ import java.util.UUID;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import com.pcms.booking.entity.Booking;
 import com.pcms.booking.entity.BookingStatus;
@@ -17,6 +19,7 @@ import com.pcms.payment.dto.RefundPaymentRequest;
 import com.pcms.payment.entity.Payment;
 import com.pcms.payment.entity.PaymentStatus;
 import com.pcms.payment.repository.PaymentRepository;
+import com.pcms.payment.service.PaymentEmailService;
 import com.pcms.payment.service.PaymentService;
 import com.pcms.user.entity.User;
 import com.pcms.user.repository.UserRepository;
@@ -34,10 +37,14 @@ public class PaymentServiceImpl
     private final UserRepository
             userRepository;
 
+    private final PaymentEmailService
+            paymentEmailService;
+
     public PaymentServiceImpl(
             PaymentRepository paymentRepository,
             BookingRepository bookingRepository,
-            UserRepository userRepository
+            UserRepository userRepository,
+            PaymentEmailService paymentEmailService
     ) {
         this.paymentRepository =
                 paymentRepository;
@@ -47,6 +54,9 @@ public class PaymentServiceImpl
 
         this.userRepository =
                 userRepository;
+
+        this.paymentEmailService =
+                paymentEmailService;
     }
 
     @Override
@@ -124,11 +134,22 @@ public class PaymentServiceImpl
                 BigDecimal.ZERO
         );
 
-        return toResponse(
+        Payment savedPayment =
                 paymentRepository.save(
                         payment
-                )
+                );
+
+        PaymentResponse response =
+                toResponse(savedPayment);
+
+        schedulePaymentEmailsAfterCommit(
+                customer,
+                booking,
+                savedPayment,
+                response.getBookingNumber()
         );
+
+        return response;
     }
 
     @Override
@@ -272,6 +293,44 @@ public class PaymentServiceImpl
                         payment
                 )
         );
+    }
+
+    private void schedulePaymentEmailsAfterCommit(
+            User customer,
+            Booking booking,
+            Payment payment,
+            String bookingNumber
+    ) {
+        Runnable emailTask = () ->
+                paymentEmailService
+                        .sendPaymentNotifications(
+                                customer.getEmail(),
+                                customer.getFullName(),
+                                bookingNumber,
+                                booking.getServiceName(),
+                                payment.getAmount(),
+                                payment.getTransactionId(),
+                                String.valueOf(
+                                        payment.getPaymentMethod()
+                                )
+                        );
+
+        if (
+                TransactionSynchronizationManager
+                        .isSynchronizationActive()
+        ) {
+            TransactionSynchronizationManager
+                    .registerSynchronization(
+                            new TransactionSynchronization() {
+                                @Override
+                                public void afterCommit() {
+                                    emailTask.run();
+                                }
+                            }
+                    );
+        } else {
+            emailTask.run();
+        }
     }
 
     private User findCustomer(
