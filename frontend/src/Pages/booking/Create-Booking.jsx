@@ -235,33 +235,59 @@ export default function BookService({
     [location.state]
   );
 
+  const [availableServices, setAvailableServices] =
+    useState([]);
+
   const serviceCatalog = useMemo(() => {
-    if (!clickedService?.name) {
-      return {};
+    const services = [...availableServices];
+
+    /*
+     * Keep the service selected from Available Services
+     * even while the API response is loading.
+     */
+    if (
+      clickedService?.name &&
+      !services.some(
+        (service) =>
+          service?.name === clickedService.name
+      )
+    ) {
+      services.unshift(clickedService);
     }
 
-    const serviceType =
-      clickedService.category ||
-      "Standard Service";
+    return services.reduce(
+      (catalog, service) => {
+        if (!service?.name) {
+          return catalog;
+        }
 
-    return {
-      [clickedService.name]: {
-        icon: Bug,
-        duration:
-          clickedService.duration ||
-          "Duration not specified",
-        price: Number(
-          clickedService.price || 0
-        ),
-        types: [
-          {
-            label: serviceType,
-            inspectionCharge: 0,
-          },
-        ],
+        const serviceType =
+          service.category ||
+          "Standard Service";
+
+        catalog[service.name] = {
+          id: service.id,
+          icon: Bug,
+          duration:
+            service.duration ||
+            "Duration not specified",
+          price: Number(
+            service.price || 0
+          ),
+          sourceService: service,
+          types: [
+            {
+              label: serviceType,
+              inspectionCharge: 0,
+            },
+          ],
+        };
+
+        return catalog;
       },
-    };
-  }, [clickedService]);
+      {}
+    );
+  }, [availableServices, clickedService]);
 
   const [profile, setProfile] = useState(DEFAULT_PROFILE);
   const [profileLoading, setProfileLoading] = useState(true);
@@ -276,14 +302,6 @@ export default function BookService({
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [apiError, setApiError] = useState("");
-
-  useEffect(() => {
-    if (!clickedService?.name) {
-      navigate("/customer/services", {
-        replace: true,
-      });
-    }
-  }, [clickedService, navigate]);
 
   useEffect(() => {
     if (!clickedService?.name) {
@@ -318,6 +336,36 @@ export default function BookService({
       pestType: "",
     }));
   }, [clickedService]);
+
+  useEffect(() => {
+    const fetchAvailableServices = async () => {
+      try {
+        const response = await api.get(
+          "/customer/services"
+        );
+
+        setAvailableServices(
+          Array.isArray(response.data)
+            ? response.data
+            : []
+        );
+      } catch (error) {
+        if (error.response?.status === 401) {
+          localStorage.removeItem("pcmsAuth");
+          navigate("/login", {
+            replace: true,
+          });
+          return;
+        }
+
+        setApiError(
+          "Unable to load available services."
+        );
+      }
+    };
+
+    fetchAvailableServices();
+  }, [navigate]);
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -419,6 +467,57 @@ export default function BookService({
       total,
     };
   }, [selectedService, selectedType]);
+
+  const handleServiceChange = (event) => {
+    const serviceName = event.target.value;
+    const service =
+      serviceCatalog[serviceName];
+
+    setForm((currentForm) => ({
+      ...currentForm,
+      service: serviceName,
+      serviceType:
+        service?.types?.[0]?.label || "",
+      pestType: service
+        ? guessPestType(
+            service.sourceService
+          )
+        : "",
+    }));
+
+    if (service?.sourceService) {
+      sessionStorage.setItem(
+        "pcmsSelectedServiceId",
+        String(service.id || "")
+      );
+
+      sessionStorage.setItem(
+        "pcmsSelectedService",
+        JSON.stringify(
+          service.sourceService
+        )
+      );
+    } else {
+      sessionStorage.removeItem(
+        "pcmsSelectedServiceId"
+      );
+
+      sessionStorage.removeItem(
+        "pcmsSelectedService"
+      );
+    }
+
+    setErrors((currentErrors) => ({
+      ...currentErrors,
+      service: "",
+      serviceType: "",
+      pestType: "",
+    }));
+
+    if (apiError) {
+      setApiError("");
+    }
+  };
 
   const handleField = (field) => (event) => {
     const value = event.target.value;
@@ -788,7 +887,7 @@ export default function BookService({
                 </label>
 
                 <div
-                  className={`bs-select bs-select--disabled ${
+                  className={`bs-select ${
                     errors.service
                       ? "bs-select--error"
                       : ""
@@ -800,22 +899,30 @@ export default function BookService({
 
                   <select
                     value={form.service}
-                    disabled
+                    onChange={
+                      handleServiceChange
+                    }
                   >
-                    {clickedService?.name ? (
+                    <option value="">
+                      Choose a service
+                    </option>
+
+                    {Object.keys(
+                      serviceCatalog
+                    ).map((serviceName) => (
                       <option
-                        value={clickedService.name}
+                        key={serviceName}
+                        value={serviceName}
                       >
-                        {clickedService.name}
+                        {serviceName}
                       </option>
-                    ) : (
-                      <option value="">
-                        Select service from Available Services
-                      </option>
-                    )}
+                    ))}
                   </select>
 
-
+                  <ChevronDown
+                    size={15}
+                    className="bs-select__chevron"
+                  />
                 </div>
 
                 {errors.service && (
