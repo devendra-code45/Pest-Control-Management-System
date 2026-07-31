@@ -276,6 +276,7 @@ public class UserServiceImpl
                     "Old password is incorrect."
             );
         }
+       
 
         if (!request.getNewPassword()
                 .equals(
@@ -306,26 +307,56 @@ public class UserServiceImpl
     }
 
     private UserResponse convertToResponse(
-            User user) {
+            User user
+    ) {
 
-        return UserResponse.builder()
-                .id(user.getId())
-                .fullName(
-                        user.getFullName()
-                )
-                .email(user.getEmail())
-                .phone(user.getPhone())
-                .role(user.getRole())
-                .dateOfBirth(
-                        user.getDateOfBirth()
-                )
-                .gender(user.getGender())
-                .address(user.getAddress())
-                .city(user.getCity())
-                .pincode(user.getPincode())
-                .profileImage(
-                        user.getProfileImage()
-                )
-                .build();
+        UserResponse response =
+                new UserResponse();
+
+        response.setId(
+                user.getId()
+        );
+
+        response.setFullName(
+                user.getFullName()
+        );
+
+        response.setEmail(
+                user.getEmail()
+        );
+
+        response.setPhone(
+                user.getPhone()
+        );
+
+        response.setRole(
+                user.getRole()
+        );
+
+        response.setDateOfBirth(
+                user.getDateOfBirth()
+        );
+
+        response.setGender(
+                user.getGender()
+        );
+
+        response.setAddress(
+                user.getAddress()
+        );
+
+        response.setCity(
+                user.getCity()
+        );
+
+        response.setPincode(
+                user.getPincode()
+        );
+
+        response.setProfileImage(
+                user.getProfileImage()
+        );
+
+        return response;
     }
 }
