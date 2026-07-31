@@ -710,3 +710,59 @@
     font-size: 22px;
   }
 }
+
+/* Add at the END of service-details.css */
+
+.sd-breadcrumb-button {
+  border: none;
+  padding: 0;
+  background: transparent;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.sd-badge-inactive {
+  background-color: #fef3e2;
+  color: var(--sd-warning);
+}
+
+.sd-message,
+.sd-loading {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 13px 16px;
+  margin-bottom: 18px;
+  border-radius: 9px;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.sd-message-error {
+  color: var(--sd-danger);
+  background-color: rgba(220, 38, 38, 0.07);
+  border: 1px solid rgba(220, 38, 38, 0.22);
+}
+
+.sd-loading {
+  justify-content: center;
+  min-height: 160px;
+  color: var(--sd-text-muted);
+  background-color: var(--sd-card);
+  border: 1px solid var(--sd-border);
+}
+
+.sd-loading-icon {
+  animation: sd-spin 0.8s linear infinite;
+}
+
+.sd-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+@keyframes sd-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

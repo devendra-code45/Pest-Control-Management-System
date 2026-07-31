@@ -961,3 +961,68 @@
     transition-duration: 0.01ms !important;
   }
 }
+
+
+/* Backend connection states */
+
+.pdt-page-state {
+  min-height: 430px;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 12px;
+  color: var(--pdt-muted);
+  text-align: center;
+}
+
+.pdt-page-state h2,
+.pdt-page-state p {
+  margin: 0;
+}
+
+.pdt-page-state h2 {
+  color: var(--pdt-heading);
+  font-size: 1.1rem;
+}
+
+.pdt-page-state p {
+  max-width: 520px;
+  font-size: 0.82rem;
+}
+
+.pdt-page-state--error svg {
+  color: var(--pdt-danger);
+}
+
+.pdt-error-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+  padding: 13px 16px;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+  border-radius: 10px;
+  background: #fff7f7;
+  font-size: 0.82rem;
+}
+
+.pdt-refund-submit-error {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 11px 12px;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+  border-radius: 9px;
+  background: #fff7f7;
+  font-size: 0.74rem;
+}
+
+.pdt-refund-submit-error svg {
+  flex: 0 0 auto;
+}
+
+.pdt-spin {
+  animation: pdt-spin 750ms linear infinite;
+}

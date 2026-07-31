@@ -395,3 +395,67 @@
     grid-template-columns: repeat(3, 1fr);
   }
 }
+
+/* Add these styles at the END of services.css */
+
+.services-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.services-message {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-bottom: 18px;
+  padding: 13px 16px;
+  border-radius: 9px;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.services-message-error {
+  color: var(--danger);
+  background: rgba(220, 38, 38, 0.07);
+  border: 1px solid rgba(220, 38, 38, 0.22);
+}
+
+.services-loading-icon {
+  margin-right: 8px;
+  vertical-align: middle;
+  animation: services-spin 0.8s linear infinite;
+}
+
+.icon-btn-activate {
+  color: var(--success);
+}
+
+.icon-btn-activate:hover {
+  color: var(--success);
+  background: #e7f7ea;
+  border-color: #bbf7d0;
+}
+
+.icon-btn-deactivate {
+  color: var(--danger);
+}
+
+.icon-btn-deactivate:hover {
+  color: var(--danger);
+  background: #fee2e2;
+  border-color: #fecaca;
+}
+
+.btns:disabled,
+.icon-btn:disabled,
+.page-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+@keyframes services-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

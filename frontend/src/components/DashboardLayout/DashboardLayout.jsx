@@ -1,4 +1,7 @@
-import { useEffect, useState } from "react";
+import {
+  useEffect,
+  useState,
+} from "react";
 
 import {
   Navigate,
@@ -18,6 +21,7 @@ import {
 } from "../Sidebar/sidebarMenus";
 
 import { useAuth } from "../../context/AuthContext";
+import api from "../../api/axios";
 
 import "./DashboardLayout.css";
 
@@ -27,6 +31,9 @@ export default function DashboardLayout() {
 
   const [mobileOpen, setMobileOpen] =
     useState(false);
+
+  const [navbarUser, setNavbarUser] =
+    useState(null);
 
   const location = useLocation();
   const navigate = useNavigate();
@@ -57,6 +64,44 @@ export default function DashboardLayout() {
     };
   }, []);
 
+  useEffect(() => {
+    let cancelled = false;
+
+    if (!auth.isAuthenticated) {
+      setNavbarUser(null);
+      return undefined;
+    }
+
+    const loadLoggedInUser = async () => {
+      try {
+        const response = await api.get(
+          "/users/profile"
+        );
+
+        if (!cancelled) {
+          setNavbarUser(
+            response.data || auth.user
+          );
+        }
+      } catch {
+        if (!cancelled) {
+          setNavbarUser(auth.user || null);
+        }
+      }
+    };
+
+    loadLoggedInUser();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    auth.isAuthenticated,
+    auth.token,
+    auth.user,
+    location.pathname,
+  ]);
+
   if (!auth.isAuthenticated) {
     return (
       <Navigate to="/login" replace />
@@ -68,6 +113,9 @@ export default function DashboardLayout() {
   const navGroups = isAdmin
     ? ADMIN_NAV_GROUPS
     : CUSTOMER_NAV_GROUPS;
+
+  const currentUser =
+    navbarUser || auth.user;
 
   const handleLogout = () => {
     logout();
@@ -116,7 +164,7 @@ export default function DashboardLayout() {
       <div className="dl-right">
         {isAdmin ? (
           <AdminNavbar
-            user={auth.user}
+            user={currentUser}
             notificationCount={3}
             onMenuClick={() =>
               setMobileOpen(true)
@@ -125,7 +173,7 @@ export default function DashboardLayout() {
           />
         ) : (
           <CustomerNavbar
-            user={auth.user}
+            user={currentUser}
             notificationCount={3}
             onMenuClick={() =>
               setMobileOpen(true)

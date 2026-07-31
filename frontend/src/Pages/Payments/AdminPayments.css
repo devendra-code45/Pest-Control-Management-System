@@ -679,3 +679,86 @@
     transition-duration: 0.01ms !important;
   }
 }
+
+
+/* Backend connection states */
+
+.ap-header-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.ap-error-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 18px;
+  padding: 13px 16px;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+  border-radius: 10px;
+  background: #fff7f7;
+  font-size: 0.82rem;
+}
+
+.ap-error-banner span {
+  flex: 1;
+}
+
+.ap-error-banner button {
+  padding: 6px 10px;
+  color: #991b1b;
+  border: 1px solid #fca5a5;
+  border-radius: 7px;
+  background: #ffffff;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.ap-loading-state {
+  min-height: 310px;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 12px;
+  color: var(--ap-muted);
+}
+
+.ap-loading-state p {
+  margin: 0;
+  font-size: 0.84rem;
+}
+
+.ap-spin {
+  animation: ap-spin 750ms linear infinite;
+}
+
+.ap-status--partially-refunded {
+  color: #0969da;
+  border: 1px solid #c9e1ff;
+  background: #edf6ff;
+}
+
+@keyframes ap-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (max-width: 640px) {
+  .ap-header-actions {
+    width: 100%;
+  }
+
+  .ap-header-actions .ap-button {
+    flex: 1;
+  }
+
+  .ap-error-banner {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+}

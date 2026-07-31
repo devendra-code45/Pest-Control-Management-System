@@ -15,6 +15,10 @@ import {
   HiOutlineClock,
   HiOutlineUserAdd,
   HiOutlineHome,
+  HiOutlineCalendar,
+  HiOutlineLocationMarker,
+  HiOutlineOfficeBuilding,
+  HiOutlineChevronDown,
 } from "react-icons/hi";
 
 import { FaLeaf } from "react-icons/fa";
@@ -26,6 +30,11 @@ const INITIAL_FORM = {
   fullName: "",
   email: "",
   phone: "",
+  dateOfBirth: "",
+  gender: "",
+  address: "",
+  city: "",
+  pincode: "",
   password: "",
   confirmPassword: "",
   acceptedTerms: false,
@@ -447,29 +456,30 @@ const DotGrid = () => (
   </svg>
 );
 
-function getErrorMessage(error) {
-  const responseData = error.response?.data;
+const getErrorMessage = (error) => {
+  const data = error.response?.data;
 
-  if (typeof responseData === "string") {
-    return responseData;
+  if (typeof data === "string" && data.trim()) {
+    return data;
   }
 
-  if (responseData?.message) {
-    return responseData.message;
+  if (data?.message) {
+    return data.message;
   }
 
-  if (responseData?.error) {
-    return responseData.error;
+  if (data?.error) {
+    return data.error;
   }
 
-  if (
-    responseData &&
-    typeof responseData === "object"
-  ) {
-    const firstMessage = Object.values(
-      responseData
-    ).find(
-      (value) => typeof value === "string"
+  if (data?.details) {
+    return data.details;
+  }
+
+  if (data && typeof data === "object") {
+    const firstMessage = Object.values(data).find(
+      (value) =>
+        typeof value === "string" &&
+        value.trim()
     );
 
     if (firstMessage) {
@@ -478,11 +488,11 @@ function getErrorMessage(error) {
   }
 
   if (!error.response) {
-    return "Unable to connect to the server.";
+    return "Unable to connect to the backend.";
   }
 
-  return "Registration failed. Please try again.";
-}
+  return "Unable to create account. Please try again.";
+};
 
 const Registration = () => {
   const navigate = useNavigate();
@@ -490,8 +500,11 @@ const Registration = () => {
   const [form, setForm] =
     useState(INITIAL_FORM);
 
-  const [errors, setErrors] = useState({});
-  const [message, setMessage] = useState(null);
+  const [errors, setErrors] =
+    useState({});
+
+  const [message, setMessage] =
+    useState(null);
 
   const [submitting, setSubmitting] =
     useState(false);
@@ -513,7 +526,9 @@ const Registration = () => {
     } = event.target;
 
     let nextValue =
-      type === "checkbox" ? checked : value;
+      type === "checkbox"
+        ? checked
+        : value;
 
     if (name === "phone") {
       nextValue = value
@@ -521,21 +536,23 @@ const Registration = () => {
         .slice(0, 10);
     }
 
+    if (name === "pincode") {
+      nextValue = value
+        .replace(/\D/g, "")
+        .slice(0, 6);
+    }
+
     setForm((currentForm) => ({
       ...currentForm,
       [name]: nextValue,
     }));
 
-    if (errors[name]) {
-      setErrors((currentErrors) => ({
-        ...currentErrors,
-        [name]: "",
-      }));
-    }
+    setErrors((currentErrors) => ({
+      ...currentErrors,
+      [name]: "",
+    }));
 
-    if (message) {
-      setMessage(null);
-    }
+    setMessage(null);
   };
 
   const validate = () => {
@@ -558,14 +575,55 @@ const Registration = () => {
         "Enter a valid email address.";
     }
 
-    if (!form.phone.trim()) {
+    if (!/^[6-9][0-9]{9}$/.test(
+      form.phone.trim()
+    )) {
       nextErrors.phone =
-        "Mobile number is required.";
-    } else if (
-      !/^[0-9]{10}$/.test(form.phone.trim())
+        "Enter a valid 10-digit mobile number.";
+    }
+
+    if (!form.dateOfBirth) {
+      nextErrors.dateOfBirth =
+        "Date of birth is required.";
+    } else {
+      const selectedDate =
+        new Date(form.dateOfBirth);
+
+      const today = new Date();
+
+      if (
+        Number.isNaN(
+          selectedDate.getTime()
+        ) ||
+        selectedDate >= today
+      ) {
+        nextErrors.dateOfBirth =
+          "Enter a valid past date.";
+      }
+    }
+
+    if (!form.gender) {
+      nextErrors.gender =
+        "Gender is required.";
+    }
+
+    if (!form.address.trim()) {
+      nextErrors.address =
+        "Address is required.";
+    }
+
+    if (!form.city.trim()) {
+      nextErrors.city =
+        "City is required.";
+    }
+
+    if (
+      !/^[0-9]{6}$/.test(
+        form.pincode.trim()
+      )
     ) {
-      nextErrors.phone =
-        "Mobile number must contain 10 digits.";
+      nextErrors.pincode =
+        "Pincode must contain 6 digits.";
     }
 
     if (!form.password) {
@@ -578,9 +636,10 @@ const Registration = () => {
 
     if (!form.confirmPassword) {
       nextErrors.confirmPassword =
-        "Please confirm your password.";
+        "Confirm your password.";
     } else if (
-      form.confirmPassword !== form.password
+      form.confirmPassword !==
+      form.password
     ) {
       nextErrors.confirmPassword =
         "Passwords do not match.";
@@ -588,7 +647,7 @@ const Registration = () => {
 
     if (!form.acceptedTerms) {
       nextErrors.acceptedTerms =
-        "You must accept the Terms and Privacy Policy.";
+        "Accept the Terms and Privacy Policy.";
     }
 
     setErrors(nextErrors);
@@ -600,7 +659,6 @@ const Registration = () => {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-
     setMessage(null);
 
     if (!validate()) {
@@ -609,15 +667,16 @@ const Registration = () => {
 
     const registrationRequest = {
       fullName: form.fullName.trim(),
-
       email: form.email
         .trim()
         .toLowerCase(),
-
       phone: form.phone.trim(),
-
+      dateOfBirth: form.dateOfBirth,
+      gender: form.gender,
+      address: form.address.trim(),
+      city: form.city.trim(),
+      pincode: form.pincode.trim(),
       password: form.password,
-
       role: "CUSTOMER",
     };
 
@@ -640,12 +699,11 @@ const Registration = () => {
       window.setTimeout(() => {
         navigate("/login", {
           replace: true,
-
           state: {
             registrationSuccess: true,
           },
         });
-      }, 2000);
+      }, 1500);
     } catch (error) {
       setMessage({
         type: "error",
@@ -655,6 +713,10 @@ const Registration = () => {
       setSubmitting(false);
     }
   };
+
+  const maxDate = new Date()
+    .toISOString()
+    .split("T")[0];
 
   return (
     <div className="registration-page">
@@ -690,9 +752,8 @@ const Registration = () => {
         </h2>
 
         <p className="hero-description">
-          Join us to manage pest control services
-          efficiently and keep your surroundings
-          pest-free.
+          Create your complete customer profile
+          and start booking pest control services.
         </p>
 
         <div className="feature-list">
@@ -703,7 +764,6 @@ const Registration = () => {
 
             <div className="feature-text">
               <h3>Professional Service</h3>
-
               <p>
                 Trained experts for effective pest
                 control.
@@ -720,10 +780,9 @@ const Registration = () => {
               <h3>
                 Safe &amp; Eco-Friendly
               </h3>
-
               <p>
-                We use safe methods for your family
-                and pets.
+                Safe methods for your family and
+                pets.
               </p>
             </div>
           </div>
@@ -735,10 +794,8 @@ const Registration = () => {
 
             <div className="feature-text">
               <h3>Timely Support</h3>
-
               <p>
-                Quick response and reliable service
-                at every time.
+                Quick response and reliable service.
               </p>
             </div>
           </div>
@@ -754,30 +811,35 @@ const Registration = () => {
           </div>
 
           <p>
-            Protecting your home, health and
-            environment with trusted pest control
-            solutions.
+            Your profile information helps us
+            provide faster and more accurate
+            service.
           </p>
         </div>
       </div>
 
       <div className="registration-right">
         <div className="registration-card">
-          <div className="registration-card-icon">
-            <HiOutlineUserAdd />
+          <div className="registration-card-header">
+            <div className="registration-card-icon">
+              <HiOutlineUserAdd />
+            </div>
+
+            <div>
+              <h2 className="welcome-heading">
+                Create Your{" "}
+                <span className="welcome-heading-accent">
+                  Account
+                </span>
+              </h2>
+
+              <p className="welcome-subtitle">
+                Enter the same personal information
+                that appears in your customer
+                profile.
+              </p>
+            </div>
           </div>
-
-          <h2 className="welcome-heading">
-            Create Your{" "}
-            <span className="welcome-heading-accent">
-              Account
-            </span>
-          </h2>
-
-          <p className="welcome-subtitle">
-            Register to get started with Pest
-            Control Management System
-          </p>
 
           <div className="divider">
             <span className="divider-line" />
@@ -790,17 +852,21 @@ const Registration = () => {
             className="registration-form"
             noValidate
           >
-            <div className="form-columns">
-              {/* LEFT COLUMN */}
-              <div className="form-col">
+            <section className="registration-section">
+              <h3>Personal Information</h3>
 
-                {/* Full Name */}
+              <div className="form-grid">
                 <div className="form-group">
-                  <label htmlFor="fullName">Full Name</label>
+                  <label htmlFor="fullName">
+                    Full Name
+                  </label>
 
                   <div
-                    className={`input-wrapper ${errors.fullName ? "input-wrapper-error" : ""
-                      }`}
+                    className={`input-wrapper ${
+                      errors.fullName
+                        ? "input-wrapper-error"
+                        : ""
+                    }`}
                   >
                     <HiOutlineUser className="input-icon" />
 
@@ -821,13 +887,49 @@ const Registration = () => {
                   )}
                 </div>
 
-                {/* Email */}
                 <div className="form-group">
-                  <label htmlFor="email">Email Address</label>
+                  <label htmlFor="phone">
+                    Mobile Number
+                  </label>
 
                   <div
-                    className={`input-wrapper ${errors.email ? "input-wrapper-error" : ""
-                      }`}
+                    className={`input-wrapper ${
+                      errors.phone
+                        ? "input-wrapper-error"
+                        : ""
+                    }`}
+                  >
+                    <HiOutlineDeviceMobile className="input-icon" />
+
+                    <input
+                      id="phone"
+                      name="phone"
+                      type="tel"
+                      maxLength={10}
+                      placeholder="Enter 10-digit number"
+                      value={form.phone}
+                      onChange={updateField}
+                    />
+                  </div>
+
+                  {errors.phone && (
+                    <span className="registration-field-error">
+                      {errors.phone}
+                    </span>
+                  )}
+                </div>
+
+                <div className="form-group">
+                  <label htmlFor="email">
+                    Email Address
+                  </label>
+
+                  <div
+                    className={`input-wrapper ${
+                      errors.email
+                        ? "input-wrapper-error"
+                        : ""
+                    }`}
                   >
                     <HiOutlineMail className="input-icon" />
 
@@ -848,101 +950,199 @@ const Registration = () => {
                   )}
                 </div>
 
-                {/* Confirm Password */}
                 <div className="form-group">
-                  <label htmlFor="confirmPassword">
-                    Confirm Password
+                  <label htmlFor="dateOfBirth">
+                    Date of Birth
                   </label>
 
                   <div
-                    className={`input-wrapper ${errors.confirmPassword
+                    className={`input-wrapper ${
+                      errors.dateOfBirth
                         ? "input-wrapper-error"
                         : ""
-                      }`}
+                    }`}
                   >
-                    <HiOutlineLockClosed className="input-icon" />
+                    <HiOutlineCalendar className="input-icon" />
 
                     <input
-                      id="confirmPassword"
-                      name="confirmPassword"
-                      type={
-                        showConfirmPassword
-                          ? "text"
-                          : "password"
-                      }
-                      placeholder="Confirm your password"
-                      value={form.confirmPassword}
+                      id="dateOfBirth"
+                      name="dateOfBirth"
+                      type="date"
+                      max={maxDate}
+                      value={form.dateOfBirth}
                       onChange={updateField}
                     />
-
-                    <button
-                      type="button"
-                      className="toggle-password"
-                      onClick={() =>
-                        setShowConfirmPassword(
-                          (prev) => !prev
-                        )
-                      }
-                    >
-                      {showConfirmPassword ? (
-                        <HiOutlineEyeOff />
-                      ) : (
-                        <HiOutlineEye />
-                      )}
-                    </button>
                   </div>
 
-                  {errors.confirmPassword && (
+                  {errors.dateOfBirth && (
                     <span className="registration-field-error">
-                      {errors.confirmPassword}
+                      {errors.dateOfBirth}
                     </span>
                   )}
                 </div>
 
-              </div>
-
-              {/* RIGHT COLUMN */}
-              <div className="form-col">
-
-                {/* Mobile */}
                 <div className="form-group">
-                  <label htmlFor="phone">
-                    Mobile Number
+                  <label htmlFor="gender">
+                    Gender
                   </label>
 
                   <div
-                    className={`input-wrapper ${errors.phone ? "input-wrapper-error" : ""
-                      }`}
+                    className={`input-wrapper ${
+                      errors.gender
+                        ? "input-wrapper-error"
+                        : ""
+                    }`}
                   >
-                    <HiOutlineDeviceMobile className="input-icon" />
+                    <HiOutlineUser className="input-icon" />
 
-                    <input
-                      id="phone"
-                      name="phone"
-                      type="tel"
-                      maxLength={10}
-                      placeholder="Enter 10-digit mobile number"
-                      value={form.phone}
+                    <select
+                      id="gender"
+                      name="gender"
+                      value={form.gender}
+                      onChange={updateField}
+                    >
+                      <option value="">
+                        Select gender
+                      </option>
+                      <option value="Male">
+                        Male
+                      </option>
+                      <option value="Female">
+                        Female
+                      </option>
+                      <option value="Other">
+                        Other
+                      </option>
+                    </select>
+
+                    <HiOutlineChevronDown className="select-caret" />
+                  </div>
+
+                  {errors.gender && (
+                    <span className="registration-field-error">
+                      {errors.gender}
+                    </span>
+                  )}
+                </div>
+              </div>
+            </section>
+
+            <section className="registration-section">
+              <h3>Address Information</h3>
+
+              <div className="form-grid">
+                <div className="form-group form-group-full">
+                  <label htmlFor="address">
+                    Address
+                  </label>
+
+                  <div
+                    className={`input-wrapper input-wrapper-textarea ${
+                      errors.address
+                        ? "input-wrapper-error"
+                        : ""
+                    }`}
+                  >
+                    <HiOutlineLocationMarker className="input-icon input-icon-top" />
+
+                    <textarea
+                      id="address"
+                      name="address"
+                      rows={2}
+                      placeholder="Enter house, street or area"
+                      value={form.address}
                       onChange={updateField}
                     />
                   </div>
 
-                  {errors.phone && (
+                  {errors.address && (
                     <span className="registration-field-error">
-                      {errors.phone}
+                      {errors.address}
                     </span>
                   )}
                 </div>
 
-                {/* Password */}
+                <div className="form-group">
+                  <label htmlFor="city">
+                    City
+                  </label>
+
+                  <div
+                    className={`input-wrapper ${
+                      errors.city
+                        ? "input-wrapper-error"
+                        : ""
+                    }`}
+                  >
+                    <HiOutlineOfficeBuilding className="input-icon" />
+
+                    <input
+                      id="city"
+                      name="city"
+                      type="text"
+                      placeholder="Enter city"
+                      value={form.city}
+                      onChange={updateField}
+                    />
+                  </div>
+
+                  {errors.city && (
+                    <span className="registration-field-error">
+                      {errors.city}
+                    </span>
+                  )}
+                </div>
+
+                <div className="form-group">
+                  <label htmlFor="pincode">
+                    Pincode
+                  </label>
+
+                  <div
+                    className={`input-wrapper ${
+                      errors.pincode
+                        ? "input-wrapper-error"
+                        : ""
+                    }`}
+                  >
+                    <HiOutlineLocationMarker className="input-icon" />
+
+                    <input
+                      id="pincode"
+                      name="pincode"
+                      type="text"
+                      inputMode="numeric"
+                      maxLength={6}
+                      placeholder="Enter 6-digit pincode"
+                      value={form.pincode}
+                      onChange={updateField}
+                    />
+                  </div>
+
+                  {errors.pincode && (
+                    <span className="registration-field-error">
+                      {errors.pincode}
+                    </span>
+                  )}
+                </div>
+              </div>
+            </section>
+
+            <section className="registration-section">
+              <h3>Account Security</h3>
+
+              <div className="form-grid">
                 <div className="form-group">
                   <label htmlFor="password">
                     Password
                   </label>
 
                   <div
-                    className={`input-wrapper ${errors.password ? "input-wrapper-error" : ""
-                      }`}
+                    className={`input-wrapper ${
+                      errors.password
+                        ? "input-wrapper-error"
+                        : ""
+                    }`}
                   >
                     <HiOutlineLockClosed className="input-icon" />
 
@@ -950,7 +1150,9 @@ const Registration = () => {
                       id="password"
                       name="password"
                       type={
-                        showPassword ? "text" : "password"
+                        showPassword
+                          ? "text"
+                          : "password"
                       }
                       placeholder="Create password"
                       value={form.password}
@@ -962,9 +1164,10 @@ const Registration = () => {
                       className="toggle-password"
                       onClick={() =>
                         setShowPassword(
-                          (prev) => !prev
+                          (current) => !current
                         )
                       }
+                      aria-label="Toggle password visibility"
                     >
                       {showPassword ? (
                         <HiOutlineEyeOff />
@@ -981,22 +1184,59 @@ const Registration = () => {
                   )}
                 </div>
 
-                {/* Customer Account Card */}
-                <div className="registration-info-box">
-                  <HiOutlineShieldCheck className="info-icon" />
+                <div className="form-group">
+                  <label htmlFor="confirmPassword">
+                    Confirm Password
+                  </label>
 
-                  <div>
-                    <strong>Customer Account</strong>
+                  <div
+                    className={`input-wrapper ${
+                      errors.confirmPassword
+                        ? "input-wrapper-error"
+                        : ""
+                    }`}
+                  >
+                    <HiOutlineLockClosed className="input-icon" />
 
-                    <span>
-                      You can complete your address and profile
-                      after registration.
-                    </span>
+                    <input
+                      id="confirmPassword"
+                      name="confirmPassword"
+                      type={
+                        showConfirmPassword
+                          ? "text"
+                          : "password"
+                      }
+                      placeholder="Confirm password"
+                      value={form.confirmPassword}
+                      onChange={updateField}
+                    />
+
+                    <button
+                      type="button"
+                      className="toggle-password"
+                      onClick={() =>
+                        setShowConfirmPassword(
+                          (current) => !current
+                        )
+                      }
+                      aria-label="Toggle confirm password visibility"
+                    >
+                      {showConfirmPassword ? (
+                        <HiOutlineEyeOff />
+                      ) : (
+                        <HiOutlineEye />
+                      )}
+                    </button>
                   </div>
-                </div>
 
+                  {errors.confirmPassword && (
+                    <span className="registration-field-error">
+                      {errors.confirmPassword}
+                    </span>
+                  )}
+                </div>
               </div>
-            </div>
+            </section>
 
             <label className="checkbox-label terms-row">
               <input
@@ -1026,10 +1266,11 @@ const Registration = () => {
 
             {message && (
               <div
-                className={`registration-message ${message.type === "success"
-                  ? "registration-message-success"
-                  : "registration-message-error"
-                  }`}
+                className={`registration-message ${
+                  message.type === "success"
+                    ? "registration-message-success"
+                    : "registration-message-error"
+                }`}
               >
                 {message.text}
               </div>
@@ -1044,7 +1285,7 @@ const Registration = () => {
 
               {submitting
                 ? "Creating Account..."
-                : "Register"}
+                : "Create Account"}
             </button>
           </form>
 
@@ -1063,4 +1304,4 @@ const Registration = () => {
   );
 };
 
-export default Registration;
+export default Registration;  

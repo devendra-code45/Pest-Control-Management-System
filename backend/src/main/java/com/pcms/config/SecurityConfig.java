@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -23,34 +24,55 @@ import com.pcms.security.jwt.JwtAuthenticationFilter;
 @EnableMethodSecurity
 public class SecurityConfig {
 
-    private final JwtAuthenticationFilter jwtAuthenticationFilter;
-    private final CustomUserDetailsService customUserDetailsService;
-    private final PasswordEncoder passwordEncoder;
+    private final JwtAuthenticationFilter
+            jwtAuthenticationFilter;
+
+    private final CustomUserDetailsService
+            customUserDetailsService;
+
+    private final PasswordEncoder
+            passwordEncoder;
 
     public SecurityConfig(
             JwtAuthenticationFilter jwtAuthenticationFilter,
             CustomUserDetailsService customUserDetailsService,
-            PasswordEncoder passwordEncoder) {
+            PasswordEncoder passwordEncoder
+    ) {
+        this.jwtAuthenticationFilter =
+                jwtAuthenticationFilter;
 
-        this.jwtAuthenticationFilter = jwtAuthenticationFilter;
-        this.customUserDetailsService = customUserDetailsService;
-        this.passwordEncoder = passwordEncoder;
+        this.customUserDetailsService =
+                customUserDetailsService;
+
+        this.passwordEncoder =
+                passwordEncoder;
     }
 
     @Bean
     public SecurityFilterChain securityFilterChain(
-            HttpSecurity http) throws Exception {
+            HttpSecurity http
+    ) throws Exception {
 
         http
+                /*
+                 * JWT authentication is stateless, so CSRF
+                 * protection is disabled for this REST API.
+                 */
                 .csrf(csrf -> csrf.disable())
 
-                .cors(cors -> cors.configurationSource(
-                        corsConfigurationSource()
-                ))
+                .cors(cors ->
+                        cors.configurationSource(
+                                corsConfigurationSource()
+                        )
+                )
 
-                .formLogin(form -> form.disable())
+                .formLogin(form ->
+                        form.disable()
+                )
 
-                .httpBasic(basic -> basic.disable())
+                .httpBasic(basic ->
+                        basic.disable()
+                )
 
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(
@@ -58,23 +80,80 @@ public class SecurityConfig {
                         )
                 )
 
-                .authenticationProvider(authenticationProvider())
+                .authenticationProvider(
+                        authenticationProvider()
+                )
 
                 .authorizeHttpRequests(auth -> auth
-                		.requestMatchers(
-                		        "/api/users/register",
-                		        "/api/users/login",
-                		        "/api/users/forgot-password",
-                		        "/api/users/verify-otp",
-                		        "/api/users/reset-password"
-                		).permitAll()
 
-                        .requestMatchers("/api/admin/**")
-                        .hasRole("ADMIN")
+                        /*
+                         * Allow browser CORS preflight requests.
+                         */
+                        .requestMatchers(
+                                HttpMethod.OPTIONS,
+                                "/**"
+                        ).permitAll()
 
-                        .requestMatchers("/api/customer/**")
-                        .hasRole("CUSTOMER")
+                        /*
+                         * Public authentication endpoints.
+                         */
+                        .requestMatchers(
+                                "/api/users/login",
+                                "/api/users/register",
 
+                                "/api/users/forgot-password",
+                                "/api/users/forgot-password/**",
+
+                                "/api/users/verify-otp",
+                                "/api/users/verify-otp/**",
+
+                                "/api/users/reset-password",
+                                "/api/users/reset-password/**"
+                        ).permitAll()
+
+                        /*
+                         * Keep this in case some existing
+                         * authentication controllers use /api/auth.
+                         */
+                        .requestMatchers(
+                                "/api/auth/**"
+                        ).permitAll()
+
+                        /*
+                         * Admin-only APIs.
+                         */
+                        .requestMatchers(
+                                "/api/admin/**"
+                        ).hasAnyAuthority(
+                                "ADMIN",
+                                "ROLE_ADMIN"
+                        )
+
+                        /*
+                         * Customer-only APIs.
+                         */
+                        .requestMatchers(
+                                "/api/customer/**"
+                        ).hasAnyAuthority(
+                                "CUSTOMER",
+                                "ROLE_CUSTOMER"
+                        )
+
+                        /*
+                         * User profile and account APIs require
+                         * login but work for both admin and customer.
+                         */
+                        .requestMatchers(
+                                "/api/users/profile",
+                                "/api/users/profile/**",
+
+                                "/api/users/change-password",
+                                "/api/users/change-password/**"
+                        ).authenticated()
+
+                        /*
+                         * Every remaining endpoint requires login.
+                         */
                         .anyRequest()
                         .authenticated()
                 )
@@ -88,13 +167,16 @@ public class SecurityConfig {
     }
 
     @Bean
-    public CorsConfigurationSource corsConfigurationSource() {
+    public CorsConfigurationSource
+            corsConfigurationSource() {
 
         CorsConfiguration configuration =
                 new CorsConfiguration();
 
         configuration.setAllowedOrigins(
-                List.of("http://localhost:5173")
+                List.of(
+                        "http://localhost:5173"
+                )
         );
 
         configuration.setAllowedMethods(
@@ -111,15 +193,20 @@ public class SecurityConfig {
         configuration.setAllowedHeaders(
                 List.of(
                         "Authorization",
-                        "Content-Type"
+                        "Content-Type",
+                        "Accept"
                 )
         );
 
         configuration.setExposedHeaders(
-                List.of("Authorization")
+                List.of(
+                        "Authorization"
+                )
         );
 
-        configuration.setAllowCredentials(true);
+        configuration.setAllowCredentials(
+                true
+        );
 
         UrlBasedCorsConfigurationSource source =
                 new UrlBasedCorsConfigurationSource();
@@ -133,7 +220,8 @@ public class SecurityConfig {
     }
 
     @Bean
-    public AuthenticationProvider authenticationProvider() {
+    public AuthenticationProvider
+            authenticationProvider() {
 
         DaoAuthenticationProvider provider =
                 new DaoAuthenticationProvider();

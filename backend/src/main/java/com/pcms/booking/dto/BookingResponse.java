@@ -51,6 +51,8 @@ public class BookingResponse {
 
     private String preferredTimeSlot;
 
+    private String serviceFrequency;
+
     private String pestType;
 
     private String problemDescription;

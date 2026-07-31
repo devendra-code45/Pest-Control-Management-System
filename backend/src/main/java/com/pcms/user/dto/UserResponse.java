@@ -1,5 +1,7 @@
 package com.pcms.user.dto;
 
+import java.time.LocalDate;
+
 import com.pcms.user.entity.Role;
 
 import lombok.Builder;
@@ -20,6 +22,10 @@ public class UserResponse {
     private String phone;
 
     private Role role;
+
+    private LocalDate dateOfBirth;
+
+    private String gender;
 
     private String address;
 

@@ -1,4 +1,9 @@
-import { useEffect, useRef, useState } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+} from "react";
+
 import {
   Link,
   useLocation,
@@ -16,7 +21,9 @@ import {
 import "./Navbar.css";
 
 function useBreadcrumb(pathname) {
-  const segments = pathname.split("/").filter(Boolean);
+  const segments = pathname
+    .split("/")
+    .filter(Boolean);
 
   if (segments.length === 0) {
     return [
@@ -27,17 +34,30 @@ function useBreadcrumb(pathname) {
     ];
   }
 
-  return segments.map((segment, index) => ({
-    label: segment
-      .replace(/-/g, " ")
-      .replace(/\b\w/g, (character) =>
-        character.toUpperCase()
-      ),
+  return segments.map(
+    (segment, index) => ({
+      label: segment
+        .replace(/-/g, " ")
+        .replace(/\b\w/g, (character) =>
+          character.toUpperCase()
+        ),
 
-    path:
-      "/" +
-      segments.slice(0, index + 1).join("/"),
-  }));
+      path:
+        "/" +
+        segments
+          .slice(0, index + 1)
+          .join("/"),
+    })
+  );
+}
+
+function getDisplayName(user) {
+  return (
+    user?.fullName ||
+    user?.name ||
+    user?.email?.split("@")[0] ||
+    "Administrator"
+  );
 }
 
 export default function AdminNavbar({
@@ -49,28 +69,40 @@ export default function AdminNavbar({
   const location = useLocation();
   const navigate = useNavigate();
 
-  const crumbs = useBreadcrumb(location.pathname);
+  const crumbs = useBreadcrumb(
+    location.pathname
+  );
 
   const [profileOpen, setProfileOpen] =
     useState(false);
 
-  const [notificationOpen, setNotificationOpen] =
-    useState(false);
+  const [
+    notificationOpen,
+    setNotificationOpen,
+  ] = useState(false);
 
   const profileRef = useRef(null);
   const notificationRef = useRef(null);
 
   const adminUser = {
-    name: user?.name || "John Doe",
-    role: "Administrator",
-    avatarUrl: user?.avatarUrl || "",
+    name: getDisplayName(user),
+    role:
+      user?.role === "ADMIN"
+        ? "Administrator"
+        : user?.role || "Administrator",
+    avatarUrl:
+      user?.profileImage ||
+      user?.avatarUrl ||
+      "",
   };
 
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (
         profileRef.current &&
-        !profileRef.current.contains(event.target)
+        !profileRef.current.contains(
+          event.target
+        )
       ) {
         setProfileOpen(false);
       }
@@ -100,6 +132,7 @@ export default function AdminNavbar({
 
   const initials = adminUser.name
     .split(" ")
+    .filter(Boolean)
     .map((name) => name[0])
     .join("")
     .slice(0, 2)
@@ -113,7 +146,9 @@ export default function AdminNavbar({
       return;
     }
 
-    navigate("/login", { replace: true });
+    navigate("/login", {
+      replace: true,
+    });
   };
 
   return (
@@ -132,31 +167,34 @@ export default function AdminNavbar({
           className="nb-breadcrumb"
           aria-label="Breadcrumb"
         >
-          {crumbs.map((crumb, index) => (
-            <span
-              className="nb-crumb-wrap"
-              key={crumb.path}
-            >
-              {index > 0 && (
-                <span className="nb-crumb-sep">
-                  /
-                </span>
-              )}
+          {crumbs.map(
+            (crumb, index) => (
+              <span
+                className="nb-crumb-wrap"
+                key={crumb.path}
+              >
+                {index > 0 && (
+                  <span className="nb-crumb-sep">
+                    /
+                  </span>
+                )}
 
-              {index === crumbs.length - 1 ? (
-                <span className="nb-crumb nb-crumb-current">
-                  {crumb.label}
-                </span>
-              ) : (
-                <Link
-                  to={crumb.path}
-                  className="nb-crumb"
-                >
-                  {crumb.label}
-                </Link>
-              )}
-            </span>
-          ))}
+                {index ===
+                crumbs.length - 1 ? (
+                  <span className="nb-crumb nb-crumb-current">
+                    {crumb.label}
+                  </span>
+                ) : (
+                  <Link
+                    to={crumb.path}
+                    className="nb-crumb"
+                  >
+                    {crumb.label}
+                  </Link>
+                )}
+              </span>
+            )
+          )}
         </nav>
       </div>
 
@@ -173,6 +211,7 @@ export default function AdminNavbar({
               setNotificationOpen(
                 (current) => !current
               );
+
               setProfileOpen(false);
             }}
           >
@@ -188,7 +227,9 @@ export default function AdminNavbar({
           {notificationOpen && (
             <div className="nb-notification-dropdown">
               <div className="nb-notification-header">
-                <strong>Notifications</strong>
+                <strong>
+                  Notifications
+                </strong>
 
                 <button type="button">
                   Mark all as read
@@ -204,11 +245,13 @@ export default function AdminNavbar({
                   </strong>
 
                   <p>
-                    A new booking request has been
-                    submitted.
+                    A new booking request has
+                    been submitted.
                   </p>
 
-                  <small>2 minutes ago</small>
+                  <small>
+                    2 minutes ago
+                  </small>
                 </div>
               </div>
 
@@ -221,11 +264,13 @@ export default function AdminNavbar({
                   </strong>
 
                   <p>
-                    A technician was assigned to
-                    booking BK-2025-0012.
+                    A technician was assigned
+                    to booking BK-2025-0012.
                   </p>
 
-                  <small>15 minutes ago</small>
+                  <small>
+                    15 minutes ago
+                  </small>
                 </div>
               </div>
 
@@ -242,7 +287,9 @@ export default function AdminNavbar({
                     complaint.
                   </p>
 
-                  <small>1 hour ago</small>
+                  <small>
+                    1 hour ago
+                  </small>
                 </div>
               </div>
             </div>
@@ -262,6 +309,7 @@ export default function AdminNavbar({
               setProfileOpen(
                 (current) => !current
               );
+
               setNotificationOpen(false);
             }}
             aria-haspopup="true"
@@ -275,7 +323,7 @@ export default function AdminNavbar({
               />
             ) : (
               <span className="nb-avatar nb-avatar-fallback">
-                {initials}
+                {initials || "AD"}
               </span>
             )}
 

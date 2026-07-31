@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   ArrowLeft,
@@ -17,32 +17,129 @@ import {
   User,
   Users,
 } from 'lucide-react';
+import api from '../../api/axios';
 import './profile.css';
 
 const INITIAL_PROFILE = {
-  fullName: 'Manish Bhoi',
-  email: 'manishbhoi@example.com',
-  phone: '+91 987 654 3210',
+  fullName: 'Administrator',
+  email: '',
+  phone: '',
   role: 'Administrator',
-  company: 'GreenShield Pest Control',
-  employeeId: 'PC-001',
-  location: 'Pune, Maharashtra',
-  department: 'Operations',
-  bio: 'Passionate about building a cleaner, healthier and pest-free environment. Managing operations and ensuring the best pest control services for our customers.',
+  company: 'Pest Control Management System',
+  employeeId: '',
+  location: 'Not added',
+  department: 'Administration',
+  bio: '',
 };
+
+function mapUserToProfile(user) {
+  return {
+    fullName:
+      user.fullName || 'Administrator',
+    email: user.email || '',
+    phone: user.phone || '',
+    role:
+      user.role === 'ADMIN'
+        ? 'Administrator'
+        : user.role || 'Administrator',
+    company: 'Pest Control Management System',
+    employeeId: user.id
+      ? `ADMIN-${String(user.id).padStart(4, '0')}`
+      : '',
+    location:
+      [
+        user.address,
+        user.city,
+        user.pincode,
+      ]
+        .filter(Boolean)
+        .join(', ') || 'Not added',
+    department: 'Administration',
+    bio: '',
+  };
+}
 
 function Profile() {
   const navigate = useNavigate();
   const imageInputRef = useRef(null);
 
-  const [savedProfile, setSavedProfile] = useState(INITIAL_PROFILE);
-  const [formData, setFormData] = useState(INITIAL_PROFILE);
-  const [profileImage, setProfileImage] = useState('');
-  const [errors, setErrors] = useState({});
+  const [savedProfile, setSavedProfile] =
+    useState(INITIAL_PROFILE);
+
+  const [formData, setFormData] =
+    useState(INITIAL_PROFILE);
+
+  const [profileImage, setProfileImage] =
+    useState('');
+
+  const [loading, setLoading] =
+    useState(true);
+
+  const [errors, setErrors] =
+    useState({});
+
   const [message, setMessage] = useState({
     type: '',
     text: '',
   });
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadProfile = async () => {
+      try {
+        setLoading(true);
+
+        const response = await api.get(
+          '/users/profile'
+        );
+
+        if (cancelled) {
+          return;
+        }
+
+        const loadedProfile =
+          mapUserToProfile(
+            response.data || {}
+          );
+
+        setSavedProfile(loadedProfile);
+        setFormData(loadedProfile);
+
+        setProfileImage(
+          response.data?.profileImage || ''
+        );
+
+        setMessage({
+          type: '',
+          text: '',
+        });
+      } catch (error) {
+        if (!cancelled) {
+          setMessage({
+            type: 'error',
+            text:
+              error.response?.data?.message ||
+              error.response?.data?.error ||
+              (typeof error.response?.data ===
+              'string'
+                ? error.response.data
+                : 'Unable to load profile information.'),
+          });
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    };
+
+    loadProfile();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const handleBack = () => {
     if (window.history.length > 1) {
@@ -50,7 +147,7 @@ function Profile() {
       return;
     }
 
-    navigate('/dashboard');
+    navigate('/admin/dashboard');
   };
 
   const handleChange = (event) => {
@@ -179,7 +276,7 @@ function Profile() {
           >
             <button
               type="button"
-              onClick={() => navigate('/dashboard')}
+              onClick={() => navigate('/admin/dashboard')}
             >
               Dashboard
             </button>
@@ -228,6 +325,16 @@ function Profile() {
         </div>
       </header>
 
+      {loading && (
+        <div
+          className="profile-info-message"
+          role="status"
+        >
+          <Info size={18} aria-hidden="true" />
+          <span>Loading profile information...</span>
+        </div>
+      )}
+
       {message.text && (
         <div
           className={`profile-info-message profile-info-message-${message.type}`}
@@ -257,7 +364,17 @@ function Profile() {
                     alt="Selected profile preview"
                   />
                 ) : (
-                  <span aria-label="Manish Bhoi initials">MB</span>
+                  <span
+                    aria-label={`${savedProfile.fullName} initials`}
+                  >
+                    {savedProfile.fullName
+                      .split(' ')
+                      .filter(Boolean)
+                      .map((part) => part[0])
+                      .join('')
+                      .slice(0, 2)
+                      .toUpperCase() || 'AD'}
+                  </span>
                 )}
               </div>
 
@@ -288,7 +405,7 @@ function Profile() {
                 />
               </div>
 
-              <p>Admin / Operations Manager</p>
+              <p>{savedProfile.role}</p>
 
               <div className="profile-info-company">
                 <Building2 size={18} aria-hidden="true" />
@@ -433,7 +550,7 @@ function Profile() {
                     name="email"
                     type="email"
                     value={formData.email}
-                    onChange={handleChange}
+                    readOnly
                     aria-invalid={Boolean(errors.email)}
                     aria-describedby={
                       errors.email
@@ -498,7 +615,7 @@ function Profile() {
                     id="profile-role"
                     name="role"
                     value={formData.role}
-                    onChange={handleChange}
+                    disabled
                     aria-invalid={Boolean(errors.role)}
                     aria-describedby={
                       errors.role
@@ -541,7 +658,7 @@ function Profile() {
                     name="company"
                     type="text"
                     value={formData.company}
-                    onChange={handleChange}
+                    readOnly
                   />
                 </div>
               </div>
@@ -562,7 +679,7 @@ function Profile() {
                     name="employeeId"
                     type="text"
                     value={formData.employeeId}
-                    onChange={handleChange}
+                    readOnly
                   />
                 </div>
               </div>
@@ -580,7 +697,7 @@ function Profile() {
                     name="location"
                     type="text"
                     value={formData.location}
-                    onChange={handleChange}
+                    readOnly
                     aria-invalid={Boolean(errors.location)}
                     aria-describedby={
                       errors.location
@@ -612,7 +729,7 @@ function Profile() {
                     id="profile-department"
                     name="department"
                     value={formData.department}
-                    onChange={handleChange}
+                    disabled
                     aria-invalid={Boolean(errors.department)}
                     aria-describedby={
                       errors.department
@@ -658,7 +775,7 @@ function Profile() {
                   rows={4}
                   maxLength={250}
                   value={formData.bio}
-                  onChange={handleChange}
+                  readOnly
                   aria-invalid={Boolean(errors.bio)}
                   aria-describedby="profile-bio-counter"
                 />

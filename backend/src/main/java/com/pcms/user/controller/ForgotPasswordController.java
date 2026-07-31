@@ -1,6 +1,9 @@
 package com.pcms.user.controller;
 
 import org.springframework.http.ResponseEntity;
+
+import org.springframework.web.bind.annotation.RequestBody;
+
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -26,7 +29,9 @@ public class ForgotPasswordController {
 
     @PostMapping("/forgot-password")
     public ResponseEntity<String> forgotPassword(
-            @Valid @RequestBody ForgotPasswordRequest request) {
+            @Valid
+            @RequestBody
+            ForgotPasswordRequest request) {
 
         forgotPasswordService.sendOtp(request);
 
