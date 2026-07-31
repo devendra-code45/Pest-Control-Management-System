@@ -13,7 +13,7 @@ import {
 } from "react-icons/hi";
 import { FaLeaf } from "react-icons/fa";
 import { FcGoogle } from "react-icons/fc";
-import axios from "../../api/axios";
+import api from "../../api/axios";
 import "./Login.css";
 
 /* ------------------------------------------------------------------ */
@@ -143,57 +143,111 @@ const Login = () => {
   });
 
   const [error, setError] = useState("");
+  const [submitting, setSubmitting] =
+    useState(false);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
 
-    setError("");
+    const email = form.username
+      .trim()
+      .toLowerCase();
+
+    const password = form.password;
+
+    if (!email || !password) {
+      setError(
+        "Email and password are required."
+      );
+      return;
+    }
 
     try {
+      setSubmitting(true);
+      setError("");
 
-      const response = await axios.post("/users/login", {
+      const response = await api.post(
+        "/users/login",
+        {
+          email,
+          password,
+        }
+      );
 
-        email: form.username,
-        password: form.password
+      const data = response.data || {};
 
-      });
+      const token =
+        data.token ||
+        data.accessToken ||
+        data.jwtToken;
 
-      const data = response.data;
+      if (!token) {
+        throw new Error(
+          "The backend login response did not return a JWT token."
+        );
+      }
+
+      const role = String(
+        data.role || ""
+      )
+        .replace(/^ROLE_/, "")
+        .toUpperCase();
 
       login({
-
         id: data.id,
         fullName: data.fullName,
-        email: data.email,
-        role: data.role,
-        token: data.token
-
+        email: data.email || email,
+        role,
+        token,
       });
 
-      if (data.role === "ADMIN") {
-
-        navigate("/admin/dashboard", { replace: true });
-
+      if (role === "ADMIN") {
+        navigate(
+          "/admin/dashboard",
+          {
+            replace: true,
+          }
+        );
+      } else if (role === "CUSTOMER") {
+        navigate(
+          "/customer/dashboard",
+          {
+            replace: true,
+          }
+        );
       } else {
-
-        navigate("/customer/dashboard", { replace: true });
-
+        setError(
+          "This account has an unsupported role."
+        );
       }
+    } catch (requestError) {
+      const data =
+        requestError.response?.data;
 
-    } catch (error) {
-
-      if (error.response) {
-
-        setError(error.response.data.message || "Invalid email or password");
-
+      if (
+        typeof data === "string" &&
+        data.trim()
+      ) {
+        setError(data);
+      } else if (data?.message) {
+        setError(data.message);
+      } else if (data?.error) {
+        setError(data.error);
+      } else if (!requestError.response) {
+        setError(
+          requestError.message ||
+          "Server is not running."
+        );
       } else {
-
-        setError("Server is not running.");
-
+        setError(
+          "Invalid email or password."
+        );
       }
-
+    } finally {
+      setSubmitting(false);
     }
   };
+
   const updateForm = (event) => {
     const { name, value } = event.target;
 
@@ -345,18 +399,27 @@ const Login = () => {
                 <input type="checkbox" defaultChecked />
                 <span>Remember me</span>
               </label>
-              <a href="/forgot-password" className="forgot-link">
+              <Link
+                to="/forgot-password"
+                className="forgot-link"
+              >
                 Forgot Password?
-              </a>
+              </Link>
             </div>
             {error && (
               <p className="login-error">
                 {error}
               </p>
             )}
-            <button type="submit" className="btn btn-primary">
+            <button
+              type="submit"
+              className="btn btn-primary"
+              disabled={submitting}
+            >
               <HiArrowRight />
-              Login
+              {submitting
+                ? "Logging in..."
+                : "Login"}
             </button>
 
             <div className="divider divider-or">
@@ -373,9 +436,12 @@ const Login = () => {
 
           <p className="register-text">
             Don&apos;t have an account?{" "}
-            <a href="/register" className="register-link">
+            <Link
+              to="/register"
+              className="register-link"
+            >
               Register Here
-            </a>
+            </Link>
           </p>
         </div>
       </div>

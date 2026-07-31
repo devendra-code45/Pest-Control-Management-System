@@ -1,23 +1,23 @@
 package com.pcms.user.service.impl;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
-
 import org.springframework.stereotype.Service;
 
 import com.pcms.security.jwt.JwtService;
+import com.pcms.user.dto.ChangePasswordRequest;
 import com.pcms.user.dto.LoginRequest;
 import com.pcms.user.dto.LoginResponse;
 import com.pcms.user.dto.RegisterRequest;
+import com.pcms.user.dto.UpdateProfileRequest;
 import com.pcms.user.dto.UserResponse;
 import com.pcms.user.entity.Role;
 import com.pcms.user.entity.User;
 import com.pcms.user.repository.UserRepository;
 import com.pcms.user.service.UserService;
-import com.pcms.user.dto.UpdateProfileRequest;
-import com.pcms.user.dto.ChangePasswordRequest;
 
 @Service
-public class UserServiceImpl implements UserService {
+public class UserServiceImpl
+        implements UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
@@ -28,26 +28,41 @@ public class UserServiceImpl implements UserService {
             PasswordEncoder passwordEncoder,
             JwtService jwtService) {
 
-        this.userRepository = userRepository;
-        this.passwordEncoder = passwordEncoder;
-        this.jwtService = jwtService;
+        this.userRepository =
+                userRepository;
+
+        this.passwordEncoder =
+                passwordEncoder;
+
+        this.jwtService =
+                jwtService;
     }
 
     @Override
-    public UserResponse register(RegisterRequest request) {
+    public UserResponse register(
+            RegisterRequest request) {
 
         String email = request.getEmail()
                 .trim()
                 .toLowerCase();
 
-        String phone = request.getPhone().trim();
+        String phone =
+                request.getPhone().trim();
 
-        if (userRepository.existsByEmail(email)) {
-            throw new RuntimeException("Email already exists.");
+        if (userRepository
+                .existsByEmail(email)) {
+
+            throw new RuntimeException(
+                    "Email already exists."
+            );
         }
 
-        if (userRepository.existsByPhone(phone)) {
-            throw new RuntimeException("Phone number already exists.");
+        if (userRepository
+                .existsByPhone(phone)) {
+
+            throw new RuntimeException(
+                    "Phone number already exists."
+            );
         }
 
         Role role = request.getRole() == null
@@ -55,21 +70,51 @@ public class UserServiceImpl implements UserService {
                 : request.getRole();
 
         User user = User.builder()
-                .fullName(request.getFullName().trim())
+                .fullName(
+                        request.getFullName()
+                                .trim()
+                )
                 .email(email)
                 .phone(phone)
-                .password(passwordEncoder.encode(request.getPassword()))
+                .dateOfBirth(
+                        request.getDateOfBirth()
+                )
+                .gender(
+                        request.getGender()
+                                .trim()
+                )
+                .address(
+                        request.getAddress()
+                                .trim()
+                )
+                .city(
+                        request.getCity()
+                                .trim()
+                )
+                .pincode(
+                        request.getPincode()
+                                .trim()
+                )
+                .password(
+                        passwordEncoder.encode(
+                                request.getPassword()
+                        )
+                )
                 .role(role)
                 .active(true)
                 .build();
 
-        User savedUser = userRepository.save(user);
+        User savedUser =
+                userRepository.save(user);
 
-        return convertToResponse(savedUser);
+        return convertToResponse(
+                savedUser
+        );
     }
 
     @Override
-    public LoginResponse login(LoginRequest request) {
+    public LoginResponse login(
+            LoginRequest request) {
 
         String email = request.getEmail()
                 .trim()
@@ -78,26 +123,39 @@ public class UserServiceImpl implements UserService {
         User user = userRepository
                 .findByEmail(email)
                 .orElseThrow(() ->
-                        new RuntimeException("Invalid email or password."));
+                        new RuntimeException(
+                                "Invalid email or password."
+                        )
+                );
 
         if (!user.isActive()) {
-            throw new RuntimeException("Your account is inactive.");
+            throw new RuntimeException(
+                    "Your account is inactive."
+            );
         }
 
-        boolean passwordMatches = passwordEncoder.matches(
-                request.getPassword(),
-                user.getPassword()
-        );
+        boolean passwordMatches =
+                passwordEncoder.matches(
+                        request.getPassword(),
+                        user.getPassword()
+                );
 
         if (!passwordMatches) {
-            throw new RuntimeException("Invalid email or password.");
+            throw new RuntimeException(
+                    "Invalid email or password."
+            );
         }
 
-        String token = jwtService.generateToken(user.getEmail());
+        String token =
+                jwtService.generateToken(
+                        user.getEmail()
+                );
 
         return LoginResponse.builder()
                 .id(user.getId())
-                .fullName(user.getFullName())
+                .fullName(
+                        user.getFullName()
+                )
                 .email(user.getEmail())
                 .role(user.getRole())
                 .token(token)
@@ -105,12 +163,18 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public UserResponse getProfile(String email) {
+    public UserResponse getProfile(
+            String email) {
 
         User user = userRepository
-                .findByEmail(email.trim().toLowerCase())
+                .findByEmail(
+                        email.trim()
+                                .toLowerCase()
+                )
                 .orElseThrow(() ->
-                        new RuntimeException("User not found.")
+                        new RuntimeException(
+                                "User not found."
+                        )
                 );
 
         return convertToResponse(user);
@@ -122,34 +186,70 @@ public class UserServiceImpl implements UserService {
             UpdateProfileRequest request) {
 
         User user = userRepository
-                .findByEmail(email.trim().toLowerCase())
+                .findByEmail(
+                        email.trim()
+                                .toLowerCase()
+                )
                 .orElseThrow(() ->
-                        new RuntimeException("User not found")
+                        new RuntimeException(
+                                "User not found"
+                        )
                 );
 
-        User userWithSamePhone = userRepository
-                .findByPhone(request.getPhone().trim())
-                .orElse(null);
+        User userWithSamePhone =
+                userRepository
+                        .findByPhone(
+                                request.getPhone()
+                                        .trim()
+                        )
+                        .orElse(null);
 
         if (userWithSamePhone != null
-                && !userWithSamePhone.getId().equals(user.getId())) {
+                && !userWithSamePhone
+                        .getId()
+                        .equals(user.getId())) {
 
             throw new RuntimeException(
                     "Phone number already exists."
             );
         }
 
-        user.setFullName(request.getFullName().trim());
-        user.setPhone(request.getPhone().trim());
-        user.setGender(request.getGender());
-        user.setDateOfBirth(request.getDateOfBirth());
-        user.setAddress(request.getAddress());
-        user.setCity(request.getCity());
-        user.setPincode(request.getPincode());
+        user.setFullName(
+                request.getFullName()
+                        .trim()
+        );
 
-        User updatedUser = userRepository.save(user);
+        user.setPhone(
+                request.getPhone()
+                        .trim()
+        );
 
-        return convertToResponse(updatedUser);
+        user.setGender(
+                request.getGender()
+        );
+
+        user.setDateOfBirth(
+                request.getDateOfBirth()
+        );
+
+        user.setAddress(
+                request.getAddress()
+        );
+
+        user.setCity(
+                request.getCity()
+        );
+
+        user.setPincode(
+                request.getPincode()
+        );
+
+        User updatedUser =
+                userRepository.save(user);
+
+        return convertToResponse(
+                updatedUser
+        );
     }
 
     @Override
@@ -158,9 +258,14 @@ public class UserServiceImpl implements UserService {
             ChangePasswordRequest request) {
 
         User user = userRepository
-                .findByEmail(email.trim().toLowerCase())
+                .findByEmail(
+                        email.trim()
+                                .toLowerCase()
+                )
                 .orElseThrow(() ->
-                        new RuntimeException("User not found.")
+                        new RuntimeException(
+                                "User not found."
+                        )
                 );
 
         if (!passwordEncoder.matches(
@@ -173,7 +278,9 @@ public class UserServiceImpl implements UserService {
         }
 
         if (!request.getNewPassword()
-                .equals(request.getConfirmPassword())) {
+                .equals(
+                        request.getConfirmPassword()
+                )) {
 
             throw new RuntimeException(
                     "New password and confirm password do not match."
@@ -198,18 +305,27 @@ public class UserServiceImpl implements UserService {
         userRepository.save(user);
     }
 
-    private UserResponse convertToResponse(User user) {
+    private UserResponse convertToResponse(
+            User user) {
 
         return UserResponse.builder()
                 .id(user.getId())
-                .fullName(user.getFullName())
+                .fullName(
+                        user.getFullName()
+                )
                 .email(user.getEmail())
                 .phone(user.getPhone())
                 .role(user.getRole())
+                .dateOfBirth(
+                        user.getDateOfBirth()
+                )
+                .gender(user.getGender())
                 .address(user.getAddress())
                 .city(user.getCity())
                 .pincode(user.getPincode())
-                .profileImage(user.getProfileImage())
+                .profileImage(
+                        user.getProfileImage()
+                )
                 .build();
     }
 }

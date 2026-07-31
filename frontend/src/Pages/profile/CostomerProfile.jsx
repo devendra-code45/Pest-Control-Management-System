@@ -1,6 +1,7 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { changePassword } from "../../api/userApi";
+import api from "../../api/axios";
 import {
   User,
   Mail,
@@ -27,54 +28,68 @@ import {
 import "./CustomerProfile.css";
 
 const DEFAULT_CUSTOMER = {
-  id: "CUST-1042",
-  name: "Rahul Sharma",
+  id: "",
+  name: "Customer",
   status: "Active",
   propertyType: "Residential",
-  email: "rahul.sharma@email.com",
-  phone: "+91 98765 43210",
-  joinedOn: "12 Jan 2024",
-  address: "Flat 302, Green Valley Apartments, Baner, Pune - 411045",
-  dob: "15 March 1990",
-  gender: "Male",
-  servicePlan: "Quarterly Pest Control - Premium",
-  technician: "Amit Verma",
-  nextService: "18 Aug 2026",
-  lastService: "18 May 2026",
+  email: "",
+  phone: "",
+  joinedOn: "Not available",
+  address: "Not added",
+  dob: "Not added",
+  gender: "Not added",
+  profileImage: "",
 };
 
-const DEFAULT_ACTIVITY = [
-  {
-    id: 1,
-    label: "Service completed - General Pest Control",
-    meta: "Pune, India \u2022 Technician: Amit Verma",
-    time: "18 May 2026, 11:20 AM",
-  },
-  {
-    id: 2,
-    label: "Service scheduled - Termite Inspection",
-    meta: "Pune, India \u2022 Technician: Amit Verma",
-    time: "02 May 2026, 09:00 AM",
-  },
-  {
-    id: 3,
-    label: "Payment received - \u20b92,499",
-    meta: "Quarterly Plan Renewal",
-    time: "28 Apr 2026, 04:45 PM",
-  },
-  {
-    id: 4,
-    label: "Complaint resolved - Ant infestation, kitchen",
-    meta: "Technician: Sanjay Patil",
-    time: "10 Mar 2026, 01:15 PM",
-  },
-  {
-    id: 5,
-    label: "Account created",
-    meta: "Self sign-up via mobile app",
-    time: "12 Jan 2024, 10:05 AM",
-  },
-];
+const DEFAULT_ACTIVITY = [];
+
+function formatDate(value) {
+  if (!value) {
+    return "Not added";
+  }
+
+  const date = new Date(`${value}T00:00:00`);
+
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
+
+  return new Intl.DateTimeFormat("en-IN", {
+    day: "2-digit",
+    month: "long",
+    year: "numeric",
+  }).format(date);
+}
+
+function formatAddress(user) {
+  const address = [
+    user.address,
+    user.city,
+    user.pincode,
+  ]
+    .filter(Boolean)
+    .join(", ");
+
+  return address || "Not added";
+}
+
+function mapUserToCustomer(user) {
+  return {
+    id: user.id
+      ? `CUST-${String(user.id).padStart(4, "0")}`
+      : "",
+    name: user.fullName || "Customer",
+    status: "Active",
+    propertyType: "Residential",
+    email: user.email || "",
+    phone: user.phone || "",
+    joinedOn: "Not available",
+    address: formatAddress(user),
+    dob: formatDate(user.dateOfBirth),
+    gender: user.gender || "Not added",
+    profileImage: user.profileImage || "",
+  };
+}
 
 function StatusBadge({ status }) {
   const isActive = status === "Active";
@@ -255,12 +270,74 @@ function ChangePasswordModal({ onClose }) {
   );
 }
 
-export default function CustomerProfile({ customer = DEFAULT_CUSTOMER, activity = DEFAULT_ACTIVITY, editPath = "/customers/edit" }) {
+export default function CustomerProfile({
+  editPath = "/customer/profile/edit-profile",
+}) {
   const navigate = useNavigate();
-  const [showPasswordModal, setShowPasswordModal] = useState(false);
-  const [showAllActivity, setShowAllActivity] = useState(false);
 
-  const visibleActivity = showAllActivity ? activity : activity.slice(0, 3);
+  const [customer, setCustomer] =
+    useState(DEFAULT_CUSTOMER);
+
+  const [loading, setLoading] =
+    useState(true);
+
+  const [profileError, setProfileError] =
+    useState("");
+
+  const [showPasswordModal, setShowPasswordModal] =
+    useState(false);
+
+  const [showAllActivity, setShowAllActivity] =
+    useState(false);
+
+  const activity = DEFAULT_ACTIVITY;
+
+  const visibleActivity = showAllActivity
+    ? activity
+    : activity.slice(0, 3);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadProfile = async () => {
+      try {
+        setLoading(true);
+        setProfileError("");
+
+        const response = await api.get(
+          "/users/profile"
+        );
+
+        if (!cancelled) {
+          setCustomer(
+            mapUserToCustomer(
+              response.data || {}
+            )
+          );
+        }
+      } catch (error) {
+        if (!cancelled) {
+          setProfileError(
+            error.response?.data?.message ||
+              error.response?.data?.error ||
+              (typeof error.response?.data === "string"
+                ? error.response.data
+                : "Unable to load profile information.")
+          );
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    };
+
+    loadProfile();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const handleEditProfile = () => {
     navigate(editPath, { state: { customer } });
@@ -272,14 +349,36 @@ export default function CustomerProfile({ customer = DEFAULT_CUSTOMER, activity 
         <div>
           <h1 className="cp-title">Customer Profile</h1>
           <div className="cp-breadcrumb">
-            <span onClick={() => navigate("/dashboard")}>Dashboard</span>
+            <span onClick={() => navigate("/customer/dashboard")}>Dashboard</span>
             <ChevronRight size={14} />
-            <span onClick={() => navigate("/customers")}>Customers</span>
+            <span onClick={() => navigate("/customer/profile")}>Customers</span>
             <ChevronRight size={14} />
             <span className="cp-breadcrumb__current">Profile</span>
           </div>
         </div>
       </div>
+
+      {loading && (
+        <div
+          className="cp-card"
+          style={{ marginBottom: "16px" }}
+        >
+          Loading profile information...
+        </div>
+      )}
+
+      {profileError && (
+        <div
+          className="cp-card"
+          style={{
+            marginBottom: "16px",
+            color: "#dc2626",
+          }}
+          role="alert"
+        >
+          {profileError}
+        </div>
+      )}
 
       <div className="cpass-layout">
         {/* Left column */}
@@ -287,7 +386,20 @@ export default function CustomerProfile({ customer = DEFAULT_CUSTOMER, activity 
           <div className="cp-sidecard__cover">
             <div className="cp-avatar-wrap">
               <div className="cp-avatar">
-                <User size={40} />
+                {customer.profileImage ? (
+                  <img
+                    src={customer.profileImage}
+                    alt={customer.name}
+                    style={{
+                      width: "100%",
+                      height: "100%",
+                      objectFit: "cover",
+                      borderRadius: "50%",
+                    }}
+                  />
+                ) : (
+                  <User size={40} />
+                )}
               </div>
               <button className="cp-avatar-edit" aria-label="Change photo">
                 <Pencil size={13} />
@@ -313,14 +425,10 @@ export default function CustomerProfile({ customer = DEFAULT_CUSTOMER, activity 
                 </a>
               </li>
               <li>
-                <a href={`tel:${customer.phone.replace(/\s/g, "")}`} className="cp-info-list__link">
+                <a href={`tel:${(customer.phone || "").replace(/\s/g, "")}`} className="cp-info-list__link">
                   <Phone size={16} />
                   <span>{customer.phone}</span>
                 </a>
-              </li>
-              <li>
-                <Calendar size={16} />
-                <span>Joined on {customer.joinedOn}</span>
               </li>
               <li>
                 <MapPin size={16} />
@@ -415,18 +523,33 @@ export default function CustomerProfile({ customer = DEFAULT_CUSTOMER, activity 
                 </button>
               </div>
 
-              <ul className="cp-activity-list">
-                {visibleActivity.map((item) => (
-                  <li key={item.id} className="cp-activity-item">
-                    <span className="cp-activity-dot" />
-                    <div>
-                      <p className="cp-activity-label">{item.label}</p>
-                      <p className="cp-activity-meta">{item.meta}</p>
-                      <p className="cp-activity-time">{item.time}</p>
-                    </div>
-                  </li>
-                ))}
-              </ul>
+              {visibleActivity.length > 0 ? (
+                <ul className="cp-activity-list">
+                  {visibleActivity.map((item) => (
+                    <li
+                      key={item.id}
+                      className="cp-activity-item"
+                    >
+                      <span className="cp-activity-dot" />
+                      <div>
+                        <p className="cp-activity-label">
+                          {item.label}
+                        </p>
+                        <p className="cp-activity-meta">
+                          {item.meta}
+                        </p>
+                        <p className="cp-activity-time">
+                          {item.time}
+                        </p>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="cp-activity-meta">
+                  No recent activity is available.
+                </p>
+              )}
             </section>
           </div>
         </div>

@@ -478,3 +478,41 @@
     flex-wrap: wrap;
   }
 }
+
+/* Add at the END of edit-service.css */
+
+.es-breadcrumb-button {
+  border: none;
+  padding: 0;
+  background: transparent;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.es-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  min-height: 160px;
+  padding: 18px;
+  color: var(--es-text-muted);
+  background-color: var(--es-card);
+  border: 1px solid var(--es-border);
+  border-radius: var(--es-radius);
+}
+
+.es-loading-icon {
+  animation: es-spin 0.8s linear infinite;
+}
+
+.es-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+@keyframes es-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

@@ -17,6 +17,7 @@ import {
     UserCheck,
     StickyNote,
     AlertCircle,
+    RotateCcw,
 } from "lucide-react";
 import api from "../../../api/axios";
 import "./accepted-bookings-view.css";
@@ -48,6 +49,20 @@ const formatDateTime = (value) => {
         hour: "2-digit",
         minute: "2-digit",
     }).format(new Date(value));
+};
+
+const formatFrequency = (value) => {
+    if (!value) {
+        return "One Time";
+    }
+
+    return value
+        .replaceAll("_", " ")
+        .toLowerCase()
+        .replace(
+            /\b\w/g,
+            (letter) => letter.toUpperCase()
+        );
 };
 
 const formatAmount = (value) =>
@@ -235,7 +250,9 @@ export default function BookingDetails() {
             date: formatDate(bookingData.preferredDate),
             time: bookingData.preferredTimeSlot || "—",
             duration: "—",
-            frequency: "—",
+            frequency: formatFrequency(
+                bookingData.serviceFrequency
+            ),
             timeSlot: bookingData.preferredTimeSlot || "—",
         };
     }, [bookingData]);
@@ -600,7 +617,16 @@ export default function BookingDetails() {
                         />
                         <InfoRow
                             label="Service Frequency"
-                            value={schedule.frequency}
+                            value={
+                                <span className="bd-frequency-badge">
+                                    <RotateCcw
+                                        size={13}
+                                        strokeWidth={2.2}
+                                    />
+
+                                    {schedule.frequency}
+                                </span>
+                            }
                         />
                         <InfoRow
                             label="Preferred Time Slot"

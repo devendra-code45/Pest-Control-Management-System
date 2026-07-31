@@ -27,14 +27,23 @@ public class BookingRequest {
     private String propertySize;
 
     @NotBlank(message = "Service address is required")
-    @Size(max = 500, message = "Service address cannot exceed 500 characters")
+    @Size(
+            max = 500,
+            message = "Service address cannot exceed 500 characters"
+    )
     private String serviceAddress;
 
-    @Size(max = 150, message = "Landmark cannot exceed 150 characters")
+    @Size(
+            max = 150,
+            message = "Landmark cannot exceed 150 characters"
+    )
     private String landmark;
 
     @NotBlank(message = "City is required")
-    @Size(max = 100, message = "City cannot exceed 100 characters")
+    @Size(
+            max = 100,
+            message = "City cannot exceed 100 characters"
+    )
     private String city;
 
     @NotBlank(message = "Pincode is required")
@@ -45,11 +54,20 @@ public class BookingRequest {
     private String pincode;
 
     @NotNull(message = "Preferred date is required")
-    @FutureOrPresent(message = "Preferred date cannot be in the past")
+    @FutureOrPresent(
+            message = "Preferred date cannot be in the past"
+    )
     private LocalDate preferredDate;
 
     @NotBlank(message = "Preferred time slot is required")
     private String preferredTimeSlot;
+
+    @NotBlank(message = "Service frequency is required")
+    @Pattern(
+            regexp = "^(ONE_TIME|WEEKLY|MONTHLY|QUARTERLY|HALF_YEARLY|YEARLY)$",
+            message = "Select a valid service frequency"
+    )
+    private String serviceFrequency;
 
     @NotBlank(message = "Pest type is required")
     private String pestType;

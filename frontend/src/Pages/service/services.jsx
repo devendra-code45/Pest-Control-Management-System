@@ -1,25 +1,27 @@
-import React, { useMemo, useState } from "react";
+import React, {
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Plus,
   Search,
-  Filter,
   RefreshCw,
   Eye,
   Pencil,
-  MoreVertical,
   Bug,
-  ShieldCheck,
-  CalendarX,
-  Tag,
-  Leaf,
   ChevronLeft,
   ChevronRight,
   Rat,
   SprayCan,
   Shield,
   Wind,
+  Power,
+  LoaderCircle,
+  AlertCircle,
 } from "lucide-react";
+import api from "../../api/axios";
 import "./services.css";
 
 const SERVICE_ICONS = {
@@ -30,100 +32,209 @@ const SERVICE_ICONS = {
   "Mosquito Control": Wind,
 };
 
-const MOCK_SERVICES = [
-  {
-    id: "SRV-2025-00124",
-    name: "Termite Treatment",
-    category: "Termite Control",
-    description: "Comprehensive termite inspection and treatment to protect your property.",
-    duration: "2 - 3 Hours",
-    price: 150,
-    status: "Active",
-  },
-  {
-    id: "SRV-2025-00125",
-    name: "Cockroach Control",
-    category: "General Pest Control",
-    description: "Effective cockroach control service for residential and commercial spaces.",
-    duration: "1 - 2 Hours",
-    price: 100,
-    status: "Active",
-  },
-  {
-    id: "SRV-2025-00126",
-    name: "Rodent Control",
-    category: "Rodent Control",
-    description: "Safe and effective rodent removal and prevention solutions.",
-    duration: "2 - 4 Hours",
-    price: 120,
-    status: "Active",
-  },
-  {
-    id: "SRV-2025-00127",
-    name: "General Pest Control",
-    category: "General Pest Control",
-    description: "General pest control for ants, spiders, flies and other common pests.",
-    duration: "1 - 2 Hours",
-    price: 90,
-    status: "Active",
-  },
-  {
-    id: "SRV-2025-00128",
-    name: "Bed Bug Treatment",
-    category: "Bed Bug Control",
-    description: "Specialized treatment for bed bugs with complete eradication.",
-    duration: "2 - 3 Hours",
-    price: 130,
-    status: "Inactive",
-  },
-  {
-    id: "SRV-2025-00129",
-    name: "Mosquito Control",
-    category: "Mosquito Control",
-    description: "Mosquito control service for outdoor and indoor areas.",
-    duration: "1 - 2 Hours",
-    price: 80,
-    status: "Active",
-  },
-];
+const getErrorMessage = (error) => {
+  const data = error.response?.data;
 
-const STAT_CARDS = [
-  { label: "Total Services", value: 24, sub: "All Services", icon: Tag },
-  { label: "Active Services", value: 20, sub: "Currently Active", icon: ShieldCheck },
-  { label: "Inactive Services", value: 4, sub: "Currently Inactive", icon: CalendarX },
-  { label: "Popular Service", value: "Termite Treatment", sub: "Most Booked", icon: Tag, isText: true },
-  { label: "Eco-friendly", value: 16, sub: "Green Services", icon: Leaf },
-];
+  if (typeof data === "string" && data.trim()) {
+    return data;
+  }
+
+  if (data?.message) return data.message;
+  if (data?.error) return data.error;
+
+  if (!error.response) {
+    return "Unable to connect to the backend.";
+  }
+
+  return "Unable to load services.";
+};
+
+const formatPrice = (value) =>
+  new Intl.NumberFormat("en-IN", {
+    style: "currency",
+    currency: "INR",
+    minimumFractionDigits: 2,
+  }).format(Number(value || 0));
 
 export default function Services() {
+  const navigate = useNavigate();
+
+  const [services, setServices] = useState([]);
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("all");
   const [status, setStatus] = useState("all");
   const [perPage, setPerPage] = useState(10);
   const [page, setPage] = useState(1);
 
+  const [loading, setLoading] = useState(true);
+  const [updatingId, setUpdatingId] = useState(null);
+  const [error, setError] = useState("");
+
+  const loadServices = async () => {
+    try {
+      setLoading(true);
+      setError("");
+
+      const response = await api.get("/admin/services");
+
+      setServices(
+        Array.isArray(response.data)
+          ? response.data
+          : []
+      );
+    } catch (requestError) {
+      setServices([]);
+      setError(getErrorMessage(requestError));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadServices();
+  }, []);
+
+  const normalizedServices = useMemo(
+    () =>
+      services.map((service) => ({
+        ...service,
+        status:
+          service.active === false
+            ? "Inactive"
+            : "Active",
+      })),
+    [services]
+  );
+
   const categories = useMemo(
-    () => ["all", ...new Set(MOCK_SERVICES.map((s) => s.category))],
-    []
+    () => [
+      "all",
+      ...new Set(
+        normalizedServices
+          .map((service) => service.category)
+          .filter(Boolean)
+      ),
+    ],
+    [normalizedServices]
   );
 
   const filtered = useMemo(() => {
-    return MOCK_SERVICES.filter((s) => {
-      const matchesSearch =
-        s.name.toLowerCase().includes(search.toLowerCase()) ||
-        s.category.toLowerCase().includes(search.toLowerCase());
-      const matchesCategory = category === "all" || s.category === category;
-      const matchesStatus = status === "all" || s.status.toLowerCase() === status;
-      return matchesSearch && matchesCategory && matchesStatus;
-    });
-  }, [search, category, status]);
+    const query = search.trim().toLowerCase();
 
-  const navigate = useNavigate();
+    return normalizedServices.filter((service) => {
+      const matchesSearch =
+        !query ||
+        String(service.name || "")
+          .toLowerCase()
+          .includes(query) ||
+        String(service.category || "")
+          .toLowerCase()
+          .includes(query) ||
+        String(service.description || "")
+          .toLowerCase()
+          .includes(query);
+
+      const matchesCategory =
+        category === "all" ||
+        service.category === category;
+
+      const matchesStatus =
+        status === "all" ||
+        service.status.toLowerCase() === status;
+
+      return (
+        matchesSearch &&
+        matchesCategory &&
+        matchesStatus
+      );
+    });
+  }, [
+    normalizedServices,
+    search,
+    category,
+    status,
+  ]);
+
+  const totalPages = Math.max(
+    1,
+    Math.ceil(filtered.length / perPage)
+  );
+
+  const safePage = Math.min(page, totalPages);
+
+  const visibleServices = filtered.slice(
+    (safePage - 1) * perPage,
+    safePage * perPage
+  );
+
+  useEffect(() => {
+    if (page > totalPages) {
+      setPage(totalPages);
+    }
+  }, [page, totalPages]);
+
+  const openDetails = (serviceId) => {
+    sessionStorage.setItem(
+      "pcmsServiceId",
+      String(serviceId)
+    );
+
+    navigate("/admin/services/details", {
+      state: {
+        serviceId,
+      },
+    });
+  };
+
+  const openEdit = (serviceId) => {
+    sessionStorage.setItem(
+      "pcmsServiceId",
+      String(serviceId)
+    );
+
+    navigate("/admin/services/edit", {
+      state: {
+        serviceId,
+      },
+    });
+  };
+
+  const toggleStatus = async (service) => {
+    try {
+      setUpdatingId(service.id);
+      setError("");
+
+      const endpoint =
+        service.active === false
+          ? `/admin/services/${service.id}/activate`
+          : `/admin/services/${service.id}/deactivate`;
+
+      await api.put(endpoint);
+
+      await loadServices();
+    } catch (requestError) {
+      setError(getErrorMessage(requestError));
+    } finally {
+      setUpdatingId(null);
+    }
+  };
+
+  const firstRecord =
+    filtered.length === 0
+      ? 0
+      : (safePage - 1) * perPage + 1;
+
+  const lastRecord = Math.min(
+    safePage * perPage,
+    filtered.length
+  );
 
   return (
     <div className="services-page">
       <div className="services-breadcrumb">
-        <span className="crumb-active">Dashboard</span>
+        <span className="crumb-active">
+          Dashboard
+        </span>
         <span className="crumb-sep">›</span>
         <span>Services</span>
       </div>
@@ -131,34 +242,74 @@ export default function Services() {
       <div className="services-header">
         <div>
           <h1>Services</h1>
-          <p>Manage all pest control services offered by your company.</p>
+          <p>
+            Manage all pest control services offered
+            by your company.
+          </p>
         </div>
-        <button className="btns btns-primary services-add-btn" onClick={() => navigate("/admin/services/add")}>
-          <Plus size={18} />
-          Add Service
-        </button>
+
+        <div className="services-header-actions">
+          <button
+            type="button"
+            className="btns btns-outline"
+            onClick={loadServices}
+            disabled={loading}
+          >
+            <RefreshCw size={18} />
+            Refresh
+          </button>
+
+          <button
+            type="button"
+            className="btns btns-primary services-add-btn"
+            onClick={() =>
+              navigate("/admin/services/add")
+            }
+          >
+            <Plus size={18} />
+            Add Service
+          </button>
+        </div>
       </div>
 
-      
+      {error && (
+        <div className="services-message services-message-error">
+          <AlertCircle size={17} />
+          {error}
+        </div>
+      )}
 
       <div className="table-card">
         <div className="table-toolbar">
           <div className="search-input">
             <Search size={18} />
+
             <input
               type="text"
               placeholder="Search by service name or category..."
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(event) => {
+                setSearch(event.target.value);
+                setPage(1);
+              }}
             />
           </div>
 
           <div className="toolbar-field">
             <label>Category</label>
-            <select value={category} onChange={(e) => setCategory(e.target.value)}>
-              {categories.map((c) => (
-                <option key={c} value={c}>
-                  {c === "all" ? "All Categories" : c}
+
+            <select
+              value={category}
+              onChange={(event) => {
+                setCategory(event.target.value);
+                setPage(1);
+              }}
+            >
+              {categories.map((item) => (
+                <option key={item} value={item}>
+                  {item === "all"
+                    ? "All Categories"
+                    : item}
                 </option>
               ))}
             </select>
@@ -166,16 +317,34 @@ export default function Services() {
 
           <div className="toolbar-field">
             <label>Status</label>
-            <select value={status} onChange={(e) => setStatus(e.target.value)}>
+
+            <select
+              value={status}
+              onChange={(event) => {
+                setStatus(event.target.value);
+                setPage(1);
+              }}
+            >
               <option value="all">All Status</option>
               <option value="active">Active</option>
-              <option value="inactive">Inactive</option>
+              <option value="inactive">
+                Inactive
+              </option>
             </select>
           </div>
 
           <div className="toolbar-field">
             <label>Show</label>
-            <select value={perPage} onChange={(e) => setPerPage(Number(e.target.value))}>
+
+            <select
+              value={perPage}
+              onChange={(event) => {
+                setPerPage(
+                  Number(event.target.value)
+                );
+                setPage(1);
+              }}
+            >
               <option value={10}>10 Per Page</option>
               <option value={25}>25 Per Page</option>
               <option value={50}>50 Per Page</option>
@@ -188,55 +357,144 @@ export default function Services() {
             <thead>
               <tr>
                 <th>Service Name</th>
-                <th>Category</th>
+                <th>Description</th>
                 <th>Duration</th>
                 <th>Price</th>
                 <th>Status</th>
-                <th className="actions-col">Actions</th>
+                <th className="actions-col">
+                  Actions
+                </th>
               </tr>
             </thead>
+
             <tbody>
-              {filtered.length === 0 ? (
+              {loading ? (
                 <tr>
-                  <td colSpan={6} className="empty-state">
-                    No services match your search or filters.
+                  <td
+                    colSpan={6}
+                    className="empty-state"
+                  >
+                    <LoaderCircle
+                      size={20}
+                      className="services-loading-icon"
+                    />
+                    Loading services...
+                  </td>
+                </tr>
+              ) : visibleServices.length === 0 ? (
+                <tr>
+                  <td
+                    colSpan={6}
+                    className="empty-state"
+                  >
+                    No services match your search or
+                    filters.
                   </td>
                 </tr>
               ) : (
-                filtered.map((s) => {
-                  const Icon = SERVICE_ICONS[s.category] || Bug;
+                visibleServices.map((service) => {
+                  const Icon =
+                    SERVICE_ICONS[
+                      service.category
+                    ] || Bug;
+
                   return (
-                    <tr key={s.id}>
+                    <tr key={service.id}>
                       <td>
                         <div className="service-name-cell">
                           <span className="service-icon">
                             <Icon size={18} />
                           </span>
+
                           <div>
-                            <div className="service-name">{s.name}</div>
-                            <div className="service-sub-category">{s.category}</div>
+                            <div className="service-name">
+                              {service.name}
+                            </div>
+
+                            <div className="service-sub-category">
+                              {service.category}
+                            </div>
                           </div>
                         </div>
                       </td>
-                      <td className="service-description">{s.description}</td>
-                      <td className="duration-cell">{s.duration}</td>
-                      <td className="price-cell">${s.price.toFixed(2)}</td>
+
+                      <td className="service-description">
+                        {service.description}
+                      </td>
+
+                      <td className="duration-cell">
+                        {service.duration}
+                      </td>
+
+                      <td className="price-cell">
+                        {formatPrice(service.price)}
+                      </td>
+
                       <td>
                         <span
                           className={`status-badge ${
-                            s.status === "Active" ? "status-active" : "status-inactive"
+                            service.active === false
+                              ? "status-inactive"
+                              : "status-active"
                           }`}
                         >
-                          {s.status}
+                          {service.active === false
+                            ? "Inactive"
+                            : "Active"}
                         </span>
                       </td>
+
                       <td>
                         <div className="row-actions">
-                          <button className="icon-btn" aria-label="View"  onClick={() => navigate("/admin/services/details")}>
+                          <button
+                            type="button"
+                            className="icon-btn"
+                            aria-label="View"
+                            title="View"
+                            onClick={() =>
+                              openDetails(service.id)
+                            }
+                          >
                             <Eye size={16} />
                           </button>
-                          <button className="icon-btn" aria-label="Edit" onClick={() => navigate("/admin/services/edit")}>
+
+                          <button
+                            type="button"
+                            className="icon-btn"
+                            aria-label="Edit"
+                            title="Edit"
+                            onClick={() =>
+                              openEdit(service.id)
+                            }
+                          >
                             <Pencil size={16} />
+                          </button>
+
+                          <button
+                            type="button"
+                            className={`icon-btn ${
+                              service.active === false
+                                ? "icon-btn-activate"
+                                : "icon-btn-deactivate"
+                            }`}
+                            aria-label={
+                              service.active === false
+                                ? "Activate"
+                                : "Deactivate"
+                            }
+                            title={
+                              service.active === false
+                                ? "Activate"
+                                : "Deactivate"
+                            }
+                            disabled={
+                              updatingId === service.id
+                            }
+                            onClick={() =>
+                              toggleStatus(service)
+                            }
+                          >
+                            <Power size={16} />
                           </button>
                         </div>
                       </td>
@@ -249,28 +507,57 @@ export default function Services() {
         </div>
 
         <div className="table-footer">
-          <span>Showing 1 to {filtered.length} of 24 results</span>
+          <span>
+            Showing {firstRecord} to {lastRecord} of{" "}
+            {filtered.length} results
+          </span>
+
           <div className="pagination">
-            <button className="page-btn" disabled={page === 1} onClick={() => setPage((p) => Math.max(1, p - 1))}>
+            <button
+              type="button"
+              className="page-btn"
+              disabled={safePage === 1}
+              onClick={() =>
+                setPage((current) =>
+                  Math.max(1, current - 1)
+                )
+              }
+            >
               <ChevronLeft size={16} />
             </button>
-            {[1, 2, 3].map((n) => (
+
+            {Array.from({
+              length: totalPages,
+            }).map((_, index) => (
               <button
-                key={n}
-                className={`page-btn ${page === n ? "page-btn-active" : ""}`}
-                onClick={() => setPage(n)}
+                type="button"
+                key={index + 1}
+                className={`page-btn ${
+                  safePage === index + 1
+                    ? "page-btn-active"
+                    : ""
+                }`}
+                onClick={() =>
+                  setPage(index + 1)
+                }
               >
-                {n}
+                {index + 1}
               </button>
             ))}
-            <span className="page-ellipsis">...</span>
+
             <button
-              className={`page-btn ${page === 5 ? "page-btn-active" : ""}`}
-              onClick={() => setPage(5)}
+              type="button"
+              className="page-btn"
+              disabled={safePage === totalPages}
+              onClick={() =>
+                setPage((current) =>
+                  Math.min(
+                    totalPages,
+                    current + 1
+                  )
+                )
+              }
             >
-              5
-            </button>
-            <button className="page-btn" onClick={() => setPage((p) => Math.min(5, p + 1))}>
               <ChevronRight size={16} />
             </button>
           </div>

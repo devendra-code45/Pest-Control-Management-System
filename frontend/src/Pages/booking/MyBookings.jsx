@@ -128,12 +128,13 @@ function getStatusNote(status) {
   return statusNotes[status] || "Status unavailable";
 }
 
-function getPaymentStatus() {
-  // The Payment module is not connected yet.
-  return "Pending";
+function getPaymentStatus(bookingId, paidBookingIds) {
+  return paidBookingIds.has(bookingId)
+    ? "Paid"
+    : "Pending";
 }
 
-function transformBooking(booking) {
+function transformBooking(booking, paidBookingIds) {
   return {
     rawId: booking.id,
     id: `BK-${String(booking.id).padStart(4, "0")}`,
@@ -158,7 +159,10 @@ function transformBooking(booking) {
     technician: booking.technicianName || null,
     technicianPhone: booking.technicianPhone || null,
     amount: formatMoney(booking.totalAmount),
-    paymentStatus: getPaymentStatus(booking),
+    paymentStatus: getPaymentStatus(
+      booking.id,
+      paidBookingIds
+    ),
     rejectionReason: booking.rejectionReason || null,
   };
 }
@@ -191,23 +195,99 @@ export default function MyBookings() {
         setLoading(true);
         setRequestError("");
 
-        const response = await api.get(
+        /*
+         * Load bookings first because this is the main
+         * data required by the My Bookings page.
+         */
+        const bookingsResponse = await api.get(
           "/customer/bookings"
         );
 
+        /*
+         * Payment status is additional information.
+         * A payment API permission error must not log
+         * the customer out or hide their bookings.
+         */
+        let paymentList = [];
+
+        try {
+          const paymentsResponse = await api.get(
+            "/customer/payments"
+          );
+
+          paymentList = Array.isArray(
+            paymentsResponse.data
+          )
+            ? paymentsResponse.data
+            : [];
+        } catch (paymentError) {
+          console.error(
+            "Unable to load customer payments:",
+            paymentError
+          );
+
+          const paymentStatus =
+            paymentError.response?.status;
+
+          if (paymentStatus === 403) {
+            setRequestError(
+              "Bookings loaded, but payment status is temporarily unavailable."
+            );
+          } else if (
+            paymentStatus !== 401
+          ) {
+            setRequestError(
+              "Bookings loaded, but payment information could not be loaded."
+            );
+          }
+        }
+
+        const paidBookingIds = new Set(
+          paymentList
+            .filter(
+              (payment) =>
+                payment.status === "PAID"
+            )
+            .map(
+              (payment) =>
+                Number(payment.bookingId)
+            )
+        );
+
         const transformedBookings = Array.isArray(
-          response.data
+          bookingsResponse.data
         )
-          ? response.data.map(transformBooking)
+          ? bookingsResponse.data.map(
+              (booking) =>
+                transformBooking(
+                  booking,
+                  paidBookingIds
+                )
+            )
           : [];
 
         setBookings(transformedBookings);
       } catch (error) {
         const status = error.response?.status;
 
-        if (status === 401 || status === 403) {
+        /*
+         * Redirect only when authentication has
+         * actually expired. A 403 means the user is
+         * authenticated but the endpoint permission
+         * is not configured correctly.
+         */
+        if (status === 401) {
           localStorage.removeItem("pcmsAuth");
-          navigate("/login", { replace: true });
+          navigate("/login", {
+            replace: true,
+          });
+          return;
+        }
+
+        if (status === 403) {
+          setRequestError(
+            "You do not have permission to load bookings."
+          );
           return;
         }
 

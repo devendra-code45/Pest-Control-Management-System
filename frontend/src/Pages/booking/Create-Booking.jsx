@@ -4,7 +4,7 @@ import React, {
   useRef,
   useState,
 } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import {
   Calendar,
   User,
@@ -40,87 +40,63 @@ const DEFAULT_PROFILE = {
   address: "",
 };
 
-const SERVICES = {
-  "Termite Control": {
-    icon: Bug,
-    duration: "45 - 60 mins",
-    price: 1299,
-    types: [
-      {
-        label: "Inspection & Treatment",
-        inspectionCharge: 199,
-      },
-      {
-        label: "Treatment Only",
-        inspectionCharge: 0,
-      },
-      {
-        label: "Inspection Only",
-        inspectionCharge: 0,
-      },
-    ],
-  },
+function readSelectedService(locationState) {
+  if (locationState?.service) {
+    return locationState.service;
+  }
 
-  "General Pest Control": {
-    icon: Sparkles,
-    duration: "60 - 75 mins",
-    price: 999,
-    types: [
-      {
-        label: "Standard Treatment",
-        inspectionCharge: 0,
-      },
-      {
-        label: "Deep Treatment",
-        inspectionCharge: 149,
-      },
-    ],
-  },
+  const storedService =
+    sessionStorage.getItem("pcmsSelectedService");
 
-  "Cockroach Control": {
-    icon: Bug,
-    duration: "30 - 45 mins",
-    price: 799,
-    types: [
-      {
-        label: "Gel Treatment",
-        inspectionCharge: 0,
-      },
-      {
-        label: "Spray Treatment",
-        inspectionCharge: 0,
-      },
-    ],
-  },
+  if (!storedService) {
+    return null;
+  }
 
-  "Rodent Control": {
-    icon: Bug,
-    duration: "45 - 60 mins",
-    price: 899,
-    types: [
-      {
-        label: "Trap Installation",
-        inspectionCharge: 99,
-      },
-      {
-        label: "Baiting Treatment",
-        inspectionCharge: 99,
-      },
-    ],
-  },
+  try {
+    return JSON.parse(storedService);
+  } catch {
+    sessionStorage.removeItem(
+      "pcmsSelectedService"
+    );
+    return null;
+  }
+}
 
-  "Mosquito Control": {
-    icon: Sparkles,
-    duration: "30 - 45 mins",
-    price: 699,
-    types: [
-      {
-        label: "Fogging Treatment",
-        inspectionCharge: 0,
-      },
-    ],
-  },
-};
+function guessPestType(service) {
+  const text = [
+    service?.name,
+    service?.category,
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+
+  if (text.includes("termite")) {
+    return "Termites";
+  }
+
+  if (text.includes("cockroach")) {
+    return "Cockroaches";
+  }
+
+  if (text.includes("rodent")) {
+    return "Rodents";
+  }
+
+  if (text.includes("mosquito")) {
+    return "Mosquitoes";
+  }
+
+  if (text.includes("bed bug")) {
+    return "Bed Bugs";
+  }
+
+  if (text.includes("ant")) {
+    return "Ants";
+  }
+
+  return "";
+}
 
 const PROPERTY_TYPES = [
   "Apartment",
@@ -145,6 +121,33 @@ const TIME_SLOTS = [
   "12:00 PM - 02:00 PM",
   "02:00 PM - 04:00 PM",
   "04:00 PM - 06:00 PM",
+];
+
+const SERVICE_FREQUENCIES = [
+  {
+    value: "ONE_TIME",
+    label: "One Time",
+  },
+  {
+    value: "WEEKLY",
+    label: "Weekly",
+  },
+  {
+    value: "MONTHLY",
+    label: "Monthly",
+  },
+  {
+    value: "QUARTERLY",
+    label: "Quarterly",
+  },
+  {
+    value: "HALF_YEARLY",
+    label: "Half-Yearly",
+  },
+  {
+    value: "YEARLY",
+    label: "Yearly",
+  },
 ];
 
 const PEST_TYPES = [
@@ -173,6 +176,7 @@ function createEmptyForm(profile = DEFAULT_PROFILE) {
     pincode: "",
     date: "",
     timeSlot: "",
+    serviceFrequency: "ONE_TIME",
     pestType: "",
     description: "",
   };
@@ -223,7 +227,41 @@ export default function BookService({
   onSubmit,
 }) {
   const navigate = useNavigate();
+  const location = useLocation();
   const fileInputRef = useRef(null);
+
+  const clickedService = useMemo(
+    () => readSelectedService(location.state),
+    [location.state]
+  );
+
+  const serviceCatalog = useMemo(() => {
+    if (!clickedService?.name) {
+      return {};
+    }
+
+    const serviceType =
+      clickedService.category ||
+      "Standard Service";
+
+    return {
+      [clickedService.name]: {
+        icon: Bug,
+        duration:
+          clickedService.duration ||
+          "Duration not specified",
+        price: Number(
+          clickedService.price || 0
+        ),
+        types: [
+          {
+            label: serviceType,
+            inspectionCharge: 0,
+          },
+        ],
+      },
+    };
+  }, [clickedService]);
 
   const [profile, setProfile] = useState(DEFAULT_PROFILE);
   const [profileLoading, setProfileLoading] = useState(true);
@@ -238,6 +276,48 @@ export default function BookService({
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [apiError, setApiError] = useState("");
+
+  useEffect(() => {
+    if (!clickedService?.name) {
+      navigate("/customer/services", {
+        replace: true,
+      });
+    }
+  }, [clickedService, navigate]);
+
+  useEffect(() => {
+    if (!clickedService?.name) {
+      return;
+    }
+
+    sessionStorage.setItem(
+      "pcmsSelectedServiceId",
+      String(clickedService.id || "")
+    );
+
+    sessionStorage.setItem(
+      "pcmsSelectedService",
+      JSON.stringify(clickedService)
+    );
+
+    setForm((currentForm) => ({
+      ...currentForm,
+      service: clickedService.name,
+      serviceType:
+        clickedService.category ||
+        "Standard Service",
+      pestType:
+        currentForm.pestType ||
+        guessPestType(clickedService),
+    }));
+
+    setErrors((currentErrors) => ({
+      ...currentErrors,
+      service: "",
+      serviceType: "",
+      pestType: "",
+    }));
+  }, [clickedService]);
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -299,7 +379,7 @@ export default function BookService({
   }, [navigate]);
 
   const selectedService = form.service
-    ? SERVICES[form.service]
+    ? serviceCatalog[form.service]
     : null;
 
   const selectedType = useMemo(() => {
@@ -348,10 +428,6 @@ export default function BookService({
         ...currentForm,
         [field]: value,
       };
-
-      if (field === "service") {
-        updatedForm.serviceType = "";
-      }
 
       return updatedForm;
     });
@@ -479,6 +555,11 @@ export default function BookService({
         "Please select a time slot";
     }
 
+    if (!form.serviceFrequency) {
+      nextErrors.serviceFrequency =
+        "Please select service frequency";
+    }
+
     if (!form.pestType) {
       nextErrors.pestType =
         "Please select a pest type";
@@ -499,7 +580,22 @@ export default function BookService({
       URL.revokeObjectURL(image.url);
     });
 
-    setForm(createEmptyForm(profile));
+    const resetValues =
+      createEmptyForm(profile);
+
+    if (clickedService?.name) {
+      resetValues.service =
+        clickedService.name;
+
+      resetValues.serviceType =
+        clickedService.category ||
+        "Standard Service";
+
+      resetValues.pestType =
+        guessPestType(clickedService);
+    }
+
+    setForm(resetValues);
     setErrors({});
     setImages([]);
     setSubmitted(false);
@@ -531,6 +627,7 @@ export default function BookService({
       pincode: form.pincode.trim(),
       preferredDate: form.date,
       preferredTimeSlot: form.timeSlot,
+      serviceFrequency: form.serviceFrequency,
       pestType: form.pestType,
       problemDescription:
         form.description.trim(),
@@ -691,7 +788,7 @@ export default function BookService({
                 </label>
 
                 <div
-                  className={`bs-select ${
+                  className={`bs-select bs-select--disabled ${
                     errors.service
                       ? "bs-select--error"
                       : ""
@@ -703,28 +800,22 @@ export default function BookService({
 
                   <select
                     value={form.service}
-                    onChange={handleField("service")}
+                    disabled
                   >
-                    <option value="" disabled>
-                      Choose a service
-                    </option>
-
-                    {Object.keys(SERVICES).map(
-                      (name) => (
-                        <option
-                          key={name}
-                          value={name}
-                        >
-                          {name}
-                        </option>
-                      )
+                    {clickedService?.name ? (
+                      <option
+                        value={clickedService.name}
+                      >
+                        {clickedService.name}
+                      </option>
+                    ) : (
+                      <option value="">
+                        Select service from Available Services
+                      </option>
                     )}
                   </select>
 
-                  <ChevronDown
-                    size={15}
-                    className="bs-select__chevron"
-                  />
+
                 </div>
 
                 {errors.service && (
@@ -743,15 +834,13 @@ export default function BookService({
                 </label>
 
                 <div
-                  className={`bs-select ${
-                    errors.serviceType
-                      ? "bs-select--error"
-                      : ""
-                  } ${
-                    !selectedService
+                  className={`bs-select ${errors.serviceType
+                    ? "bs-select--error"
+                    : ""
+                    } ${!selectedService
                       ? "bs-select--disabled"
                       : ""
-                  }`}
+                    }`}
                 >
                   <span className="bs-select__icon">
                     <Sparkles size={16} />
@@ -819,8 +908,8 @@ export default function BookService({
 
                   {selectedService
                     ? `₹${selectedService.price.toLocaleString(
-                        "en-IN"
-                      )} onwards`
+                      "en-IN"
+                    )} onwards`
                     : "—"}
                 </div>
               </div>
@@ -845,11 +934,10 @@ export default function BookService({
                 </label>
 
                 <div
-                  className={`bs-select ${
-                    errors.propertyType
-                      ? "bs-select--error"
-                      : ""
-                  }`}
+                  className={`bs-select ${errors.propertyType
+                    ? "bs-select--error"
+                    : ""
+                    }`}
                 >
                   <span className="bs-select__icon">
                     <Building2 size={16} />
@@ -897,11 +985,10 @@ export default function BookService({
                 </label>
 
                 <div
-                  className={`bs-select ${
-                    errors.propertySize
-                      ? "bs-select--error"
-                      : ""
-                  }`}
+                  className={`bs-select ${errors.propertySize
+                    ? "bs-select--error"
+                    : ""
+                    }`}
                 >
                   <span className="bs-select__icon">
                     <Ruler size={16} />
@@ -959,11 +1046,10 @@ export default function BookService({
               </label>
 
               <div
-                className={`bs-input ${
-                  errors.address
-                    ? "bs-input--error"
-                    : ""
-                }`}
+                className={`bs-input ${errors.address
+                  ? "bs-input--error"
+                  : ""
+                  }`}
               >
                 <MapPin
                   size={16}
@@ -1020,11 +1106,10 @@ export default function BookService({
                 </label>
 
                 <div
-                  className={`bs-input ${
-                    errors.city
-                      ? "bs-input--error"
-                      : ""
-                  }`}
+                  className={`bs-input ${errors.city
+                    ? "bs-input--error"
+                    : ""
+                    }`}
                 >
                   <input
                     type="text"
@@ -1050,11 +1135,10 @@ export default function BookService({
                 </label>
 
                 <div
-                  className={`bs-input ${
-                    errors.pincode
-                      ? "bs-input--error"
-                      : ""
-                  }`}
+                  className={`bs-input ${errors.pincode
+                    ? "bs-input--error"
+                    : ""
+                    }`}
                 >
                   <input
                     type="text"
@@ -1095,11 +1179,10 @@ export default function BookService({
                 </label>
 
                 <div
-                  className={`bs-input ${
-                    errors.date
-                      ? "bs-input--error"
-                      : ""
-                  }`}
+                  className={`bs-input ${errors.date
+                    ? "bs-input--error"
+                    : ""
+                    }`}
                 >
                   <Calendar
                     size={16}
@@ -1130,11 +1213,10 @@ export default function BookService({
                 </label>
 
                 <div
-                  className={`bs-select ${
-                    errors.timeSlot
-                      ? "bs-select--error"
-                      : ""
-                  }`}
+                  className={`bs-select ${errors.timeSlot
+                    ? "bs-select--error"
+                    : ""
+                    }`}
                 >
                   <span className="bs-select__icon">
                     <Clock size={16} />
@@ -1172,6 +1254,56 @@ export default function BookService({
                   </span>
                 )}
               </div>
+              <div className="bs-field">
+                <label>
+                  Service Frequency{" "}
+                  <span className="bs-required">*</span>
+                </label>
+
+                <div
+                  className={`bs-select ${errors.serviceFrequency
+                      ? "bs-select--error"
+                      : ""
+                    }`}
+                >
+                  <span className="bs-select__icon">
+                    <RotateCcw size={16} />
+                  </span>
+
+                  <select
+                    value={form.serviceFrequency}
+                    onChange={handleField(
+                      "serviceFrequency"
+                    )}
+                  >
+                    <option value="" disabled>
+                      Select service frequency
+                    </option>
+
+                    {SERVICE_FREQUENCIES.map(
+                      (frequency) => (
+                        <option
+                          key={frequency.value}
+                          value={frequency.value}
+                        >
+                          {frequency.label}
+                        </option>
+                      )
+                    )}
+                  </select>
+
+                  <ChevronDown
+                    size={15}
+                    className="bs-select__chevron"
+                  />
+                </div>
+
+                {errors.serviceFrequency && (
+                  <span className="bs-error-text">
+                    {errors.serviceFrequency}
+                  </span>
+                )}
+              </div>
             </div>
           </section>
 
@@ -1193,11 +1325,10 @@ export default function BookService({
                 </label>
 
                 <div
-                  className={`bs-select ${
-                    errors.pestType
-                      ? "bs-select--error"
-                      : ""
-                  }`}
+                  className={`bs-select ${errors.pestType
+                    ? "bs-select--error"
+                    : ""
+                    }`}
                 >
                   <span className="bs-select__icon">
                     <Bug size={16} />
@@ -1245,11 +1376,10 @@ export default function BookService({
                 </label>
 
                 <div
-                  className={`bs-input bs-input--textarea ${
-                    errors.description
-                      ? "bs-input--error"
-                      : ""
-                  }`}
+                  className={`bs-input bs-input--textarea ${errors.description
+                    ? "bs-input--error"
+                    : ""
+                    }`}
                 >
                   <textarea
                     rows={3}
@@ -1283,11 +1413,10 @@ export default function BookService({
               </label>
 
               <div
-                className={`bs-dropzone ${
-                  isDragging
-                    ? "bs-dropzone--active"
-                    : ""
-                }`}
+                className={`bs-dropzone ${isDragging
+                  ? "bs-dropzone--active"
+                  : ""
+                  }`}
                 onClick={() =>
                   fileInputRef.current?.click()
                 }
@@ -1446,8 +1575,8 @@ export default function BookService({
             </div>
           ) : (
             <div className="bs-summary__empty">
-              Select a service to see your booking
-              summary.
+              Select a service from Available Services
+              to continue.
             </div>
           )}
 

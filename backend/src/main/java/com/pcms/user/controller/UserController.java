@@ -21,6 +21,11 @@ import org.springframework.security.core.Authentication;
 import com.pcms.user.dto.UpdateProfileRequest;
 import com.pcms.user.dto.ChangePasswordRequest;
 
+import org.springframework.web.bind.annotation.RequestBody;
+
+
+
+
 @RestController
 @RequestMapping("/api/users")
 @Validated
@@ -43,11 +48,13 @@ public class UserController {
     }
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> login(
-            @Valid @RequestBody LoginRequest request) {
+            @Valid
+            @RequestBody
+            LoginRequest request) {
 
-        LoginResponse response = userService.login(request);
-
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(
+                userService.login(request)
+        );
     }
     @GetMapping("/profile")
     public ResponseEntity<UserResponse> getProfile(

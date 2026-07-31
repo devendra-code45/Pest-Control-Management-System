@@ -108,6 +108,13 @@ public class Booking {
 
     @Column(nullable = false)
     private String preferredTimeSlot;
+    @Column(
+            name = "service_frequency",
+            nullable = false,
+            length = 30
+    )
+    @Builder.Default
+    private String serviceFrequency = "ONE_TIME";
 
     @Column(nullable = false)
     private String pestType;
@@ -167,6 +174,11 @@ public class Booking {
             totalAmount = servicePrice
                     .add(inspectionCharge)
                     .add(convenienceFee);
+        }
+        if (serviceFrequency == null
+                || serviceFrequency.isBlank()) {
+
+            serviceFrequency = "ONE_TIME";
         }
     }
 

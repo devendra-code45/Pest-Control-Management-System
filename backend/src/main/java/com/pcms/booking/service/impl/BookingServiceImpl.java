@@ -18,6 +18,9 @@ import com.pcms.technician.repository.TechnicianRepository;
 import com.pcms.user.entity.User;
 import com.pcms.user.repository.UserRepository;
 
+import com.pcms.service.entity.PestService;
+import com.pcms.service.repository.ServiceRepository;
+
 @Service
 public class BookingServiceImpl
         implements BookingService {
@@ -28,15 +31,18 @@ public class BookingServiceImpl
     private final BookingRepository bookingRepository;
     private final UserRepository userRepository;
     private final TechnicianRepository technicianRepository;
+    private final ServiceRepository serviceRepository;
 
     public BookingServiceImpl(
             BookingRepository bookingRepository,
             UserRepository userRepository,
-            TechnicianRepository technicianRepository) {
+            TechnicianRepository technicianRepository,
+            ServiceRepository serviceRepository) {
 
         this.bookingRepository = bookingRepository;
         this.userRepository = userRepository;
         this.technicianRepository = technicianRepository;
+        this.serviceRepository = serviceRepository;
     }
 
     // =====================================================
@@ -106,12 +112,16 @@ public class BookingServiceImpl
                 .preferredTimeSlot(
                         request.getPreferredTimeSlot().trim()
                 )
+                .serviceFrequency(
+                        request.getServiceFrequency().trim()
+                )
                 .pestType(
                         request.getPestType().trim()
                 )
                 .problemDescription(
                         request.getProblemDescription().trim()
                 )
+                
                 .status(BookingStatus.PENDING)
                 .build();
 
@@ -491,28 +501,41 @@ public class BookingServiceImpl
     private BigDecimal getServicePrice(
             String serviceName) {
 
-        return switch (serviceName.trim()) {
+        if (serviceName == null
+                || serviceName.isBlank()) {
 
-            case "Termite Control" ->
-                    BigDecimal.valueOf(1299);
+            throw new RuntimeException(
+                    "Service name is required."
+            );
+        }
 
-            case "General Pest Control" ->
-                    BigDecimal.valueOf(999);
+        PestService service =
+                serviceRepository
+                        .findByNameIgnoreCase(
+                                serviceName.trim()
+                        )
+                        .orElseThrow(() ->
+                                new RuntimeException(
+                                        "Selected service does not exist."
+                                )
+                        );
 
-            case "Cockroach Control" ->
-                    BigDecimal.valueOf(799);
+        if (!Boolean.TRUE.equals(
+                service.getActive()
+        )) {
 
-            case "Rodent Control" ->
-                    BigDecimal.valueOf(899);
+            throw new RuntimeException(
+                    "Selected service is currently unavailable."
+            );
+        }
 
-            case "Mosquito Control" ->
-                    BigDecimal.valueOf(699);
+        if (service.getPrice() == null) {
+            throw new RuntimeException(
+                    "Price is not configured for the selected service."
+            );
+        }
 
-            default ->
-                    throw new RuntimeException(
-                            "Invalid service selected."
-                    );
-        };
+        return service.getPrice();
     }
 
     private BigDecimal getInspectionCharge(
@@ -625,6 +648,9 @@ public class BookingServiceImpl
                 )
                 .preferredTimeSlot(
                         booking.getPreferredTimeSlot()
+                )
+                .serviceFrequency(
+                        booking.getServiceFrequency()
                 )
                 .pestType(
                         booking.getPestType()
