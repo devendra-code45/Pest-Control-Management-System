@@ -4,6 +4,9 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.nio.charset.StandardCharsets;
 import java.text.DecimalFormat;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Locale;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -65,6 +68,158 @@ public class PaymentEmailService {
                 amount,
                 transactionId,
                 paymentMethod
+        );
+    }
+
+
+    public void sendRefundNotifications(
+            String customerEmail,
+            String customerName,
+            String bookingNumber,
+            String serviceName,
+            BigDecimal refundAmount,
+            String transactionId,
+            String refundReason,
+            String refundNote,
+            LocalDateTime refundedAt
+    ) {
+        sendCustomerRefundEmail(
+                customerEmail,
+                customerName,
+                bookingNumber,
+                serviceName,
+                refundAmount,
+                transactionId,
+                refundReason,
+                refundNote,
+                refundedAt
+        );
+
+        sendAdminRefundEmail(
+                customerEmail,
+                customerName,
+                bookingNumber,
+                serviceName,
+                refundAmount,
+                transactionId,
+                refundReason,
+                refundNote,
+                refundedAt
+        );
+    }
+
+    private void sendCustomerRefundEmail(
+            String customerEmail,
+            String customerName,
+            String bookingNumber,
+            String serviceName,
+            BigDecimal refundAmount,
+            String transactionId,
+            String refundReason,
+            String refundNote,
+            LocalDateTime refundedAt
+    ) {
+        String subject =
+                "Refund Processed - " +
+                        bookingNumber;
+
+        String html = String.format(
+                "<div style='font-family:Arial,sans-serif;max-width:620px;margin:auto;border:1px solid #e5e7eb;border-radius:12px;overflow:hidden'>"
+                        + "<div style='background:#15803d;color:#ffffff;padding:22px 26px'>"
+                        + "<h2 style='margin:0'>Refund Processed</h2>"
+                        + "<p style='margin:7px 0 0'>Pest Control Management System</p>"
+                        + "</div>"
+                        + "<div style='padding:24px 26px;color:#1f2937'>"
+                        + "<p>Hello <strong>%s</strong>,</p>"
+                        + "<p>Your payment refund has been processed successfully.</p>"
+                        + "<div style='background:#fff7ed;border:1px solid #fed7aa;border-radius:10px;padding:16px;margin:20px 0'>"
+                        + "<div style='color:#9a3412;font-size:14px'>Amount Refunded</div>"
+                        + "<div style='color:#c2410c;font-size:25px;font-weight:700;margin-top:4px'>%s</div>"
+                        + "</div>"
+                        + "<table style='width:100%%;border-collapse:collapse;font-size:14px'>"
+                        + "<tr><td style='padding:8px 0;color:#64748b'>Booking ID</td><td style='padding:8px 0;text-align:right;font-weight:600'>%s</td></tr>"
+                        + "<tr><td style='padding:8px 0;color:#64748b'>Service</td><td style='padding:8px 0;text-align:right;font-weight:600'>%s</td></tr>"
+                        + "<tr><td style='padding:8px 0;color:#64748b'>Transaction ID</td><td style='padding:8px 0;text-align:right;font-weight:600'>%s</td></tr>"
+                        + "<tr><td style='padding:8px 0;color:#64748b'>Refund Reason</td><td style='padding:8px 0;text-align:right;font-weight:600'>%s</td></tr>"
+                        + "<tr><td style='padding:8px 0;color:#64748b'>Refund Note</td><td style='padding:8px 0;text-align:right;font-weight:600'>%s</td></tr>"
+                        + "<tr><td style='padding:8px 0;color:#64748b'>Refund Date</td><td style='padding:8px 0;text-align:right;font-weight:600'>%s</td></tr>"
+                        + "<tr><td style='padding:8px 0;color:#64748b'>Status</td><td style='padding:8px 0;text-align:right;color:#c2410c;font-weight:700'>REFUNDED</td></tr>"
+                        + "</table>"
+                        + "<p style='margin-top:24px;color:#64748b;font-size:13px'>The time taken for the amount to appear can depend on the payment provider or bank.</p>"
+                        + "</div></div>",
+                escapeHtml(customerName),
+                formatAmount(refundAmount),
+                escapeHtml(bookingNumber),
+                escapeHtml(serviceName),
+                escapeHtml(transactionId),
+                escapeHtml(refundReason),
+                escapeHtml(refundNote),
+                formatDateTime(refundedAt)
+        );
+
+        sendHtmlEmail(
+                customerEmail,
+                subject,
+                html,
+                "customer refund"
+        );
+    }
+
+    private void sendAdminRefundEmail(
+            String customerEmail,
+            String customerName,
+            String bookingNumber,
+            String serviceName,
+            BigDecimal refundAmount,
+            String transactionId,
+            String refundReason,
+            String refundNote,
+            LocalDateTime refundedAt
+    ) {
+        String subject =
+                "Refund Completed - " +
+                        bookingNumber;
+
+        String html = String.format(
+                "<div style='font-family:Arial,sans-serif;max-width:620px;margin:auto;border:1px solid #e5e7eb;border-radius:12px;overflow:hidden'>"
+                        + "<div style='background:#166534;color:#ffffff;padding:22px 26px'>"
+                        + "<h2 style='margin:0'>Refund Completed</h2>"
+                        + "<p style='margin:7px 0 0'>Admin refund notification</p>"
+                        + "</div>"
+                        + "<div style='padding:24px 26px;color:#1f2937'>"
+                        + "<p>A customer payment refund has been completed successfully.</p>"
+                        + "<div style='background:#fff7ed;border:1px solid #fed7aa;border-radius:10px;padding:16px;margin:20px 0'>"
+                        + "<div style='color:#9a3412;font-size:14px'>Refunded Amount</div>"
+                        + "<div style='color:#c2410c;font-size:25px;font-weight:700;margin-top:4px'>%s</div>"
+                        + "</div>"
+                        + "<table style='width:100%%;border-collapse:collapse;font-size:14px'>"
+                        + "<tr><td style='padding:8px 0;color:#64748b'>Customer</td><td style='padding:8px 0;text-align:right;font-weight:600'>%s</td></tr>"
+                        + "<tr><td style='padding:8px 0;color:#64748b'>Customer Email</td><td style='padding:8px 0;text-align:right;font-weight:600'>%s</td></tr>"
+                        + "<tr><td style='padding:8px 0;color:#64748b'>Booking ID</td><td style='padding:8px 0;text-align:right;font-weight:600'>%s</td></tr>"
+                        + "<tr><td style='padding:8px 0;color:#64748b'>Service</td><td style='padding:8px 0;text-align:right;font-weight:600'>%s</td></tr>"
+                        + "<tr><td style='padding:8px 0;color:#64748b'>Transaction ID</td><td style='padding:8px 0;text-align:right;font-weight:600'>%s</td></tr>"
+                        + "<tr><td style='padding:8px 0;color:#64748b'>Refund Reason</td><td style='padding:8px 0;text-align:right;font-weight:600'>%s</td></tr>"
+                        + "<tr><td style='padding:8px 0;color:#64748b'>Refund Note</td><td style='padding:8px 0;text-align:right;font-weight:600'>%s</td></tr>"
+                        + "<tr><td style='padding:8px 0;color:#64748b'>Refund Date</td><td style='padding:8px 0;text-align:right;font-weight:600'>%s</td></tr>"
+                        + "<tr><td style='padding:8px 0;color:#64748b'>Status</td><td style='padding:8px 0;text-align:right;color:#c2410c;font-weight:700'>REFUNDED</td></tr>"
+                        + "</table>"
+                        + "</div></div>",
+                formatAmount(refundAmount),
+                escapeHtml(customerName),
+                escapeHtml(customerEmail),
+                escapeHtml(bookingNumber),
+                escapeHtml(serviceName),
+                escapeHtml(transactionId),
+                escapeHtml(refundReason),
+                escapeHtml(refundNote),
+                formatDateTime(refundedAt)
+        );
+
+        sendHtmlEmail(
+                adminEmail,
+                subject,
+                html,
+                "admin refund"
         );
     }
 
@@ -224,6 +379,25 @@ public class PaymentEmailService {
                 formatter.format(
                         safeAmount
                 );
+    }
+
+
+    private String formatDateTime(
+            LocalDateTime dateTime
+    ) {
+        if (dateTime == null) {
+            return "Not available";
+        }
+
+        DateTimeFormatter formatter =
+                DateTimeFormatter.ofPattern(
+                        "dd MMM yyyy, hh:mm a",
+                        Locale.ENGLISH
+                );
+
+        return escapeHtml(
+                dateTime.format(formatter)
+        );
     }
 
     private String escapeHtml(

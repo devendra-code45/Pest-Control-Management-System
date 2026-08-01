@@ -288,11 +288,86 @@ public class PaymentServiceImpl
                 LocalDateTime.now()
         );
 
-        return toResponse(
+        Payment savedPayment =
                 paymentRepository.save(
                         payment
-                )
+                );
+
+        PaymentResponse response =
+                toResponse(savedPayment);
+
+        scheduleRefundEmailsAfterCommit(
+                savedPayment,
+                response.getBookingNumber()
         );
+
+        return response;
+    }
+
+    private void scheduleRefundEmailsAfterCommit(
+            Payment payment,
+            String bookingNumber
+    ) {
+        User customer =
+                payment.getCustomer();
+
+        Booking booking =
+                payment.getBooking();
+
+        String customerEmail =
+                customer.getEmail();
+
+        String customerName =
+                customer.getFullName();
+
+        String serviceName =
+                booking.getServiceName();
+
+        BigDecimal refundedAmount =
+                payment.getRefundedAmount();
+
+        String transactionId =
+                payment.getTransactionId();
+
+        String refundReason =
+                payment.getRefundReason();
+
+        String refundNote =
+                payment.getRefundNote();
+
+        LocalDateTime refundedAt =
+                payment.getRefundedAt();
+
+        Runnable emailTask = () ->
+                paymentEmailService
+                        .sendRefundNotifications(
+                                customerEmail,
+                                customerName,
+                                bookingNumber,
+                                serviceName,
+                                refundedAmount,
+                                transactionId,
+                                refundReason,
+                                refundNote,
+                                refundedAt
+                        );
+
+        if (
+                TransactionSynchronizationManager
+                        .isSynchronizationActive()
+        ) {
+            TransactionSynchronizationManager
+                    .registerSynchronization(
+                            new TransactionSynchronization() {
+                                @Override
+                                public void afterCommit() {
+                                    emailTask.run();
+                                }
+                            }
+                    );
+        } else {
+            emailTask.run();
+        }
     }
 
     private void schedulePaymentEmailsAfterCommit(
@@ -466,5 +541,4 @@ public class PaymentServiceImpl
 
         return response;
     }
-
 }
