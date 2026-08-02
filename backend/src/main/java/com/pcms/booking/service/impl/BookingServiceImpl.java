@@ -3,8 +3,13 @@ package com.pcms.booking.service.impl;
 import java.math.BigDecimal;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import com.pcms.booking.dto.BookingRequest;
 import com.pcms.booking.dto.BookingResponse;
@@ -12,6 +17,8 @@ import com.pcms.booking.entity.Booking;
 import com.pcms.booking.entity.BookingStatus;
 import com.pcms.booking.repository.BookingRepository;
 import com.pcms.booking.service.BookingService;
+import com.pcms.notification.entity.NotificationType;
+import com.pcms.notification.service.NotificationService;
 import com.pcms.technician.entity.Technician;
 import com.pcms.technician.entity.TechnicianStatus;
 import com.pcms.technician.repository.TechnicianRepository;
@@ -25,6 +32,11 @@ import com.pcms.service.repository.ServiceRepository;
 public class BookingServiceImpl
         implements BookingService {
 
+    private static final Logger LOGGER =
+            LoggerFactory.getLogger(
+                    BookingServiceImpl.class
+            );
+
     private static final BigDecimal CONVENIENCE_FEE =
             BigDecimal.valueOf(49);
 
@@ -32,17 +44,20 @@ public class BookingServiceImpl
     private final UserRepository userRepository;
     private final TechnicianRepository technicianRepository;
     private final ServiceRepository serviceRepository;
+    private final NotificationService notificationService;
 
     public BookingServiceImpl(
             BookingRepository bookingRepository,
             UserRepository userRepository,
             TechnicianRepository technicianRepository,
-            ServiceRepository serviceRepository) {
+            ServiceRepository serviceRepository,
+            NotificationService notificationService) {
 
         this.bookingRepository = bookingRepository;
         this.userRepository = userRepository;
         this.technicianRepository = technicianRepository;
         this.serviceRepository = serviceRepository;
+        this.notificationService = notificationService;
     }
 
     // =====================================================
@@ -127,6 +142,21 @@ public class BookingServiceImpl
 
         Booking savedBooking =
                 bookingRepository.save(booking);
+
+        scheduleAdminNotificationAfterCommit(
+                "New Booking Received",
+                "New booking " +
+                        formatBookingNumber(
+                                savedBooking.getId()
+                        ) +
+                        " was created by " +
+                        customer.getFullName() +
+                        " for " +
+                        savedBooking.getServiceName() +
+                        ".",
+                NotificationType.BOOKING_CREATED,
+                savedBooking.getId()
+        );
 
         return convertToResponse(savedBooking);
     }
@@ -240,6 +270,19 @@ public class BookingServiceImpl
         Booking updatedBooking =
                 bookingRepository.save(booking);
 
+        scheduleCustomerNotificationAfterCommit(
+                updatedBooking,
+                "Booking Accepted",
+                "Your booking " +
+                        formatBookingNumber(
+                                updatedBooking.getId()
+                        ) +
+                        " for " +
+                        updatedBooking.getServiceName() +
+                        " has been accepted.",
+                NotificationType.BOOKING_ACCEPTED
+        );
+
         return convertToResponse(
                 updatedBooking
         );
@@ -296,6 +339,18 @@ public class BookingServiceImpl
 
         Booking updatedBooking =
                 bookingRepository.save(booking);
+
+        scheduleCustomerNotificationAfterCommit(
+                updatedBooking,
+                "Booking Rejected",
+                "Your booking " +
+                        formatBookingNumber(
+                                updatedBooking.getId()
+                        ) +
+                        " was rejected. Reason: " +
+                        updatedBooking.getRejectionReason(),
+                NotificationType.BOOKING_REJECTED
+        );
 
         return convertToResponse(
                 updatedBooking
@@ -357,6 +412,19 @@ public class BookingServiceImpl
         Booking updatedBooking =
                 bookingRepository.save(booking);
 
+        scheduleCustomerNotificationAfterCommit(
+                updatedBooking,
+                "Technician Assigned",
+                updatedBooking.getTechnicianName() +
+                        " has been assigned to booking " +
+                        formatBookingNumber(
+                                updatedBooking.getId()
+                        ) +
+                        ". Contact: " +
+                        updatedBooking.getTechnicianPhone(),
+                NotificationType.TECHNICIAN_ASSIGNED
+        );
+
         return convertToResponse(
                 updatedBooking
         );
@@ -390,6 +458,17 @@ public class BookingServiceImpl
 
         Booking updatedBooking =
                 bookingRepository.save(booking);
+
+        scheduleCustomerNotificationAfterCommit(
+                updatedBooking,
+                "Service Started",
+                "Service for booking " +
+                        formatBookingNumber(
+                                updatedBooking.getId()
+                        ) +
+                        " has started.",
+                NotificationType.SERVICE_STARTED
+        );
 
         return convertToResponse(
                 updatedBooking
@@ -436,9 +515,130 @@ public class BookingServiceImpl
         Booking updatedBooking =
                 bookingRepository.save(booking);
 
+        scheduleCustomerNotificationAfterCommit(
+                updatedBooking,
+                "Service Completed",
+                "Service for booking " +
+                        formatBookingNumber(
+                                updatedBooking.getId()
+                        ) +
+                        " has been completed.",
+                NotificationType.SERVICE_COMPLETED
+        );
+
+        scheduleAdminNotificationAfterCommit(
+                "Booking Completed",
+                "Booking " +
+                        formatBookingNumber(
+                                updatedBooking.getId()
+                        ) +
+                        " for " +
+                        updatedBooking
+                                .getCustomer()
+                                .getFullName() +
+                        " has been completed.",
+                NotificationType.SERVICE_COMPLETED,
+                updatedBooking.getId()
+        );
+
         return convertToResponse(
                 updatedBooking
         );
+    }
+
+    // =====================================================
+    // NOTIFICATION HELPERS
+    // =====================================================
+
+    private void scheduleCustomerNotificationAfterCommit(
+            Booking booking,
+            String title,
+            String message,
+            NotificationType type) {
+
+        String customerEmail =
+                booking
+                        .getCustomer()
+                        .getEmail();
+
+        Long bookingId = booking.getId();
+
+        runAfterCommit(() -> {
+            try {
+                notificationService
+                        .createCustomerNotification(
+                                customerEmail,
+                                title,
+                                message,
+                                type,
+                                bookingId,
+                                null
+                        );
+            } catch (RuntimeException exception) {
+                LOGGER.error(
+                        "Unable to create customer booking notification for booking {}.",
+                        bookingId,
+                        exception
+                );
+            }
+        });
+    }
+
+    private void scheduleAdminNotificationAfterCommit(
+            String title,
+            String message,
+            NotificationType type,
+            Long bookingId) {
+
+        runAfterCommit(() -> {
+            try {
+                notificationService
+                        .createAdminNotification(
+                                title,
+                                message,
+                                type,
+                                bookingId,
+                                null
+                        );
+            } catch (RuntimeException exception) {
+                LOGGER.error(
+                        "Unable to create admin booking notification for booking {}.",
+                        bookingId,
+                        exception
+                );
+            }
+        });
+    }
+
+    private void runAfterCommit(
+            Runnable task) {
+
+        if (
+                TransactionSynchronizationManager
+                        .isSynchronizationActive()
+        ) {
+            TransactionSynchronizationManager
+                    .registerSynchronization(
+                            new TransactionSynchronization() {
+                                @Override
+                                public void afterCommit() {
+                                    task.run();
+                                }
+                            }
+                    );
+        } else {
+            task.run();
+        }
+    }
+
+    private String formatBookingNumber(
+            Long bookingId) {
+
+        return "BK-" +
+                String.format(
+                        "%04d",
+                        bookingId
+                );
     }
 
     // =====================================================

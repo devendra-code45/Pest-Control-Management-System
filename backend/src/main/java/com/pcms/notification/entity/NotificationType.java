@@ -1,8 +1,16 @@
 package com.pcms.notification.entity;
 
 public enum NotificationType {
+
     PAYMENT_SUCCESS,
     PAYMENT_RECEIVED,
     REFUND_PROCESSED,
-    REFUND_COMPLETED
+    REFUND_COMPLETED,
+
+    BOOKING_CREATED,
+    BOOKING_ACCEPTED,
+    BOOKING_REJECTED,
+    TECHNICIAN_ASSIGNED,
+    SERVICE_STARTED,
+    SERVICE_COMPLETED
 }
