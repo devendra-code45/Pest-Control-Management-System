@@ -5,6 +5,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
@@ -13,6 +15,8 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 import com.pcms.booking.entity.Booking;
 import com.pcms.booking.entity.BookingStatus;
 import com.pcms.booking.repository.BookingRepository;
+import com.pcms.notification.entity.NotificationType;
+import com.pcms.notification.service.NotificationService;
 import com.pcms.payment.dto.PaymentRequest;
 import com.pcms.payment.dto.PaymentResponse;
 import com.pcms.payment.dto.RefundPaymentRequest;
@@ -28,6 +32,11 @@ import com.pcms.user.repository.UserRepository;
 public class PaymentServiceImpl
         implements PaymentService {
 
+    private static final Logger LOGGER =
+            LoggerFactory.getLogger(
+                    PaymentServiceImpl.class
+            );
+
     private final PaymentRepository
             paymentRepository;
 
@@ -40,11 +49,15 @@ public class PaymentServiceImpl
     private final PaymentEmailService
             paymentEmailService;
 
+    private final NotificationService
+            notificationService;
+
     public PaymentServiceImpl(
             PaymentRepository paymentRepository,
             BookingRepository bookingRepository,
             UserRepository userRepository,
-            PaymentEmailService paymentEmailService
+            PaymentEmailService paymentEmailService,
+            NotificationService notificationService
     ) {
         this.paymentRepository =
                 paymentRepository;
@@ -57,6 +70,9 @@ public class PaymentServiceImpl
 
         this.paymentEmailService =
                 paymentEmailService;
+
+        this.notificationService =
+                notificationService;
     }
 
     @Override
@@ -338,19 +354,65 @@ public class PaymentServiceImpl
         LocalDateTime refundedAt =
                 payment.getRefundedAt();
 
-        Runnable emailTask = () ->
-                paymentEmailService
-                        .sendRefundNotifications(
+        Long bookingId =
+                booking.getId();
+
+        Long paymentId =
+                payment.getId();
+
+        Runnable emailTask = () -> {
+            paymentEmailService
+                    .sendRefundNotifications(
+                            customerEmail,
+                            customerName,
+                            bookingNumber,
+                            serviceName,
+                            refundedAmount,
+                            transactionId,
+                            refundReason,
+                            refundNote,
+                            refundedAt
+                    );
+
+            try {
+                notificationService
+                        .createCustomerNotification(
                                 customerEmail,
-                                customerName,
-                                bookingNumber,
-                                serviceName,
-                                refundedAmount,
-                                transactionId,
-                                refundReason,
-                                refundNote,
-                                refundedAt
+                                "Refund Processed",
+                                "Your refund of INR " +
+                                        refundedAmount +
+                                        " for booking " +
+                                        bookingNumber +
+                                        " has been processed.",
+                                NotificationType
+                                        .REFUND_PROCESSED,
+                                bookingId,
+                                paymentId
                         );
+
+                notificationService
+                        .createAdminNotification(
+                                "Refund Completed",
+                                "Refund of INR " +
+                                        refundedAmount +
+                                        " was completed for " +
+                                        customerName +
+                                        " (" +
+                                        bookingNumber +
+                                        ").",
+                                NotificationType
+                                        .REFUND_COMPLETED,
+                                bookingId,
+                                paymentId
+                        );
+            } catch (RuntimeException exception) {
+                LOGGER.error(
+                        "Unable to create refund notifications for payment {}.",
+                        paymentId,
+                        exception
+                );
+            }
+        };
 
         if (
                 TransactionSynchronizationManager
@@ -376,19 +438,83 @@ public class PaymentServiceImpl
             Payment payment,
             String bookingNumber
     ) {
-        Runnable emailTask = () ->
-                paymentEmailService
-                        .sendPaymentNotifications(
-                                customer.getEmail(),
-                                customer.getFullName(),
-                                bookingNumber,
-                                booking.getServiceName(),
-                                payment.getAmount(),
-                                payment.getTransactionId(),
-                                String.valueOf(
-                                        payment.getPaymentMethod()
-                                )
+        String customerEmail =
+                customer.getEmail();
+
+        String customerName =
+                customer.getFullName();
+
+        String serviceName =
+                booking.getServiceName();
+
+        BigDecimal amount =
+                payment.getAmount();
+
+        String transactionId =
+                payment.getTransactionId();
+
+        String paymentMethod =
+                String.valueOf(
+                        payment.getPaymentMethod()
+                );
+
+        Long bookingId =
+                booking.getId();
+
+        Long paymentId =
+                payment.getId();
+
+        Runnable emailTask = () -> {
+            paymentEmailService
+                    .sendPaymentNotifications(
+                            customerEmail,
+                            customerName,
+                            bookingNumber,
+                            serviceName,
+                            amount,
+                            transactionId,
+                            paymentMethod
+                    );
+
+            try {
+                notificationService
+                        .createCustomerNotification(
+                                customerEmail,
+                                "Payment Successful",
+                                "Your payment of INR " +
+                                        amount +
+                                        " for booking " +
+                                        bookingNumber +
+                                        " was completed successfully.",
+                                NotificationType
+                                        .PAYMENT_SUCCESS,
+                                bookingId,
+                                paymentId
                         );
+
+                notificationService
+                        .createAdminNotification(
+                                "Payment Received",
+                                "Payment of INR " +
+                                        amount +
+                                        " was received from " +
+                                        customerName +
+                                        " for booking " +
+                                        bookingNumber +
+                                        ".",
+                                NotificationType
+                                        .PAYMENT_RECEIVED,
+                                bookingId,
+                                paymentId
+                        );
+            } catch (RuntimeException exception) {
+                LOGGER.error(
+                        "Unable to create payment notifications for payment {}.",
+                        paymentId,
+                        exception
+                );
+            }
+        };
 
         if (
                 TransactionSynchronizationManager
@@ -541,4 +667,5 @@ public class PaymentServiceImpl
 
         return response;
     }
+
 }

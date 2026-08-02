@@ -18,6 +18,7 @@ import {
   UserCircle,
 } from "lucide-react";
 
+import NotificationDropdown from "./NotificationDropdown";
 import "./Navbar.css";
 
 function useBreadcrumb(pathname) {
@@ -62,7 +63,12 @@ function getDisplayName(user) {
 
 export default function AdminNavbar({
   user,
-  notificationCount = 3,
+  notifications = [],
+  notificationCount = 0,
+  notificationsLoading = false,
+  onNotificationsOpen,
+  onMarkNotificationRead,
+  onMarkAllNotificationsRead,
   onMenuClick,
   onLogout,
 }) {
@@ -130,6 +136,11 @@ export default function AdminNavbar({
     };
   }, []);
 
+  useEffect(() => {
+    setProfileOpen(false);
+    setNotificationOpen(false);
+  }, [location.pathname]);
+
   const initials = adminUser.name
     .split(" ")
     .filter(Boolean)
@@ -140,6 +151,7 @@ export default function AdminNavbar({
 
   const handleLogout = () => {
     setProfileOpen(false);
+    setNotificationOpen(false);
 
     if (onLogout) {
       onLogout();
@@ -149,6 +161,21 @@ export default function AdminNavbar({
     navigate("/login", {
       replace: true,
     });
+  };
+
+  const handleNotificationToggle = () => {
+    const willOpen = !notificationOpen;
+
+    setNotificationOpen(willOpen);
+    setProfileOpen(false);
+
+    if (
+      willOpen &&
+      typeof onNotificationsOpen ===
+        "function"
+    ) {
+      onNotificationsOpen();
+    }
   };
 
   return (
@@ -207,92 +234,37 @@ export default function AdminNavbar({
             type="button"
             className="nb-icon-btn"
             aria-label="Admin notifications"
-            onClick={() => {
-              setNotificationOpen(
-                (current) => !current
-              );
-
-              setProfileOpen(false);
-            }}
+            onClick={
+              handleNotificationToggle
+            }
           >
             <Bell size={18} />
 
             {notificationCount > 0 && (
               <span className="nb-badge">
-                {notificationCount}
+                {notificationCount > 99
+                  ? "99+"
+                  : notificationCount}
               </span>
             )}
           </button>
 
           {notificationOpen && (
-            <div className="nb-notification-dropdown">
-              <div className="nb-notification-header">
-                <strong>
-                  Notifications
-                </strong>
-
-                <button type="button">
-                  Mark all as read
-                </button>
-              </div>
-
-              <div className="nb-notification-item unread">
-                <span className="nb-notification-dot" />
-
-                <div>
-                  <strong>
-                    New Booking Received
-                  </strong>
-
-                  <p>
-                    A new booking request has
-                    been submitted.
-                  </p>
-
-                  <small>
-                    2 minutes ago
-                  </small>
-                </div>
-              </div>
-
-              <div className="nb-notification-item unread">
-                <span className="nb-notification-dot blue" />
-
-                <div>
-                  <strong>
-                    Technician Assigned
-                  </strong>
-
-                  <p>
-                    A technician was assigned
-                    to booking BK-2025-0012.
-                  </p>
-
-                  <small>
-                    15 minutes ago
-                  </small>
-                </div>
-              </div>
-
-              <div className="nb-notification-item">
-                <span className="nb-notification-dot orange" />
-
-                <div>
-                  <strong>
-                    New Complaint Received
-                  </strong>
-
-                  <p>
-                    A customer submitted a new
-                    complaint.
-                  </p>
-
-                  <small>
-                    1 hour ago
-                  </small>
-                </div>
-              </div>
-            </div>
+            <NotificationDropdown
+              notifications={notifications}
+              unreadCount={
+                notificationCount
+              }
+              loading={
+                notificationsLoading
+              }
+              onMarkAsRead={
+                onMarkNotificationRead
+              }
+              onMarkAllAsRead={
+                onMarkAllNotificationsRead
+              }
+            />
           )}
         </div>
 

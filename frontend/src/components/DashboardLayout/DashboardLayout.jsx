@@ -1,4 +1,5 @@
 import {
+  useCallback,
   useEffect,
   useState,
 } from "react";
@@ -34,6 +35,21 @@ export default function DashboardLayout() {
 
   const [navbarUser, setNavbarUser] =
     useState(null);
+
+  const [
+    notifications,
+    setNotifications,
+  ] = useState([]);
+
+  const [
+    notificationCount,
+    setNotificationCount,
+  ] = useState(0);
+
+  const [
+    notificationsLoading,
+    setNotificationsLoading,
+  ] = useState(false);
 
   const location = useLocation();
   const navigate = useNavigate();
@@ -102,6 +118,133 @@ export default function DashboardLayout() {
     location.pathname,
   ]);
 
+  const loadNotifications =
+    useCallback(async () => {
+      if (!auth.isAuthenticated) {
+        setNotifications([]);
+        setNotificationCount(0);
+        return;
+      }
+
+      setNotificationsLoading(true);
+
+      try {
+        const [
+          notificationsResponse,
+          countResponse,
+        ] = await Promise.all([
+          api.get("/notifications"),
+          api.get(
+            "/notifications/unread-count"
+          ),
+        ]);
+
+        setNotifications(
+          Array.isArray(
+            notificationsResponse.data
+          )
+            ? notificationsResponse.data
+            : []
+        );
+
+        setNotificationCount(
+          Number(
+            countResponse.data?.count || 0
+          )
+        );
+      } catch (error) {
+        console.error(
+          "Unable to load notifications.",
+          error
+        );
+      } finally {
+        setNotificationsLoading(false);
+      }
+    }, [
+      auth.isAuthenticated,
+      auth.token,
+    ]);
+
+  useEffect(() => {
+    loadNotifications();
+  }, [
+    loadNotifications,
+    location.pathname,
+  ]);
+
+  const handleMarkNotificationRead =
+    async (notificationId) => {
+      const currentNotification =
+        notifications.find(
+          (notification) =>
+            notification.id ===
+            notificationId
+        );
+
+      if (currentNotification?.read) {
+        return;
+      }
+
+      try {
+        await api.patch(
+          `/notifications/${notificationId}/read`
+        );
+
+        setNotifications(
+          (current) =>
+            current.map((notification) =>
+              notification.id ===
+              notificationId
+                ? {
+                    ...notification,
+                    read: true,
+                  }
+                : notification
+            )
+        );
+
+        setNotificationCount(
+          (current) =>
+            Math.max(0, current - 1)
+        );
+      } catch (error) {
+        console.error(
+          "Unable to mark notification as read.",
+          error
+        );
+      }
+    };
+
+  const handleMarkAllNotificationsRead =
+    async () => {
+      if (notificationCount === 0) {
+        return;
+      }
+
+      try {
+        await api.patch(
+          "/notifications/read-all"
+        );
+
+        setNotifications(
+          (current) =>
+            current.map(
+              (notification) => ({
+                ...notification,
+                read: true,
+              })
+            )
+        );
+
+        setNotificationCount(0);
+      } catch (error) {
+        console.error(
+          "Unable to mark all notifications as read.",
+          error
+        );
+      }
+    };
+
   if (!auth.isAuthenticated) {
     return (
       <Navigate to="/login" replace />
@@ -120,6 +263,18 @@ export default function DashboardLayout() {
   const handleLogout = () => {
     logout();
     navigate("/login", { replace: true });
+  };
+
+  const notificationProps = {
+    notifications,
+    notificationCount,
+    notificationsLoading,
+    onNotificationsOpen:
+      loadNotifications,
+    onMarkNotificationRead:
+      handleMarkNotificationRead,
+    onMarkAllNotificationsRead:
+      handleMarkAllNotificationsRead,
   };
 
   return (
@@ -165,7 +320,7 @@ export default function DashboardLayout() {
         {isAdmin ? (
           <AdminNavbar
             user={currentUser}
-            notificationCount={3}
+            {...notificationProps}
             onMenuClick={() =>
               setMobileOpen(true)
             }
@@ -174,7 +329,7 @@ export default function DashboardLayout() {
         ) : (
           <CustomerNavbar
             user={currentUser}
-            notificationCount={3}
+            {...notificationProps}
             onMenuClick={() =>
               setMobileOpen(true)
             }

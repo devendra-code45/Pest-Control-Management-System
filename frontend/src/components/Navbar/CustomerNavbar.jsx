@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 
 import { useAuth } from "../../context/AuthContext";
+import NotificationDropdown from "./NotificationDropdown";
 import "./Navbar.css";
 
 function useBreadcrumb(pathname) {
@@ -43,7 +44,12 @@ function useBreadcrumb(pathname) {
 
 export default function CustomerNavbar({
   user,
-  notificationCount = 3,
+  notifications = [],
+  notificationCount = 0,
+  notificationsLoading = false,
+  onNotificationsOpen,
+  onMarkNotificationRead,
+  onMarkAllNotificationsRead,
   onMenuClick,
   onLogout,
 }) {
@@ -140,6 +146,21 @@ export default function CustomerNavbar({
     navigate("/login", { replace: true });
   };
 
+  const handleNotificationToggle = () => {
+    const willOpen = !notificationOpen;
+
+    setNotificationOpen(willOpen);
+    setProfileOpen(false);
+
+    if (
+      willOpen &&
+      typeof onNotificationsOpen ===
+        "function"
+    ) {
+      onNotificationsOpen();
+    }
+  };
+
   return (
     <header className="nb-navbar">
       <div className="nb-left">
@@ -193,83 +214,37 @@ export default function CustomerNavbar({
             type="button"
             className="nb-icon-btn"
             aria-label="Customer notifications"
-            onClick={() => {
-              setNotificationOpen(
-                (current) => !current
-              );
-
-              setProfileOpen(false);
-            }}
+            onClick={
+              handleNotificationToggle
+            }
           >
             <Bell size={18} />
 
             {notificationCount > 0 && (
               <span className="nb-badge">
-                {notificationCount}
+                {notificationCount > 99
+                  ? "99+"
+                  : notificationCount}
               </span>
             )}
           </button>
 
           {notificationOpen && (
-            <div className="nb-notification-dropdown">
-              <div className="nb-notification-header">
-                <strong>Notifications</strong>
-
-                <button type="button">
-                  Mark all as read
-                </button>
-              </div>
-
-              <div className="nb-notification-item unread">
-                <span className="nb-notification-dot" />
-
-                <div>
-                  <strong>
-                    Booking Confirmed
-                  </strong>
-
-                  <p>
-                    Your booking has been confirmed.
-                  </p>
-
-                  <small>5 minutes ago</small>
-                </div>
-              </div>
-
-              <div className="nb-notification-item unread">
-                <span className="nb-notification-dot blue" />
-
-                <div>
-                  <strong>
-                    Technician Assigned
-                  </strong>
-
-                  <p>
-                    A technician was assigned to
-                    your booking.
-                  </p>
-
-                  <small>20 minutes ago</small>
-                </div>
-              </div>
-
-              <div className="nb-notification-item">
-                <span className="nb-notification-dot orange" />
-
-                <div>
-                  <strong>
-                    Payment Successful
-                  </strong>
-
-                  <p>
-                    Your payment was completed
-                    successfully.
-                  </p>
-
-                  <small>1 hour ago</small>
-                </div>
-              </div>
-            </div>
+            <NotificationDropdown
+              notifications={notifications}
+              unreadCount={
+                notificationCount
+              }
+              loading={
+                notificationsLoading
+              }
+              onMarkAsRead={
+                onMarkNotificationRead
+              }
+              onMarkAllAsRead={
+                onMarkAllNotificationsRead
+              }
+            />
           )}
         </div>
 
