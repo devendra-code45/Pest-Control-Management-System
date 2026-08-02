@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   AlertCircle,
@@ -15,6 +15,7 @@ import {
   X,
 } from "lucide-react";
 
+import api from "../../api/axios";
 import "./CustomerContactSupport.css";
 
 const CATEGORY_OPTIONS = [
@@ -35,76 +36,42 @@ const initialForm = {
   description: "",
 };
 
-const initialComplaints = [
-  {
-    id: "CP-2025-0012",
-    subject: "Technician was late",
-    category: "Service Delay",
-    date: "25 May 2025",
-    status: "In Progress",
-  },
-  {
-    id: "CP-2025-0011",
-    subject: "Pest problem not resolved",
-    category: "Service Quality",
-    date: "18 May 2025",
-    status: "Resolved",
-  },
-  {
-    id: "CP-2025-0010",
-    subject: "Need to reschedule",
-    category: "Reschedule",
-    date: "10 May 2025",
-    status: "Resolved",
-  },
-  {
-    id: "CP-2025-0009",
-    subject: "Wrong amount charged",
-    category: "Payment Issue",
-    date: "02 May 2025",
-    status: "Closed",
-  },
-  {
-    id: "CP-2025-0008",
-    subject: "Request for follow up",
-    category: "Follow Up",
-    date: "28 Apr 2025",
-    status: "Resolved",
-  },
-  {
-    id: "CP-2025-0007",
-    subject: "Technician did not arrive",
-    category: "Service Delay",
-    date: "22 Apr 2025",
-    status: "Open",
-  },
-  {
-    id: "CP-2025-0006",
-    subject: "Payment receipt required",
-    category: "Payment Issue",
-    date: "15 Apr 2025",
-    status: "Resolved",
-  },
-  {
-    id: "CP-2025-0005",
-    subject: "Cockroach issue remains",
-    category: "Pest Problem Not Resolved",
-    date: "08 Apr 2025",
-    status: "Closed",
-  },
-];
-
-const statusClassName = (status) =>
+const statusClassName = (status = "") =>
   status.toLowerCase().replace(/\s+/g, "-");
 
-const formatDate = (date) =>
-  new Intl.DateTimeFormat("en-IN", {
+const formatDate = (value) => {
+  if (!value) return "—";
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return "—";
+  }
+
+  return new Intl.DateTimeFormat("en-IN", {
     day: "2-digit",
     month: "short",
     year: "numeric",
   }).format(date);
+};
 
-function StatisticCard({ icon: Icon, label, value, description, tone }) {
+const getApiError = (error, fallback) => {
+  const responseData = error?.response?.data;
+
+  if (typeof responseData === "string") {
+    return responseData;
+  }
+
+  return responseData?.message || responseData?.error || fallback;
+};
+
+function StatisticCard({
+  icon: Icon,
+  label,
+  value,
+  description,
+  tone,
+}) {
   return (
     <article className="contact-support__stat-card">
       <div
@@ -115,10 +82,16 @@ function StatisticCard({ icon: Icon, label, value, description, tone }) {
 
       <div>
         <p className="contact-support__stat-label">{label}</p>
-        <strong className={`contact-support__stat-value text-${tone}`}>
+
+        <strong
+          className={`contact-support__stat-value text-${tone}`}
+        >
           {value}
         </strong>
-        <p className="contact-support__stat-description">{description}</p>
+
+        <p className="contact-support__stat-description">
+          {description}
+        </p>
       </div>
     </article>
   );
@@ -131,36 +104,102 @@ function ContactSupport() {
   const [form, setForm] = useState(initialForm);
   const [errors, setErrors] = useState({});
   const [selectedFile, setSelectedFile] = useState(null);
-  const [complaints, setComplaints] = useState(initialComplaints);
+  const [complaints, setComplaints] = useState([]);
   const [rowsPerPage, setRowsPerPage] = useState(5);
   const [currentPage, setCurrentPage] = useState(1);
   const [successMessage, setSuccessMessage] = useState("");
+  const [pageError, setPageError] = useState("");
+  const [loadingComplaints, setLoadingComplaints] =
+    useState(true);
+  const [submitting, setSubmitting] = useState(false);
+
+  const loadComplaints = async () => {
+    setLoadingComplaints(true);
+    setPageError("");
+
+    try {
+      const response = await api.get(
+        "/customer/complaints"
+      );
+
+      setComplaints(
+        Array.isArray(response.data)
+          ? response.data
+          : []
+      );
+    } catch (error) {
+      console.error(
+        "Load complaints error:",
+        error?.response?.data || error
+      );
+
+      setPageError(
+        getApiError(
+          error,
+          "Unable to load your complaints."
+        )
+      );
+    } finally {
+      setLoadingComplaints(false);
+    }
+  };
+
+  useEffect(() => {
+    loadComplaints();
+  }, []);
 
   const totals = useMemo(() => {
-    const openStatuses = ["Open", "In Progress"];
+    const openStatuses = [
+      "Pending",
+      "In Progress",
+    ];
 
     return {
       total: complaints.length,
-      open: complaints.filter((item) =>
-        openStatuses.includes(item.status)
+
+      open: complaints.filter((complaint) =>
+        openStatuses.includes(complaint.status)
       ).length,
+
       resolved: complaints.filter(
-        (item) => item.status === "Resolved"
+        (complaint) =>
+          complaint.status === "Resolved"
       ).length,
-      closed: complaints.filter((item) => item.status === "Closed")
-        .length,
+
+      closed: complaints.filter((complaint) =>
+        ["Closed", "Rejected"].includes(
+          complaint.status
+        )
+      ).length,
     };
   }, [complaints]);
 
   const totalPages = Math.max(
     1,
-    Math.ceil(complaints.length / rowsPerPage)
+    Math.ceil(
+      complaints.length / rowsPerPage
+    )
   );
 
   const visibleComplaints = useMemo(() => {
-    const startIndex = (currentPage - 1) * rowsPerPage;
-    return complaints.slice(startIndex, startIndex + rowsPerPage);
-  }, [complaints, currentPage, rowsPerPage]);
+    const safePage = Math.min(
+      currentPage,
+      totalPages
+    );
+
+    const startIndex =
+      (safePage - 1) * rowsPerPage;
+
+    return complaints.slice(
+      startIndex,
+      startIndex + rowsPerPage
+    );
+  }, [
+    complaints,
+    currentPage,
+    rowsPerPage,
+    totalPages,
+  ]);
 
   const updateField = (event) => {
     const { name, value } = event.target;
@@ -176,46 +215,58 @@ function ContactSupport() {
     }));
 
     setSuccessMessage("");
+    setPageError("");
   };
 
   const validateForm = () => {
     const nextErrors = {};
 
     if (!form.subject.trim()) {
-      nextErrors.subject = "Subject is required.";
-    } else if (form.subject.trim().length < 5) {
-      nextErrors.subject = "Subject must contain at least 5 characters.";
+      nextErrors.subject =
+        "Subject is required.";
+    } else if (
+      form.subject.trim().length < 5
+    ) {
+      nextErrors.subject =
+        "Subject must contain at least 5 characters.";
     }
 
     if (!form.category) {
-      nextErrors.category = "Please select a complaint category.";
+      nextErrors.category =
+        "Please select a complaint category.";
     }
 
     if (
       form.bookingId.trim() &&
-      !/^BK-\d{4}-\d{4}$/i.test(form.bookingId.trim())
+      !/^BK-(?:\d{4}-)?\d+$/i.test(
+        form.bookingId.trim()
+      )
     ) {
       nextErrors.bookingId =
-        "Use booking ID format BK-2025-0012.";
+        "Use booking ID format BK-2025-0012 or BK-0012.";
     }
 
     if (!form.description.trim()) {
-      nextErrors.description = "Description is required.";
-    } else if (form.description.trim().length < 15) {
+      nextErrors.description =
+        "Description is required.";
+    } else if (
+      form.description.trim().length < 15
+    ) {
       nextErrors.description =
         "Description must contain at least 15 characters.";
     }
 
     setErrors(nextErrors);
-    return Object.keys(nextErrors).length === 0;
+
+    return (
+      Object.keys(nextErrors).length === 0
+    );
   };
 
   const handleFileChange = (event) => {
     const file = event.target.files?.[0];
 
-    if (!file) {
-      return;
-    }
+    if (!file) return;
 
     const allowedTypes = [
       "application/pdf",
@@ -224,13 +275,16 @@ function ContactSupport() {
       "image/png",
     ];
 
-    const maximumSize = 5 * 1024 * 1024;
+    const maximumSize =
+      5 * 1024 * 1024;
 
     if (!allowedTypes.includes(file.type)) {
       setErrors((currentErrors) => ({
         ...currentErrors,
-        attachment: "Only PDF, JPG and PNG files are allowed.",
+        attachment:
+          "Only PDF, JPG and PNG files are allowed.",
       }));
+
       event.target.value = "";
       return;
     }
@@ -238,8 +292,10 @@ function ContactSupport() {
     if (file.size > maximumSize) {
       setErrors((currentErrors) => ({
         ...currentErrors,
-        attachment: "File size must not exceed 5 MB.",
+        attachment:
+          "File size must not exceed 5 MB.",
       }));
+
       event.target.value = "";
       return;
     }
@@ -265,66 +321,117 @@ function ContactSupport() {
     setErrors({});
     setSelectedFile(null);
     setSuccessMessage("");
+    setPageError("");
 
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
   };
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
 
     if (!validateForm()) {
       return;
     }
 
-    const complaintNumber = String(complaints.length + 13).padStart(
-      4,
-      "0"
+    const formData = new FormData();
+
+    formData.append(
+      "subject",
+      form.subject.trim()
     );
 
-    const newComplaint = {
-      id: `CP-2025-${complaintNumber}`,
-      subject: form.subject.trim(),
-      category: form.category,
-      date: formatDate(new Date()),
-      status: "Open",
-      bookingId: form.bookingId.trim() || null,
-      description: form.description.trim(),
-      attachment: selectedFile?.name || null,
-    };
+    formData.append(
+      "category",
+      form.category
+    );
 
-    setComplaints((currentComplaints) => [
-      newComplaint,
-      ...currentComplaints,
-    ]);
+    formData.append(
+      "description",
+      form.description.trim()
+    );
 
-    setForm(initialForm);
-    setSelectedFile(null);
-    setErrors({});
-    setCurrentPage(1);
-
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
+    if (form.bookingId.trim()) {
+      formData.append(
+        "bookingId",
+        form.bookingId.trim()
+      );
     }
 
-    setSuccessMessage(
-      `Complaint ${newComplaint.id} submitted successfully.`
-    );
+    if (selectedFile) {
+      formData.append(
+        "attachment",
+        selectedFile
+      );
+    }
+
+    setSubmitting(true);
+    setSuccessMessage("");
+    setPageError("");
+
+    try {
+      const response = await api.post(
+        "/customer/complaints",
+        formData
+      );
+
+      const createdComplaint =
+        response.data;
+
+      setComplaints(
+        (currentComplaints) => [
+          createdComplaint,
+          ...currentComplaints,
+        ]
+      );
+
+      setForm(initialForm);
+      setSelectedFile(null);
+      setErrors({});
+      setCurrentPage(1);
+
+      setSuccessMessage(
+        `Complaint ${createdComplaint.id} submitted successfully.`
+      );
+
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    } catch (error) {
+      console.error(
+        "Complaint submission error:",
+        error?.response?.data || error
+      );
+
+      setPageError(
+        getApiError(
+          error,
+          "Unable to submit complaint."
+        )
+      );
+    } finally {
+      setSubmitting(false);
+    }
   };
 
-  const handleRowsPerPageChange = (event) => {
-    setRowsPerPage(Number(event.target.value));
+  const handleRowsPerPageChange = (
+    event
+  ) => {
+    setRowsPerPage(
+      Number(event.target.value)
+    );
+
     setCurrentPage(1);
   };
 
   const goToPage = (pageNumber) => {
-    const safePage = Math.min(Math.max(pageNumber, 1), totalPages);
-    setCurrentPage(safePage);
-  };
+    const safePage = Math.min(
+      Math.max(pageNumber, 1),
+      totalPages
+    );
 
-  const handleViewAllComplaints = () => {
-    navigate("/customer/complaints");
+    setCurrentPage(safePage);
   };
 
   return (
@@ -337,8 +444,10 @@ function ContactSupport() {
           </div>
 
           <p>
-            We&apos;re here to help you. Raise a complaint or query and
-            our support team will get back to you.
+            We&apos;re here to help you.
+            Raise a complaint or query and
+            our support team will get back
+            to you.
           </p>
         </div>
 
@@ -352,8 +461,14 @@ function ContactSupport() {
           </span>
 
           <span>
-            <strong>Need immediate help?</strong>
-            <small>Call our support team</small>
+            <strong>
+              Need immediate help?
+            </strong>
+
+            <small>
+              Call our support team
+            </small>
+
             <b>1800-123-4567</b>
           </span>
         </a>
@@ -394,17 +509,33 @@ function ContactSupport() {
       </div>
 
       {successMessage && (
-        <div className="contact-support__success" role="status">
+        <div
+          className="contact-support__success"
+          role="status"
+        >
           <CheckCircle2 size={19} />
+
           <span>{successMessage}</span>
 
           <button
             type="button"
             aria-label="Dismiss success message"
-            onClick={() => setSuccessMessage("")}
+            onClick={() =>
+              setSuccessMessage("")
+            }
           >
             <X size={17} />
           </button>
+        </div>
+      )}
+
+      {pageError && (
+        <div
+          className="contact-support__field-error"
+          role="alert"
+        >
+          <AlertCircle size={16} />
+          {pageError}
         </div>
       )}
 
@@ -431,7 +562,9 @@ function ContactSupport() {
               value={form.subject}
               onChange={updateField}
               placeholder="Enter a short description of your issue"
-              aria-invalid={Boolean(errors.subject)}
+              aria-invalid={Boolean(
+                errors.subject
+              )}
             />
 
             {errors.subject && (
@@ -452,15 +585,24 @@ function ContactSupport() {
               name="category"
               value={form.category}
               onChange={updateField}
-              aria-invalid={Boolean(errors.category)}
+              aria-invalid={Boolean(
+                errors.category
+              )}
             >
-              <option value="">Select a category</option>
+              <option value="">
+                Select a category
+              </option>
 
-              {CATEGORY_OPTIONS.map((category) => (
-                <option value={category} key={category}>
-                  {category}
-                </option>
-              ))}
+              {CATEGORY_OPTIONS.map(
+                (category) => (
+                  <option
+                    value={category}
+                    key={category}
+                  >
+                    {category}
+                  </option>
+                )
+              )}
             </select>
 
             {errors.category && (
@@ -473,7 +615,8 @@ function ContactSupport() {
 
           <div className="contact-support__field">
             <label htmlFor="support-booking-id">
-              Booking ID <small>(Optional)</small>
+              Booking ID{" "}
+              <small>(Optional)</small>
             </label>
 
             <input
@@ -483,7 +626,9 @@ function ContactSupport() {
               value={form.bookingId}
               onChange={updateField}
               placeholder="Enter booking ID (e.g., BK-2025-0012)"
-              aria-invalid={Boolean(errors.bookingId)}
+              aria-invalid={Boolean(
+                errors.bookingId
+              )}
             />
 
             {errors.bookingId && (
@@ -507,7 +652,9 @@ function ContactSupport() {
               rows={5}
               maxLength={500}
               placeholder="Please describe your issue in detail..."
-              aria-invalid={Boolean(errors.description)}
+              aria-invalid={Boolean(
+                errors.description
+              )}
             />
 
             <div className="contact-support__textarea-footer">
@@ -520,13 +667,16 @@ function ContactSupport() {
                 <span />
               )}
 
-              <small>{form.description.length}/500</small>
+              <small>
+                {form.description.length}/500
+              </small>
             </div>
           </div>
 
           <div className="contact-support__field">
             <label htmlFor="support-attachment">
-              Attachment <small>(Optional)</small>
+              Attachment{" "}
+              <small>(Optional)</small>
             </label>
 
             <input
@@ -542,13 +692,22 @@ function ContactSupport() {
               <button
                 type="button"
                 className="contact-support__upload"
-                onClick={() => fileInputRef.current?.click()}
+                onClick={() =>
+                  fileInputRef.current?.click()
+                }
               >
                 <Paperclip size={22} />
 
                 <span>
-                  <strong>Click to upload</strong> or drag and drop
-                  <small>PDF, JPG or PNG up to 5 MB</small>
+                  <strong>
+                    Click to upload
+                  </strong>{" "}
+                  or drag and drop
+
+                  <small>
+                    PDF, JPG or PNG up to
+                    5 MB
+                  </small>
                 </span>
               </button>
             ) : (
@@ -556,15 +715,25 @@ function ContactSupport() {
                 <FileText size={21} />
 
                 <span>
-                  <strong>{selectedFile.name}</strong>
+                  <strong>
+                    {selectedFile.name}
+                  </strong>
+
                   <small>
-                    {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
+                    {(
+                      selectedFile.size /
+                      1024 /
+                      1024
+                    ).toFixed(2)}{" "}
+                    MB
                   </small>
                 </span>
 
                 <button
                   type="button"
-                  onClick={removeSelectedFile}
+                  onClick={
+                    removeSelectedFile
+                  }
                   aria-label="Remove selected attachment"
                 >
                   <X size={17} />
@@ -585,6 +754,7 @@ function ContactSupport() {
               type="button"
               className="contact-support__button contact-support__button--outline"
               onClick={handleReset}
+              disabled={submitting}
             >
               <RotateCcw size={17} />
               Reset
@@ -593,9 +763,13 @@ function ContactSupport() {
             <button
               type="submit"
               className="contact-support__button contact-support__button--primary"
+              disabled={submitting}
             >
               <Send size={17} />
-              Submit Complaint
+
+              {submitting
+                ? "Submitting..."
+                : "Submit Complaint"}
             </button>
           </div>
         </form>
@@ -604,13 +778,19 @@ function ContactSupport() {
           <div className="contact-support__table-heading">
             <div className="contact-support__card-heading">
               <FileText size={21} />
-              <h2>Your Previous Complaints</h2>
+              <h2>
+                Your Previous Complaints
+              </h2>
             </div>
 
             <button
               type="button"
               className="contact-support__view-all"
-              onClick={handleViewAllComplaints}
+              onClick={() =>
+                navigate(
+                  "/customer/complaints"
+                )
+              }
             >
               View all complaints
               <ChevronRight size={18} />
@@ -630,37 +810,64 @@ function ContactSupport() {
               </thead>
 
               <tbody>
-                {visibleComplaints.map((complaint) => (
-                  <tr key={complaint.id}>
-                    <td>
-                      <button
-                        type="button"
-                        className="contact-support__complaint-id"
-                        onClick={() =>
-                          navigate(
-                            `/customer/complaints/${complaint.id}`
-                          )
-                        }
-                      >
-                        {complaint.id}
-                      </button>
-                    </td>
-
-                    <td>{complaint.subject}</td>
-                    <td>{complaint.category}</td>
-                    <td>{complaint.date}</td>
-
-                    <td>
-                      <span
-                        className={`contact-support__status contact-support__status--${statusClassName(
-                          complaint.status
-                        )}`}
-                      >
-                        {complaint.status}
-                      </span>
+                {loadingComplaints ? (
+                  <tr>
+                    <td colSpan={5}>
+                      Loading complaints...
                     </td>
                   </tr>
-                ))}
+                ) : visibleComplaints.length ===
+                  0 ? (
+                  <tr>
+                    <td colSpan={5}>
+                      No complaints found.
+                    </td>
+                  </tr>
+                ) : (
+                  visibleComplaints.map(
+                    (complaint) => (
+                      <tr key={complaint.id}>
+                        <td>
+                          <button
+                            type="button"
+                            className="contact-support__complaint-id"
+                            onClick={() =>
+                              navigate(
+                                `/customer/complaints/${complaint.id}`
+                              )
+                            }
+                          >
+                            {complaint.id}
+                          </button>
+                        </td>
+
+                        <td>
+                          {complaint.subject}
+                        </td>
+
+                        <td>
+                          {complaint.category}
+                        </td>
+
+                        <td>
+                          {formatDate(
+                            complaint.createdAt
+                          )}
+                        </td>
+
+                        <td>
+                          <span
+                            className={`contact-support__status contact-support__status--${statusClassName(
+                              complaint.status
+                            )}`}
+                          >
+                            {complaint.status}
+                          </span>
+                        </td>
+                      </tr>
+                    )
+                  )
+                )}
               </tbody>
             </table>
           </div>
@@ -671,10 +878,14 @@ function ContactSupport() {
 
               <select
                 value={rowsPerPage}
-                onChange={handleRowsPerPageChange}
+                onChange={
+                  handleRowsPerPageChange
+                }
               >
                 <option value={5}>5</option>
-                <option value={10}>10</option>
+                <option value={10}>
+                  10
+                </option>
               </select>
             </label>
 
@@ -682,7 +893,11 @@ function ContactSupport() {
               <button
                 type="button"
                 disabled={currentPage === 1}
-                onClick={() => goToPage(currentPage - 1)}
+                onClick={() =>
+                  goToPage(
+                    currentPage - 1
+                  )
+                }
                 aria-label="Previous page"
               >
                 <ChevronLeft size={18} />
@@ -696,11 +911,14 @@ function ContactSupport() {
                   type="button"
                   key={pageNumber}
                   className={
-                    currentPage === pageNumber
+                    currentPage ===
+                    pageNumber
                       ? "contact-support__page-active"
                       : ""
                   }
-                  onClick={() => goToPage(pageNumber)}
+                  onClick={() =>
+                    goToPage(pageNumber)
+                  }
                 >
                   {pageNumber}
                 </button>
@@ -708,8 +926,15 @@ function ContactSupport() {
 
               <button
                 type="button"
-                disabled={currentPage === totalPages}
-                onClick={() => goToPage(currentPage + 1)}
+                disabled={
+                  currentPage ===
+                  totalPages
+                }
+                onClick={() =>
+                  goToPage(
+                    currentPage + 1
+                  )
+                }
                 aria-label="Next page"
               >
                 <ChevronRight size={18} />

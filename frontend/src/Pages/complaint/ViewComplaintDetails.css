@@ -563,3 +563,49 @@
     font-size: 21px;
   }
 }
+
+/* Fix long customer information values */
+.vcd-info-row {
+  display: grid;
+  grid-template-columns: 125px 10px minmax(0, 1fr);
+  align-items: start;
+  column-gap: 8px;
+  width: 100%;
+}
+
+.vcd-info-label {
+  min-width: 0;
+}
+
+.vcd-info-colon {
+  text-align: center;
+}
+
+.vcd-info-value {
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  white-space: normal;
+}
+
+.vcd-value-with-icon {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.vcd-value-with-icon svg {
+  flex-shrink: 0;
+  margin-top: 3px;
+}
+
+.vcd-email-text {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}

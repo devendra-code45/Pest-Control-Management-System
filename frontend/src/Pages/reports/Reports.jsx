@@ -1,358 +1,136 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   AlertCircle,
-  AlertTriangle,
-  ArrowDown,
-  ArrowUp,
   BarChart3,
   CalendarDays,
   CalendarRange,
-  Check,
   CheckCircle2,
   ChevronDown,
   ChevronRight,
-  Copy,
   Download,
   FileText,
   IndianRupee,
   Info,
   LoaderCircle,
   MessageCircle,
-  MoreVertical,
   PieChart,
   Search,
   ShieldCheck,
-  Trash2,
   UserCog,
   Users,
   X,
-} from 'lucide-react';
-import './Reports.css';
+} from "lucide-react";
 
-const INITIAL_REPORTS = [
-  {
-    id: 'report-revenue-summary',
-    name: 'Revenue Summary',
-    type: 'Revenue Report',
-    dateRange: '01 Jul 2026 - 19 Jul 2026',
-    generatedOn: '19 Jul 2026, 10:30 AM',
-    status: 'Completed',
-  },
-  {
-    id: 'report-service-performance',
-    name: 'Service Performance',
-    type: 'Service Report',
-    dateRange: '01 Jul 2026 - 19 Jul 2026',
-    generatedOn: '19 Jul 2026, 09:15 AM',
-    status: 'Completed',
-  },
-  {
-    id: 'report-technician-summary',
-    name: 'Technician Summary',
-    type: 'Technician Report',
-    dateRange: '01 Jul 2026 - 19 Jul 2026',
-    generatedOn: '18 Jul 2026, 06:45 PM',
-    status: 'Completed',
-  },
-  {
-    id: 'report-complaint-overview',
-    name: 'Complaint Overview',
-    type: 'Complaint Report',
-    dateRange: '01 Jul 2026 - 19 Jul 2026',
-    generatedOn: '18 Jul 2026, 05:20 PM',
-    status: 'In Progress',
-  },
-  {
-    id: 'report-booking-overview',
-    name: 'Booking Overview',
-    type: 'Booking Report',
-    dateRange: '01 Jul 2026 - 19 Jul 2026',
-    generatedOn: '18 Jul 2026, 04:10 PM',
-    status: 'Completed',
-  },
-];
-
-const STATISTICS = [
-  {
-    id: 'total-revenue',
-    title: 'Total Revenue',
-    value: '₹2,48,500',
-    change: '18%',
-    direction: 'up',
-    icon: IndianRupee,
-  },
-  {
-    id: 'completed-services',
-    title: 'Completed Services',
-    value: '128',
-    change: '14%',
-    direction: 'up',
-    icon: CheckCircle2,
-  },
-  {
-    id: 'open-complaints',
-    title: 'Open Complaints',
-    value: '7',
-    change: '12%',
-    direction: 'down',
-    icon: AlertTriangle,
-  },
-  {
-    id: 'collection-rate',
-    title: 'Collection Rate',
-    value: '92.4%',
-    change: '5.6%',
-    direction: 'up',
-    icon: PieChart,
-  },
-];
+import api from "../../api/axios";
+import "./Reports.css";
 
 const REPORT_CATEGORIES = [
   {
-    id: 'revenue',
-    title: 'Revenue Report',
-    description: 'Revenue and financial analysis',
+    id: "revenue",
+    title: "Revenue Report",
+    description: "Revenue and financial analysis",
     icon: BarChart3,
   },
   {
-    id: 'service',
-    title: 'Service Report',
-    description: 'Service performance and completion',
+    id: "service",
+    title: "Service Report",
+    description: "Service performance and completion",
     icon: ShieldCheck,
   },
   {
-    id: 'booking',
-    title: 'Booking Report',
-    description: 'Booking trends and details',
+    id: "booking",
+    title: "Booking Report",
+    description: "Booking trends and details",
     icon: CalendarRange,
   },
   {
-    id: 'complaint',
-    title: 'Complaint Report',
-    description: 'Complaint analysis and status',
+    id: "complaint",
+    title: "Complaint Report",
+    description: "Complaint analysis and status",
     icon: MessageCircle,
   },
   {
-    id: 'customer',
-    title: 'Customer Report',
-    description: 'Customer insights and activity',
+    id: "customer",
+    title: "Customer Report",
+    description: "Customer insights and activity",
     icon: Users,
   },
   {
-    id: 'technician',
-    title: 'Technician Report',
-    description: 'Technician performance and jobs',
+    id: "technician",
+    title: "Technician Report",
+    description: "Technician performance and jobs",
     icon: UserCog,
   },
   {
-    id: 'payment',
-    title: 'Payment Report',
-    description: 'Payments and transactions',
+    id: "payment",
+    title: "Payment Report",
+    description: "Payments and transactions",
     icon: IndianRupee,
-  },
-  {
-    id: 'custom',
-    title: 'Custom Report',
-    description: 'Generate custom reports',
-    icon: FileText,
-    isCustom: true,
   },
 ];
 
-const CUSTOM_REPORT_TYPES = REPORT_CATEGORIES.filter(
-  (category) => !category.isCustom,
-).map((category) => category.title);
+const getCurrentMonthRange = () => {
+  const today = new Date();
+  const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+  const toIsoDate = (date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  };
 
-const DEFAULT_CUSTOM_FORM = {
-  name: '',
-  type: '',
-  startDate: '2026-07-01',
-  endDate: '2026-07-19',
+  return {
+    startDate: toIsoDate(firstDay),
+    endDate: toIsoDate(today),
+  };
 };
 
-function createUniqueId(prefix = 'report') {
-  if (
-    typeof crypto !== 'undefined' &&
-    typeof crypto.randomUUID === 'function'
-  ) {
-    return `${prefix}-${crypto.randomUUID()}`;
-  }
+const formatDate = (value) => {
+  if (!value) return "—";
 
-  return `${prefix}-${Date.now()}-${Math.random()
-    .toString(36)
-    .slice(2, 9)}`;
-}
+  const date = new Date(`${value}T00:00:00`);
 
-function parseLocalDate(dateValue) {
-  return new Date(`${dateValue}T00:00:00`);
-}
+  if (Number.isNaN(date.getTime())) return value;
 
-function formatDate(dateValue) {
-  if (!dateValue) {
-    return '';
-  }
+  return date.toLocaleDateString("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
+};
 
-  return new Intl.DateTimeFormat('en-IN', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
-  }).format(parseLocalDate(dateValue));
-}
-
-function createDateRange(startDate, endDate) {
-  return `${formatDate(startDate)} - ${formatDate(endDate)}`;
-}
-
-function formatCurrentDateTime() {
-  const formattedDate = new Intl.DateTimeFormat('en-IN', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: true,
-  }).format(new Date());
-
-  return formattedDate.replace(/\b(am|pm)\b/gi, (value) =>
-    value.toUpperCase(),
-  );
-}
-
-function escapeCsvValue(value) {
-  const text = String(value ?? '');
+const escapeCsvValue = (value) => {
+  const text = String(value ?? "");
 
   if (/[",\n\r]/.test(text)) {
     return `"${text.replace(/"/g, '""')}"`;
   }
 
   return text;
-}
+};
 
-function slugify(value) {
-  return String(value)
+const slugify = (value) =>
+  String(value || "report")
     .trim()
     .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '');
-}
-
-function getReportSummary(reportType) {
-  const summaries = {
-    'Revenue Report':
-      'Provides a financial overview of collected revenue, pending amounts, payment performance and revenue trends for the selected period.',
-    'Service Report':
-      'Summarizes completed, pending and cancelled pest-control services along with service completion performance.',
-    'Booking Report':
-      'Shows booking activity, scheduled visits, completion trends and customer booking patterns for the selected date range.',
-    'Complaint Report':
-      'Reviews customer complaints, current resolution status, response performance and unresolved complaint trends.',
-    'Customer Report':
-      'Provides customer activity insights, service history, repeat bookings and account engagement information.',
-    'Technician Report':
-      'Summarizes technician assignments, completed jobs, service efficiency and workload distribution.',
-    'Payment Report':
-      'Provides a transaction summary covering received payments, pending collections, payment methods and collection status.',
-  };
-
-  return (
-    summaries[reportType] ||
-    'Provides a structured summary of the selected pest-control management data for the chosen reporting period.'
-  );
-}
-
-function StatusBadge({ status }) {
-  const normalizedStatus = status.toLowerCase().replace(/\s+/g, '-');
-
-  return (
-    <span
-      className={`reports-status reports-status--${normalizedStatus}`}
-      aria-label={`Report status: ${status}`}
-    >
-      {status}
-    </span>
-  );
-}
-
-function StatCard({ title, value, change, direction, icon: Icon }) {
-  const TrendIcon = direction === 'down' ? ArrowDown : ArrowUp;
-
-  return (
-    <article className="reports-stat-card">
-      <div className="reports-stat-card__icon" aria-hidden="true">
-        <Icon size={29} strokeWidth={1.9} />
-      </div>
-
-      <div className="reports-stat-card__content">
-        <p className="reports-stat-card__title">{title}</p>
-        <strong className="reports-stat-card__value">{value}</strong>
-
-        <div className="reports-stat-card__trend">
-          <TrendIcon size={15} strokeWidth={2.2} aria-hidden="true" />
-          <span className="reports-stat-card__change">{change}</span>
-          <span>from last month</span>
-        </div>
-      </div>
-    </article>
-  );
-}
-
-function ReportCategoryCard({
-  title,
-  description,
-  icon: Icon,
-  isActive,
-  onClick,
-}) {
-  return (
-    <button
-      type="button"
-      className={`reports-category-card ${
-        isActive ? 'reports-category-card--active' : ''
-      }`}
-      aria-pressed={isActive}
-      onClick={onClick}
-    >
-      <span className="reports-category-card__icon" aria-hidden="true">
-        <Icon size={23} strokeWidth={1.9} />
-      </span>
-
-      <span className="reports-category-card__content">
-        <strong>{title}</strong>
-        <span>{description}</span>
-      </span>
-
-      <ChevronRight
-        className="reports-category-card__arrow"
-        size={19}
-        aria-hidden="true"
-      />
-    </button>
-  );
-}
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
 
 function Notification({ notification, onClose }) {
-  if (!notification) {
-    return null;
-  }
-
-  const Icon =
-    notification.type === 'success'
-      ? Check
-      : notification.type === 'error'
-        ? AlertCircle
-        : Info;
-
-  const role = notification.type === 'error' ? 'alert' : 'status';
+  if (!notification) return null;
 
   return (
     <div
       className={`reports-notification reports-notification--${notification.type}`}
-      role={role}
-      aria-live="polite"
+      role={notification.type === "error" ? "alert" : "status"}
     >
-      <span className="reports-notification__icon" aria-hidden="true">
-        <Icon size={19} strokeWidth={2.2} />
+      <span className="reports-notification__icon">
+        {notification.type === "error" ? (
+          <AlertCircle size={19} />
+        ) : (
+          <Info size={19} />
+        )}
       </span>
 
       <span className="reports-notification__message">
@@ -362,50 +140,83 @@ function Notification({ notification, onClose }) {
       <button
         type="button"
         className="reports-notification__close"
-        aria-label="Close notification"
         onClick={onClose}
+        aria-label="Close notification"
       >
-        <X size={17} aria-hidden="true" />
+        <X size={17} />
       </button>
     </div>
   );
 }
 
-function ReportDetailsModal({ report, onClose, onDownload }) {
-  if (!report) {
-    return null;
-  }
+function StatCard({ title, value, icon: Icon, description }) {
+  return (
+    <article className="reports-stat-card">
+      <div className="reports-stat-card__icon">
+        <Icon size={29} strokeWidth={1.9} />
+      </div>
 
-  const isDownloadDisabled = report.status === 'In Progress';
+      <div className="reports-stat-card__content">
+        <p className="reports-stat-card__title">{title}</p>
+        <strong className="reports-stat-card__value">{value}</strong>
+        <div className="reports-stat-card__trend">
+          <span className="reports-stat-card__change">Live</span>
+          <span>{description}</span>
+        </div>
+      </div>
+    </article>
+  );
+}
+
+function ReportCategoryCard({ category, active, onClick }) {
+  const Icon = category.icon;
+
+  return (
+    <button
+      type="button"
+      className={`reports-category-card ${
+        active ? "reports-category-card--active" : ""
+      }`}
+      onClick={onClick}
+    >
+      <span className="reports-category-card__icon">
+        <Icon size={23} strokeWidth={1.9} />
+      </span>
+
+      <span className="reports-category-card__content">
+        <strong>{category.title}</strong>
+        <span>{category.description}</span>
+      </span>
+
+      <ChevronRight className="reports-category-card__arrow" size={19} />
+    </button>
+  );
+}
+
+function ReportDetailsModal({ report, onClose, onDownload }) {
+  if (!report) return null;
 
   return (
     <div
       className="reports-modal-backdrop"
       onMouseDown={(event) => {
-        if (event.target === event.currentTarget) {
-          onClose();
-        }
+        if (event.target === event.currentTarget) onClose();
       }}
     >
-      <section
-        className="reports-modal reports-modal--details"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="reports-details-title"
-      >
+      <section className="reports-modal reports-modal--details" role="dialog" aria-modal="true">
         <header className="reports-modal__header">
           <div>
-            <span className="reports-modal__eyebrow">Report details</span>
-            <h2 id="reports-details-title">{report.name}</h2>
+            <span className="reports-modal__eyebrow">Live report details</span>
+            <h2>{report.name}</h2>
           </div>
 
           <button
             type="button"
             className="reports-icon-button"
-            aria-label="Close report details"
             onClick={onClose}
+            aria-label="Close report details"
           >
-            <X size={20} aria-hidden="true" />
+            <X size={20} />
           </button>
         </header>
 
@@ -415,19 +226,18 @@ function ReportDetailsModal({ report, onClose, onDownload }) {
               <dt>Report Type</dt>
               <dd>{report.type}</dd>
             </div>
-
             <div>
               <dt>Status</dt>
               <dd>
-                <StatusBadge status={report.status} />
+                <span className="reports-status reports-status--completed">
+                  {report.status}
+                </span>
               </dd>
             </div>
-
             <div>
               <dt>Date Range</dt>
               <dd>{report.dateRange}</dd>
             </div>
-
             <div>
               <dt>Generated On</dt>
               <dd>{report.generatedOn}</dd>
@@ -436,18 +246,16 @@ function ReportDetailsModal({ report, onClose, onDownload }) {
 
           <div className="reports-summary-box">
             <h3>Report Summary</h3>
-            <p>{getReportSummary(report.type)}</p>
+            <p>{report.summary}</p>
           </div>
 
-          {isDownloadDisabled && (
-            <div className="reports-modal-message reports-modal-message--warning">
-              <AlertCircle size={18} aria-hidden="true" />
-              <span>
-                This report is still being generated. Download will be
-                available after completion.
-              </span>
-            </div>
-          )}
+          <div className="reports-info-banner">
+            <Info size={19} />
+            <p>
+              This report contains {report.rows?.length || 0} real database record(s)
+              for the selected date range.
+            </p>
+          </div>
         </div>
 
         <footer className="reports-modal__footer">
@@ -462,265 +270,10 @@ function ReportDetailsModal({ report, onClose, onDownload }) {
           <button
             type="button"
             className="reports-button reports-button--primary"
-            disabled={isDownloadDisabled}
             onClick={() => onDownload(report)}
           >
-            <Download size={17} aria-hidden="true" />
+            <Download size={17} />
             Download CSV
-          </button>
-        </footer>
-      </section>
-    </div>
-  );
-}
-
-function CustomReportModal({
-  form,
-  errors,
-  onChange,
-  onSubmit,
-  onClose,
-}) {
-  return (
-    <div
-      className="reports-modal-backdrop"
-      onMouseDown={(event) => {
-        if (event.target === event.currentTarget) {
-          onClose();
-        }
-      }}
-    >
-      <section
-        className="reports-modal"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="reports-custom-title"
-      >
-        <header className="reports-modal__header">
-          <div>
-            <span className="reports-modal__eyebrow">
-              Custom report generator
-            </span>
-            <h2 id="reports-custom-title">Generate Custom Report</h2>
-          </div>
-
-          <button
-            type="button"
-            className="reports-icon-button"
-            aria-label="Close custom report form"
-            onClick={onClose}
-          >
-            <X size={20} aria-hidden="true" />
-          </button>
-        </header>
-
-        <form onSubmit={onSubmit} noValidate>
-          <div className="reports-modal__body">
-            <div className="reports-form-grid">
-              <div className="reports-form-field reports-form-field--full">
-                <label htmlFor="custom-report-name">Report Name</label>
-                <input
-                  id="custom-report-name"
-                  name="name"
-                  type="text"
-                  value={form.name}
-                  className={errors.name ? 'reports-input--error' : ''}
-                  aria-invalid={Boolean(errors.name)}
-                  aria-describedby={
-                    errors.name ? 'custom-report-name-error' : undefined
-                  }
-                  placeholder="Enter report name"
-                  onChange={onChange}
-                />
-                {errors.name && (
-                  <span
-                    id="custom-report-name-error"
-                    className="reports-field-error"
-                  >
-                    {errors.name}
-                  </span>
-                )}
-              </div>
-
-              <div className="reports-form-field reports-form-field--full">
-                <label htmlFor="custom-report-type">Report Type</label>
-                <select
-                  id="custom-report-type"
-                  name="type"
-                  value={form.type}
-                  className={errors.type ? 'reports-input--error' : ''}
-                  aria-invalid={Boolean(errors.type)}
-                  aria-describedby={
-                    errors.type ? 'custom-report-type-error' : undefined
-                  }
-                  onChange={onChange}
-                >
-                  <option value="">Select report type</option>
-                  {CUSTOM_REPORT_TYPES.map((type) => (
-                    <option key={type} value={type}>
-                      {type}
-                    </option>
-                  ))}
-                </select>
-                {errors.type && (
-                  <span
-                    id="custom-report-type-error"
-                    className="reports-field-error"
-                  >
-                    {errors.type}
-                  </span>
-                )}
-              </div>
-
-              <div className="reports-form-field">
-                <label htmlFor="custom-report-start-date">Start Date</label>
-                <input
-                  id="custom-report-start-date"
-                  name="startDate"
-                  type="date"
-                  value={form.startDate}
-                  className={errors.startDate ? 'reports-input--error' : ''}
-                  aria-invalid={Boolean(errors.startDate)}
-                  aria-describedby={
-                    errors.startDate
-                      ? 'custom-report-start-date-error'
-                      : undefined
-                  }
-                  onChange={onChange}
-                />
-                {errors.startDate && (
-                  <span
-                    id="custom-report-start-date-error"
-                    className="reports-field-error"
-                  >
-                    {errors.startDate}
-                  </span>
-                )}
-              </div>
-
-              <div className="reports-form-field">
-                <label htmlFor="custom-report-end-date">End Date</label>
-                <input
-                  id="custom-report-end-date"
-                  name="endDate"
-                  type="date"
-                  value={form.endDate}
-                  className={errors.endDate ? 'reports-input--error' : ''}
-                  aria-invalid={Boolean(errors.endDate)}
-                  aria-describedby={
-                    errors.endDate
-                      ? 'custom-report-end-date-error'
-                      : undefined
-                  }
-                  onChange={onChange}
-                />
-                {errors.endDate && (
-                  <span
-                    id="custom-report-end-date-error"
-                    className="reports-field-error"
-                  >
-                    {errors.endDate}
-                  </span>
-                )}
-              </div>
-            </div>
-          </div>
-
-          <footer className="reports-modal__footer">
-            <button
-              type="button"
-              className="reports-button reports-button--secondary"
-              onClick={onClose}
-            >
-              Cancel
-            </button>
-
-            <button
-              type="submit"
-              className="reports-button reports-button--primary"
-            >
-              <FileText size={17} aria-hidden="true" />
-              Generate Report
-            </button>
-          </footer>
-        </form>
-      </section>
-    </div>
-  );
-}
-
-function DeleteConfirmationModal({ report, onCancel, onConfirm }) {
-  if (!report) {
-    return null;
-  }
-
-  return (
-    <div
-      className="reports-modal-backdrop"
-      onMouseDown={(event) => {
-        if (event.target === event.currentTarget) {
-          onCancel();
-        }
-      }}
-    >
-      <section
-        className="reports-modal reports-modal--confirmation"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="reports-delete-title"
-      >
-        <header className="reports-modal__header">
-          <div>
-            <span className="reports-modal__eyebrow reports-modal__eyebrow--danger">
-              Delete report
-            </span>
-            <h2 id="reports-delete-title">Confirm deletion</h2>
-          </div>
-
-          <button
-            type="button"
-            className="reports-icon-button"
-            aria-label="Close delete confirmation"
-            onClick={onCancel}
-          >
-            <X size={20} aria-hidden="true" />
-          </button>
-        </header>
-
-        <div className="reports-modal__body">
-          <div className="reports-delete-message">
-            <span className="reports-delete-message__icon" aria-hidden="true">
-              <Trash2 size={23} />
-            </span>
-
-            <div>
-              <p>
-                Are you sure you want to delete{' '}
-                <strong>{report.name}</strong>?
-              </p>
-              <span>
-                This removes the report from the current frontend session.
-              </span>
-            </div>
-          </div>
-        </div>
-
-        <footer className="reports-modal__footer">
-          <button
-            type="button"
-            className="reports-button reports-button--secondary"
-            onClick={onCancel}
-          >
-            Cancel
-          </button>
-
-          <button
-            type="button"
-            className="reports-button reports-button--danger"
-            onClick={onConfirm}
-          >
-            <Trash2 size={17} aria-hidden="true" />
-            Delete Report
           </button>
         </footer>
       </section>
@@ -730,105 +283,35 @@ function DeleteConfirmationModal({ report, onCancel, onConfirm }) {
 
 function Reports() {
   const navigate = useNavigate();
+  const initialRange = useMemo(() => getCurrentMonthRange(), []);
+  const datePickerRef = useRef(null);
 
-  const [reports, setReports] = useState(INITIAL_REPORTS);
-  const [selectedCategory, setSelectedCategory] = useState('');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedReportId, setSelectedReportId] = useState(null);
-  const [activeMenuId, setActiveMenuId] = useState(null);
-  const [reportToDelete, setReportToDelete] = useState(null);
-  const [notification, setNotification] = useState(null);
-  const [isExporting, setIsExporting] = useState(false);
-
-  const [startDate, setStartDate] = useState('2026-07-01');
-  const [endDate, setEndDate] = useState('2026-07-19');
-  const [draftStartDate, setDraftStartDate] = useState('2026-07-01');
-  const [draftEndDate, setDraftEndDate] = useState('2026-07-19');
-  const [dateError, setDateError] = useState('');
+  const [startDate, setStartDate] = useState(initialRange.startDate);
+  const [endDate, setEndDate] = useState(initialRange.endDate);
+  const [draftStartDate, setDraftStartDate] = useState(initialRange.startDate);
+  const [draftEndDate, setDraftEndDate] = useState(initialRange.endDate);
+  const [dateError, setDateError] = useState("");
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
 
-  const [isCustomReportOpen, setIsCustomReportOpen] = useState(false);
-  const [customReportForm, setCustomReportForm] = useState(
-    DEFAULT_CUSTOM_FORM,
-  );
-  const [customReportErrors, setCustomReportErrors] = useState({});
-  const [pendingReportIds, setPendingReportIds] = useState([]);
+  const [summary, setSummary] = useState(null);
+  const [reports, setReports] = useState([]);
+  const [selectedCategory, setSelectedCategory] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedReport, setSelectedReport] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [isExporting, setIsExporting] = useState(false);
+  const [notification, setNotification] = useState(null);
 
-  const datePickerRef = useRef(null);
-  const actionMenuRef = useRef(null);
-  const completionTimersRef = useRef(new Map());
-
-  const selectedReport = useMemo(
-    () =>
-      reports.find((report) => report.id === selectedReportId) || null,
-    [reports, selectedReportId],
-  );
-
-  const visibleReports = useMemo(() => {
-    const normalizedQuery = searchQuery.trim().toLowerCase();
-
-    return reports.filter((report) => {
-      const matchesCategory =
-        !selectedCategory || report.type === selectedCategory;
-
-      const matchesSearch =
-        !normalizedQuery ||
-        report.name.toLowerCase().includes(normalizedQuery) ||
-        report.type.toLowerCase().includes(normalizedQuery) ||
-        report.status.toLowerCase().includes(normalizedQuery);
-
-      return matchesCategory && matchesSearch;
-    });
-  }, [reports, searchQuery, selectedCategory]);
+  const showNotification = (message, type = "information") => {
+    setNotification({ message, type });
+  };
 
   useEffect(() => {
-    if (!notification) {
-      return undefined;
-    }
+    if (!notification) return undefined;
 
-    const timeoutId = window.setTimeout(() => {
-      setNotification(null);
-    }, 3000);
-
-    return () => window.clearTimeout(timeoutId);
+    const timeout = window.setTimeout(() => setNotification(null), 3000);
+    return () => window.clearTimeout(timeout);
   }, [notification]);
-
-  useEffect(() => {
-    pendingReportIds.forEach((reportId) => {
-      if (completionTimersRef.current.has(reportId)) {
-        return;
-      }
-
-      const timerId = window.setTimeout(() => {
-        setReports((currentReports) =>
-          currentReports.map((report) =>
-            report.id === reportId
-              ? { ...report, status: 'Completed' }
-              : report,
-          ),
-        );
-
-        setPendingReportIds((currentIds) =>
-          currentIds.filter((id) => id !== reportId),
-        );
-
-        completionTimersRef.current.delete(reportId);
-      }, 3500);
-
-      completionTimersRef.current.set(reportId, timerId);
-    });
-  }, [pendingReportIds]);
-
-  useEffect(
-    () => () => {
-      completionTimersRef.current.forEach((timerId) => {
-        window.clearTimeout(timerId);
-      });
-
-      completionTimersRef.current.clear();
-    },
-    [],
-  );
 
   useEffect(() => {
     const handleOutsideClick = (event) => {
@@ -840,361 +323,155 @@ function Reports() {
         setIsDatePickerOpen(false);
         setDraftStartDate(startDate);
         setDraftEndDate(endDate);
-        setDateError('');
-      }
-
-      if (
-        activeMenuId &&
-        actionMenuRef.current &&
-        !actionMenuRef.current.contains(event.target)
-      ) {
-        setActiveMenuId(null);
+        setDateError("");
       }
     };
 
-    document.addEventListener('mousedown', handleOutsideClick);
+    document.addEventListener("mousedown", handleOutsideClick);
+    return () => document.removeEventListener("mousedown", handleOutsideClick);
+  }, [isDatePickerOpen, startDate, endDate]);
 
-    return () => {
-      document.removeEventListener('mousedown', handleOutsideClick);
-    };
-  }, [activeMenuId, endDate, isDatePickerOpen, startDate]);
+  const loadReports = async (fromDate = startDate, toDate = endDate) => {
+    setLoading(true);
+
+    try {
+      const response = await api.get("/admin/reports/overview", {
+        params: {
+          startDate: fromDate,
+          endDate: toDate,
+        },
+      });
+
+      setSummary(response.data?.summary || null);
+      setReports(Array.isArray(response.data?.reports) ? response.data.reports : []);
+    } catch (error) {
+      console.error("Load reports error:", error?.response?.data || error);
+      showNotification(
+        error?.response?.data?.message ||
+          error?.response?.data?.error ||
+          "Unable to load reports.",
+        "error"
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const handleEscapeKey = (event) => {
-      if (event.key !== 'Escape') {
-        return;
-      }
+    loadReports(initialRange.startDate, initialRange.endDate);
+  }, []);
 
-      if (reportToDelete) {
-        setReportToDelete(null);
-        return;
-      }
+  const visibleReports = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
 
-      if (isCustomReportOpen) {
-        setIsCustomReportOpen(false);
-        setCustomReportErrors({});
-        setCustomReportForm({
-          ...DEFAULT_CUSTOM_FORM,
-          startDate,
-          endDate,
-        });
-        return;
-      }
+    return reports.filter((report) => {
+      const matchesCategory =
+        !selectedCategory || report.type === selectedCategory;
 
-      if (selectedReportId) {
-        setSelectedReportId(null);
-        return;
-      }
+      const matchesSearch =
+        !query ||
+        report.name?.toLowerCase().includes(query) ||
+        report.type?.toLowerCase().includes(query) ||
+        report.status?.toLowerCase().includes(query);
 
-      if (isDatePickerOpen) {
-        setIsDatePickerOpen(false);
-        setDraftStartDate(startDate);
-        setDraftEndDate(endDate);
-        setDateError('');
-        return;
-      }
-
-      if (activeMenuId) {
-        setActiveMenuId(null);
-      }
-    };
-
-    document.addEventListener('keydown', handleEscapeKey);
-
-    return () => {
-      document.removeEventListener('keydown', handleEscapeKey);
-    };
-  }, [
-    activeMenuId,
-    endDate,
-    isCustomReportOpen,
-    isDatePickerOpen,
-    reportToDelete,
-    selectedReportId,
-    startDate,
-  ]);
-
-  const showNotification = (message, type = 'success') => {
-    setNotification({
-      id: createUniqueId('notification'),
-      message,
-      type,
+      return matchesCategory && matchesSearch;
     });
-  };
+  }, [reports, selectedCategory, searchQuery]);
 
-  const downloadCsv = (rows, filename) => {
-    const headers = [
-      'Report Name',
-      'Report Type',
-      'Date Range',
-      'Generated On',
-      'Status',
-    ];
-
-    const csvRows = rows.map((report) => [
-      report.name,
-      report.type,
-      report.dateRange,
-      report.generatedOn,
-      report.status,
-    ]);
-
-    const csvContent = [headers, ...csvRows]
-      .map((row) => row.map(escapeCsvValue).join(','))
-      .join('\r\n');
-
-    const blob = new Blob([`\uFEFF${csvContent}`], {
-      type: 'text/csv;charset=utf-8;',
-    });
-
-    const objectUrl = URL.createObjectURL(blob);
-    const downloadLink = document.createElement('a');
-
-    downloadLink.href = objectUrl;
-    downloadLink.download = filename;
-    document.body.appendChild(downloadLink);
-    downloadLink.click();
-    downloadLink.remove();
-
-    URL.revokeObjectURL(objectUrl);
-  };
+  const statCards = [
+    {
+      title: "Total Revenue",
+      value: `₹${Number(summary?.totalRevenue || 0).toLocaleString("en-IN", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      })}`,
+      icon: IndianRupee,
+      description: "net collected amount",
+    },
+    {
+      title: "Completed Services",
+      value: summary?.completedServices ?? 0,
+      icon: CheckCircle2,
+      description: "completed bookings",
+    },
+    {
+      title: "Open Complaints",
+      value: summary?.openComplaints ?? 0,
+      icon: MessageCircle,
+      description: "pending or in progress",
+    },
+    {
+      title: "Collection Rate",
+      value: `${Number(summary?.collectionRate || 0).toFixed(2)}%`,
+      icon: PieChart,
+      description: "revenue collection",
+    },
+  ];
 
   const handleApplyDateRange = () => {
     if (!draftStartDate || !draftEndDate) {
-      setDateError('Both start and end dates are required.');
-      showNotification('Please select both dates.', 'error');
+      setDateError("Both start and end dates are required.");
       return;
     }
 
     if (draftEndDate < draftStartDate) {
-      setDateError('End date cannot be before the start date.');
-      showNotification('The selected date range is invalid.', 'error');
+      setDateError("End date cannot be before start date.");
       return;
     }
 
     setStartDate(draftStartDate);
     setEndDate(draftEndDate);
-    setDateError('');
+    setDateError("");
     setIsDatePickerOpen(false);
-    showNotification('Report date range updated.', 'information');
+    loadReports(draftStartDate, draftEndDate);
   };
 
   const handleCancelDateRange = () => {
     setDraftStartDate(startDate);
     setDraftEndDate(endDate);
-    setDateError('');
+    setDateError("");
     setIsDatePickerOpen(false);
   };
 
-  const handleExportReports = async () => {
+  const downloadReportCsv = (report) => {
+    const headers = Array.isArray(report.headers) ? report.headers : [];
+    const rows = Array.isArray(report.rows) ? report.rows : [];
+
+    const csvContent = [headers, ...rows]
+      .map((row) => row.map(escapeCsvValue).join(","))
+      .join("\r\n");
+
+    const blob = new Blob([`﻿${csvContent}`], {
+      type: "text/csv;charset=utf-8;",
+    });
+
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `${slugify(report.name)}-${endDate}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    showNotification(`${report.name} downloaded successfully.`);
+  };
+
+  const handleExportAll = async () => {
     if (visibleReports.length === 0) {
-      showNotification('There are no visible reports to export.', 'error');
+      showNotification("There are no visible reports to export.", "error");
       return;
     }
 
     setIsExporting(true);
 
-    await new Promise((resolve) => {
-      window.setTimeout(resolve, 450);
-    });
-
-    downloadCsv(
-      visibleReports,
-      `pest-control-reports-${endDate}.csv`,
-    );
-
-    setIsExporting(false);
-    showNotification('Reports exported successfully.');
-  };
-
-  const handleCategorySelect = (category) => {
-    setActiveMenuId(null);
-
-    if (category.isCustom) {
-      setCustomReportForm({
-        ...DEFAULT_CUSTOM_FORM,
-        startDate,
-        endDate,
+    try {
+      visibleReports.forEach((report, index) => {
+        window.setTimeout(() => downloadReportCsv(report), index * 250);
       });
-      setCustomReportErrors({});
-      setIsCustomReportOpen(true);
-      return;
+    } finally {
+      window.setTimeout(() => setIsExporting(false), 500);
     }
-
-    setSelectedCategory((currentCategory) =>
-      currentCategory === category.title ? '' : category.title,
-    );
-  };
-
-  const handleCustomReportChange = (event) => {
-    const { name, value } = event.target;
-
-    setCustomReportForm((currentForm) => ({
-      ...currentForm,
-      [name]: value,
-    }));
-
-    if (customReportErrors[name]) {
-      setCustomReportErrors((currentErrors) => ({
-        ...currentErrors,
-        [name]: '',
-      }));
-    }
-  };
-
-  const validateCustomReport = () => {
-    const errors = {};
-
-    if (!customReportForm.name.trim()) {
-      errors.name = 'Report name is required.';
-    }
-
-    if (!customReportForm.type) {
-      errors.type = 'Select a report type.';
-    }
-
-    if (!customReportForm.startDate) {
-      errors.startDate = 'Start date is required.';
-    }
-
-    if (!customReportForm.endDate) {
-      errors.endDate = 'End date is required.';
-    } else if (
-      customReportForm.startDate &&
-      customReportForm.endDate < customReportForm.startDate
-    ) {
-      errors.endDate = 'End date cannot be before the start date.';
-    }
-
-    return errors;
-  };
-
-  const handleGenerateCustomReport = (event) => {
-    event.preventDefault();
-
-    const validationErrors = validateCustomReport();
-
-    if (Object.keys(validationErrors).length > 0) {
-      setCustomReportErrors(validationErrors);
-      showNotification('Correct the highlighted report fields.', 'error');
-      return;
-    }
-
-    const reportId = createUniqueId('custom-report');
-
-    const newReport = {
-      id: reportId,
-      name: customReportForm.name.trim(),
-      type: customReportForm.type,
-      dateRange: createDateRange(
-        customReportForm.startDate,
-        customReportForm.endDate,
-      ),
-      generatedOn: formatCurrentDateTime(),
-      status: 'In Progress',
-    };
-
-    setReports((currentReports) => [newReport, ...currentReports]);
-    setPendingReportIds((currentIds) => [...currentIds, reportId]);
-    setIsCustomReportOpen(false);
-    setCustomReportErrors({});
-    setCustomReportForm({
-      ...DEFAULT_CUSTOM_FORM,
-      startDate,
-      endDate,
-    });
-
-    showNotification('Custom report generation started.');
-  };
-
-  const handleCloseCustomReport = () => {
-    setIsCustomReportOpen(false);
-    setCustomReportErrors({});
-    setCustomReportForm({
-      ...DEFAULT_CUSTOM_FORM,
-      startDate,
-      endDate,
-    });
-  };
-
-  const handleViewReport = (report) => {
-    setActiveMenuId(null);
-    setSelectedReportId(report.id);
-  };
-
-  const handleDownloadReport = (report) => {
-    if (report.status === 'In Progress') {
-      showNotification(
-        'This report is still being generated.',
-        'error',
-      );
-      return;
-    }
-
-    downloadCsv(
-      [report],
-      `${slugify(report.name) || 'report'}.csv`,
-    );
-
-    setActiveMenuId(null);
-    showNotification(`${report.name} downloaded successfully.`);
-  };
-
-  const handleDuplicateReport = (report) => {
-    const duplicateReport = {
-      ...report,
-      id: createUniqueId('report-copy'),
-      name: `${report.name} Copy`,
-      generatedOn: formatCurrentDateTime(),
-    };
-
-    setReports((currentReports) => [
-      duplicateReport,
-      ...currentReports,
-    ]);
-
-    setActiveMenuId(null);
-    showNotification('Report duplicated successfully.');
-  };
-
-  const handleRequestDelete = (report) => {
-    setActiveMenuId(null);
-    setReportToDelete(report);
-  };
-
-  const handleConfirmDelete = () => {
-    if (!reportToDelete) {
-      return;
-    }
-
-    setReports((currentReports) =>
-      currentReports.filter(
-        (report) => report.id !== reportToDelete.id,
-      ),
-    );
-
-    setPendingReportIds((currentIds) =>
-      currentIds.filter((id) => id !== reportToDelete.id),
-    );
-
-    const timerId = completionTimersRef.current.get(reportToDelete.id);
-
-    if (timerId) {
-      window.clearTimeout(timerId);
-      completionTimersRef.current.delete(reportToDelete.id);
-    }
-
-    if (selectedReportId === reportToDelete.id) {
-      setSelectedReportId(null);
-    }
-
-    setReportToDelete(null);
-    showNotification('Report deleted successfully.');
-  };
-
-  const handleClearFilters = () => {
-    setSearchQuery('');
-    setSelectedCategory('');
   };
 
   return (
@@ -1208,62 +485,50 @@ function Reports() {
         <button
           type="button"
           className="reports-breadcrumb__link"
-          onClick={() => navigate('/dashboard')}
+          onClick={() => navigate("/admin/dashboard")}
         >
           Dashboard
         </button>
 
-        <ChevronRight size={17} aria-hidden="true" />
-
+        <ChevronRight size={17} />
         <span aria-current="page">Reports</span>
       </nav>
 
       <header className="reports-header">
         <div className="reports-header__content">
           <h1>Reports</h1>
-          <p>
-            View and analyze business reports and performance insights.
-          </p>
+          <p>View real business reports and performance insights.</p>
         </div>
 
         <div className="reports-header__actions">
-          <div
-            className="reports-date-wrapper"
-            ref={datePickerRef}
-          >
+          <div className="reports-date-wrapper" ref={datePickerRef}>
             <button
               type="button"
               className="reports-date-control"
-              aria-haspopup="dialog"
-              aria-expanded={isDatePickerOpen}
               onClick={() => {
-                setActiveMenuId(null);
                 setDraftStartDate(startDate);
                 setDraftEndDate(endDate);
-                setDateError('');
-                setIsDatePickerOpen((currentValue) => !currentValue);
+                setDateError("");
+                setIsDatePickerOpen((value) => !value);
               }}
             >
-              <CalendarDays size={19} aria-hidden="true" />
-              <span>{createDateRange(startDate, endDate)}</span>
-              <ChevronDown size={18} aria-hidden="true" />
+              <CalendarDays size={19} />
+              <span>
+                {formatDate(startDate)} - {formatDate(endDate)}
+              </span>
+              <ChevronDown size={18} />
             </button>
 
             {isDatePickerOpen && (
-              <div
-                className="reports-date-popover"
-                role="dialog"
-                aria-label="Select report date range"
-              >
+              <div className="reports-date-popover" role="dialog">
                 <div className="reports-date-popover__header">
                   <strong>Select Date Range</strong>
                   <button
                     type="button"
                     className="reports-icon-button reports-icon-button--small"
-                    aria-label="Close date range selector"
                     onClick={handleCancelDateRange}
                   >
-                    <X size={18} aria-hidden="true" />
+                    <X size={18} />
                   </button>
                 </div>
 
@@ -1274,10 +539,9 @@ function Reports() {
                       id="reports-from-date"
                       type="date"
                       value={draftStartDate}
-                      aria-invalid={Boolean(dateError)}
                       onChange={(event) => {
                         setDraftStartDate(event.target.value);
-                        setDateError('');
+                        setDateError("");
                       }}
                     />
                   </div>
@@ -1288,21 +552,17 @@ function Reports() {
                       id="reports-to-date"
                       type="date"
                       value={draftEndDate}
-                      aria-invalid={Boolean(dateError)}
                       onChange={(event) => {
                         setDraftEndDate(event.target.value);
-                        setDateError('');
+                        setDateError("");
                       }}
                     />
                   </div>
                 </div>
 
                 {dateError && (
-                  <div
-                    className="reports-date-popover__error"
-                    role="alert"
-                  >
-                    <AlertCircle size={16} aria-hidden="true" />
+                  <div className="reports-date-popover__error">
+                    <AlertCircle size={16} />
                     <span>{dateError}</span>
                   </div>
                 )}
@@ -1331,50 +591,41 @@ function Reports() {
           <button
             type="button"
             className="reports-button reports-button--outline reports-export-button"
-            disabled={isExporting}
-            onClick={handleExportReports}
+            disabled={loading || isExporting}
+            onClick={handleExportAll}
           >
             {isExporting ? (
-              <LoaderCircle
-                className="reports-spinner"
-                size={18}
-                aria-hidden="true"
-              />
+              <LoaderCircle className="reports-spinner" size={18} />
             ) : (
-              <Download size={18} aria-hidden="true" />
+              <Download size={18} />
             )}
-
-            {isExporting ? 'Exporting...' : 'Export'}
+            {isExporting ? "Exporting..." : "Export All"}
           </button>
         </div>
       </header>
 
-      <section
-        className="reports-stats-grid"
-        aria-label="Report statistics"
-      >
-        {STATISTICS.map((statistic) => (
-          <StatCard key={statistic.id} {...statistic} />
+      <section className="reports-stats-grid" aria-label="Report statistics">
+        {statCards.map((stat) => (
+          <StatCard key={stat.title} {...stat} />
         ))}
       </section>
 
       <section className="reports-section-card">
         <header className="reports-section-header">
-          <div>
-            <h2>Report Categories</h2>
-          </div>
+          <h2>Report Categories</h2>
         </header>
 
         <div className="reports-category-grid">
           {REPORT_CATEGORIES.map((category) => (
             <ReportCategoryCard
               key={category.id}
-              {...category}
-              isActive={
-                !category.isCustom &&
-                selectedCategory === category.title
+              category={category}
+              active={selectedCategory === category.title}
+              onClick={() =>
+                setSelectedCategory((current) =>
+                  current === category.title ? "" : category.title
+                )
               }
-              onClick={() => handleCategorySelect(category)}
             />
           ))}
         </div>
@@ -1383,57 +634,61 @@ function Reports() {
       <section className="reports-section-card reports-recent-section">
         <header className="reports-section-header reports-section-header--recent">
           <div className="reports-section-header__title">
-            <h2>Recent Reports</h2>
-
+            <h2>Generated Reports</h2>
             {selectedCategory && (
               <div className="reports-active-filter">
-                <span>
-                  Filtered by: <strong>{selectedCategory}</strong>
-                </span>
-
-                <button
-                  type="button"
-                  onClick={() => setSelectedCategory('')}
-                >
-                  Clear Filter
+                Showing: <strong>{selectedCategory}</strong>
+                <button type="button" onClick={() => setSelectedCategory("")}>
+                  Clear filter
                 </button>
               </div>
             )}
           </div>
 
           <div className="reports-search">
-            <Search size={18} aria-hidden="true" />
+            <Search size={17} />
             <input
-              type="search"
+              type="text"
+              placeholder="Search reports"
               value={searchQuery}
-              aria-label="Search reports"
-              placeholder="Search reports..."
               onChange={(event) => setSearchQuery(event.target.value)}
             />
-
             {searchQuery && (
-              <button
-                type="button"
-                aria-label="Clear report search"
-                onClick={() => setSearchQuery('')}
-              >
-                <X size={17} aria-hidden="true" />
+              <button type="button" onClick={() => setSearchQuery("")}>
+                <X size={15} />
               </button>
             )}
           </div>
         </header>
 
-        {visibleReports.length > 0 ? (
+        {loading ? (
+          <div className="reports-empty-state">
+            <span className="reports-empty-state__icon">
+              <LoaderCircle className="reports-spinner" size={28} />
+            </span>
+            <h3>Loading reports</h3>
+            <p>Calculating real values from the database.</p>
+          </div>
+        ) : visibleReports.length === 0 ? (
+          <div className="reports-empty-state">
+            <span className="reports-empty-state__icon">
+              <FileText size={28} />
+            </span>
+            <h3>No reports found</h3>
+            <p>Change the filter or date range.</p>
+          </div>
+        ) : (
           <div className="reports-table-wrapper">
             <table className="reports-table">
               <thead>
                 <tr>
-                  <th scope="col">Report Name</th>
-                  <th scope="col">Report Type</th>
-                  <th scope="col">Date Range</th>
-                  <th scope="col">Generated On</th>
-                  <th scope="col">Status</th>
-                  <th scope="col">Action</th>
+                  <th>Report Name</th>
+                  <th>Report Type</th>
+                  <th>Date Range</th>
+                  <th>Generated On</th>
+                  <th>Records</th>
+                  <th>Status</th>
+                  <th>Actions</th>
                 </tr>
               </thead>
 
@@ -1442,114 +697,36 @@ function Reports() {
                   <tr key={report.id}>
                     <td>
                       <div className="reports-table__name">
-                        <span aria-hidden="true">
-                          <FileText size={18} />
-                        </span>
+                        <span><FileText size={16} /></span>
                         <strong>{report.name}</strong>
                       </div>
                     </td>
-
                     <td>{report.type}</td>
                     <td>{report.dateRange}</td>
                     <td>{report.generatedOn}</td>
-
+                    <td>{report.rows?.length || 0}</td>
                     <td>
-                      <StatusBadge status={report.status} />
+                      <span className="reports-status reports-status--completed">
+                        {report.status}
+                      </span>
                     </td>
-
                     <td>
                       <div className="reports-row-actions">
                         <button
                           type="button"
                           className="reports-view-button"
-                          onClick={() => handleViewReport(report)}
+                          onClick={() => setSelectedReport(report)}
                         >
                           View
                         </button>
-
-                        <div
-                          className="reports-action-wrapper"
-                          ref={
-                            activeMenuId === report.id
-                              ? actionMenuRef
-                              : null
-                          }
+                        <button
+                          type="button"
+                          className="reports-icon-button reports-icon-button--table"
+                          onClick={() => downloadReportCsv(report)}
+                          aria-label={`Download ${report.name}`}
                         >
-                          <button
-                            type="button"
-                            className="reports-icon-button reports-icon-button--table"
-                            aria-label={`Open actions for ${report.name}`}
-                            aria-haspopup="menu"
-                            aria-expanded={
-                              activeMenuId === report.id
-                            }
-                            onClick={() =>
-                              setActiveMenuId((currentId) =>
-                                currentId === report.id
-                                  ? null
-                                  : report.id,
-                              )
-                            }
-                          >
-                            <MoreVertical
-                              size={19}
-                              aria-hidden="true"
-                            />
-                          </button>
-
-                          {activeMenuId === report.id && (
-                            <div
-                              className="reports-action-menu"
-                              role="menu"
-                            >
-                              <button
-                                type="button"
-                                role="menuitem"
-                                disabled={
-                                  report.status === 'In Progress'
-                                }
-                                onClick={() =>
-                                  handleDownloadReport(report)
-                                }
-                              >
-                                <Download
-                                  size={16}
-                                  aria-hidden="true"
-                                />
-                                Download CSV
-                              </button>
-
-                              <button
-                                type="button"
-                                role="menuitem"
-                                onClick={() =>
-                                  handleDuplicateReport(report)
-                                }
-                              >
-                                <Copy
-                                  size={16}
-                                  aria-hidden="true"
-                                />
-                                Duplicate Report
-                              </button>
-
-                              <button
-                                type="button"
-                                role="menuitem"
-                                className="reports-action-menu__danger"
-                                onClick={() =>
-                                  handleRequestDelete(report)
-                                }
-                              >
-                                <Trash2
-                                  size={16}
-                                  aria-hidden="true"
-                                />
-                                Delete Report
-                              </button>
-                            </div>
-                          )}
-                        </div>
+                          <Download size={16} />
+                        </button>
                       </div>
                     </td>
                   </tr>
@@ -1557,61 +734,22 @@ function Reports() {
               </tbody>
             </table>
           </div>
-        ) : (
-          <div className="reports-empty-state">
-            <span className="reports-empty-state__icon" aria-hidden="true">
-              <FileText size={29} />
-            </span>
-
-            <h3>No reports found</h3>
-            <p>
-              Try changing your search or report category filter.
-            </p>
-
-            <button
-              type="button"
-              className="reports-button reports-button--outline"
-              onClick={handleClearFilters}
-            >
-              Clear Filters
-            </button>
-          </div>
         )}
 
         <div className="reports-info-banner">
-          <Info size={21} aria-hidden="true" />
+          <Info size={20} />
           <p>
-            Select a report category or view a recent report to see
-            detailed insights.
+            Reports are calculated directly from bookings, payments, complaints,
+            customers, services and technicians. No report database table is required.
           </p>
         </div>
       </section>
 
-      {selectedReport && (
-        <ReportDetailsModal
-          report={selectedReport}
-          onClose={() => setSelectedReportId(null)}
-          onDownload={handleDownloadReport}
-        />
-      )}
-
-      {isCustomReportOpen && (
-        <CustomReportModal
-          form={customReportForm}
-          errors={customReportErrors}
-          onChange={handleCustomReportChange}
-          onSubmit={handleGenerateCustomReport}
-          onClose={handleCloseCustomReport}
-        />
-      )}
-
-      {reportToDelete && (
-        <DeleteConfirmationModal
-          report={reportToDelete}
-          onCancel={() => setReportToDelete(null)}
-          onConfirm={handleConfirmDelete}
-        />
-      )}
+      <ReportDetailsModal
+        report={selectedReport}
+        onClose={() => setSelectedReport(null)}
+        onDownload={downloadReportCsv}
+      />
     </main>
   );
 }

@@ -43,22 +43,55 @@ api.interceptors.request.use(
   (config) => {
     const url = config.url || "";
 
-    const isPublicEndpoint =
-      PUBLIC_ENDPOINTS.some((endpoint) =>
-        url.startsWith(endpoint)
-      );
+    const isPublicEndpoint = PUBLIC_ENDPOINTS.some((endpoint) =>
+      url.startsWith(endpoint)
+    );
+
+    config.headers = config.headers || {};
 
     if (!isPublicEndpoint) {
       const token = getStoredToken();
 
       if (token) {
-        config.headers = config.headers || {};
-
-        config.headers.Authorization =
-          `Bearer ${token}`;
+        config.headers.Authorization = `Bearer ${token}`;
       }
-    } else if (config.headers) {
-      delete config.headers.Authorization;
+    } else {
+      if (typeof config.headers.delete === "function") {
+        config.headers.delete("Authorization");
+      } else {
+        delete config.headers.Authorization;
+      }
+    }
+
+    const isFormData =
+      typeof FormData !== "undefined" &&
+      config.data instanceof FormData;
+
+    if (isFormData) {
+      /*
+       * Do not manually set multipart/form-data.
+       * The browser will automatically add the required boundary.
+       */
+      if (typeof config.headers.delete === "function") {
+        config.headers.delete("Content-Type");
+      } else {
+        delete config.headers["Content-Type"];
+        delete config.headers["content-type"];
+      }
+    } else {
+      /*
+       * Keep all normal login, booking, payment,
+       * profile and other requests as JSON.
+       */
+      if (typeof config.headers.set === "function") {
+        config.headers.set(
+          "Content-Type",
+          "application/json"
+        );
+      } else {
+        config.headers["Content-Type"] =
+          "application/json";
+      }
     }
 
     return config;

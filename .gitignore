@@ -23,3 +23,20 @@
 hs_err_pid*
 replay_pid*
 /.metadata/
+
+
+# Runtime uploaded files
+backend/uploads/
+
+# Backend build files
+backend/target/
+
+# Eclipse / Spring Tools files
+backend/.classpath
+backend/.project
+backend/.factorypath
+backend/.settings/
+
+# Frontend dependencies
+frontend/node_modules/
+frontend/dist/
