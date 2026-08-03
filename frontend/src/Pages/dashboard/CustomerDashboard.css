@@ -592,3 +592,32 @@
     grid-template-columns: 1fr 1fr;
   }
 }
+
+.cd-dashboard-error {
+  margin: 12px 0 0;
+  padding: 10px 14px;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  background: #fff7f7;
+  color: #dc2626;
+  font-size: 13px;
+}
+
+.cd-upcoming-panel--empty {
+  min-height: 165px;
+  align-items: center;
+  justify-content: center;
+}
+
+.cd-empty-message {
+  margin: 0;
+  color: var(--cd-text-muted);
+  font-size: 13.5px;
+  text-align: center;
+}
+
+.cd-table-empty {
+  padding: 35px 14px !important;
+  color: var(--cd-text-muted);
+  text-align: center !important;
+}

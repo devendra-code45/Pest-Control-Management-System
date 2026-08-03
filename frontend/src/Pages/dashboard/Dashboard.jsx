@@ -1,612 +1,1337 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
+
+import { useNavigate } from "react-router-dom";
+
 import {
-  CalendarDays,
-  CalendarPlus,
-  Users,
-  ShieldCheck,
-  UserCog,
+  ClipboardList,
+  ClipboardCheck,
   IndianRupee,
-  TrendingUp,
-  MapPin,
-  Clock3,
-  Bug,
-  Wrench,
-  UserPlus,
-  BarChart3,
-  Leaf,
-  ChevronRight,
+  AlertCircle,
+  Calendar,
   ArrowRight,
-  MessageSquareWarning,
-  Building2,
-} from 'lucide-react';
-import './Dashboard.css';
+  ChevronRight,
+  CalendarDays,
+  Wallet,
+  FileText,
+  UserRound,
+} from "lucide-react";
 
-const DASHBOARD_ROUTES = {
-  customers: '/customers',
-  bookings: '/bookings',
-  addBooking: '/create-booking',
-  services: '/services',
-  addService: '/add-service',
-  technicians: '/technicians',
-  complaints: '/complaints',
-  payments: '/payments',
-  reports: '/reports',
-  addCustomer: '/add-customer',
-};
+import api from "../../api/axios";
+import { useAuth } from "../../context/AuthContext";
+import "./Dashboard.css";
 
-const STAT_CARDS = [
+const BOOKING_ENDPOINTS = [
+  "/admin/bookings/pending",
+  "/admin/bookings/accepted",
+  "/admin/bookings/assigned",
+  "/admin/bookings/in-progress",
+  "/admin/bookings/completed",
+  "/admin/bookings/rejected",
+];
+
+const QUICK_ACCESS = [
   {
-    id: 'customers',
-    title: 'Total Customers',
-    value: '1,248',
-    trend: '12% from last month',
-    trendType: 'up',
-    icon: Users,
-    route: DASHBOARD_ROUTES.customers,
-  },
-  {
-    id: 'bookings',
-    title: "Today's Bookings",
-    value: '18',
-    trend: '4 new bookings today',
-    trendType: 'info',
+    id: "bookings",
+    label: "Bookings",
+    caption: "View and manage bookings",
     icon: CalendarDays,
-    route: DASHBOARD_ROUTES.bookings,
+    tone: "blue",
+    path: "/admin/bookings",
   },
   {
-    id: 'active-services',
-    title: 'Active Services',
-    value: '42',
-    trend: '8 services completed today',
-    trendType: 'info',
-    icon: ShieldCheck,
-    route: DASHBOARD_ROUTES.services,
+    id: "services",
+    label: "Services",
+    caption: "Manage pest control services",
+    icon: ClipboardCheck,
+    tone: "green",
+    path: "/admin/services",
   },
   {
-    id: 'technicians',
-    title: 'Available Technicians',
-    value: '16',
-    trend: 'Out of 24 technicians',
-    trendType: 'neutral',
-    icon: UserCog,
-    route: DASHBOARD_ROUTES.technicians,
+    id: "technicians",
+    label: "Technicians",
+    caption: "View and manage technicians",
+    icon: UserRound,
+    tone: "purple",
+    path: "/admin/technicians",
   },
   {
-    id: 'revenue',
-    title: 'Monthly Revenue',
-    value: '₹2,48,500',
-    trend: '18% from last month',
-    trendType: 'up',
-    icon: IndianRupee,
-    route: DASHBOARD_ROUTES.payments,
+    id: "payments",
+    label: "Payments",
+    caption: "View customer payments",
+    icon: Wallet,
+    tone: "orange",
+    path: "/admin/payments",
+  },
+  {
+    id: "complaints",
+    label: "Complaints",
+    caption: "View customer complaints",
+    icon: AlertCircle,
+    tone: "red",
+    path: "/admin/complaints",
+  },
+  {
+    id: "reports",
+    label: "Reports",
+    caption: "View system reports",
+    icon: FileText,
+    tone: "blue",
+    path: "/admin/reports",
   },
 ];
 
-const UPCOMING_SERVICES = [
-  {
-    id: 'UPC-1',
-    date: '20 Jul 2026',
-    time: '09:00 AM',
-    customer: 'Rahul Patil',
-    service: 'General Pest Control',
-    property: 'Residential',
-    location: 'Pune, Maharashtra',
-    technician: 'Amit Sharma',
-    status: 'Scheduled',
-  },
-  {
-    id: 'UPC-2',
-    date: '20 Jul 2026',
-    time: '11:30 AM',
-    customer: 'Sneha Kulkarni',
-    service: 'Termite Treatment',
-    property: 'Office',
-    location: 'Pimpri, Maharashtra',
-    technician: 'Rohit Jadhav',
-    status: 'In Progress',
-  },
-  {
-    id: 'UPC-3',
-    date: '20 Jul 2026',
-    time: '02:00 PM',
-    customer: 'Akash More',
-    service: 'Rodent Control',
-    property: 'Restaurant',
-    location: 'Chinchwad, Maharashtra',
-    technician: 'Sameer Patil',
-    status: 'Pending',
-  },
+const AVATAR_TONES = [
+  "ad-av-green",
+  "ad-av-blue",
+  "ad-av-orange",
+  "ad-av-purple",
+  "ad-av-teal",
 ];
 
-const RECENT_COMPLAINTS = [
-  {
-    id: 'REQ-2026-0148',
-    customer: 'Vishal Deshmukh',
-    issue: 'Cockroach infestation',
-    date: '19 Jul 2026',
-    priority: 'High',
-    status: 'Open',
-  },
-  {
-    id: 'REQ-2026-0147',
-    customer: 'Priya Shah',
-    issue: 'Termite inspection request',
-    date: '19 Jul 2026',
-    priority: 'Medium',
-    status: 'Assigned',
-  },
-  {
-    id: 'REQ-2026-0146',
-    customer: 'Sagar Patil',
-    issue: 'Follow-up service required',
-    date: '18 Jul 2026',
-    priority: 'Low',
-    status: 'Resolved',
-  },
-  {
-    id: 'REQ-2026-0145',
-    customer: 'Neha Joshi',
-    issue: 'Technician arrival delay',
-    date: '18 Jul 2026',
-    priority: 'High',
-    status: 'In Review',
-  },
-];
+function toArray(value) {
+  return Array.isArray(value) ? value : [];
+}
 
-const ACTIVE_SERVICES = [
-  {
-    id: 'ACT-1',
-    service: 'General Pest Control',
-    icon: ShieldCheck,
-    customer: 'Green Valley Residency',
-    property: 'Residential Society',
-    location: 'Pune, Maharashtra',
-    date: 'Started on 19 Jul 2026',
-    status: 'In Progress',
-  },
-  {
-    id: 'ACT-2',
-    service: 'Termite Treatment',
-    icon: Bug,
-    customer: 'Tech Park Offices',
-    property: 'Commercial Office',
-    location: 'Hinjewadi, Pune',
-    date: 'Started on 18 Jul 2026',
-    status: 'In Progress',
-  },
-  {
-    id: 'ACT-3',
-    service: 'Rodent Control',
-    icon: Wrench,
-    customer: 'Royal Food Corner',
-    property: 'Restaurant',
-    location: 'Pimpri, Maharashtra',
-    date: 'Started on 18 Jul 2026',
-    status: 'Inspection',
-  },
-  {
-    id: 'ACT-4',
-    service: 'Bed Bug Treatment',
-    icon: Bug,
-    customer: 'Sunrise Hostel',
-    property: 'Hostel',
-    location: 'Wakad, Pune',
-    date: 'Scheduled for 20 Jul 2026',
-    status: 'Scheduled',
-  },
-];
-
-const QUICK_ACTIONS = [
-  {
-    id: 'add-customer',
-    label: 'Add Customer',
-    icon: UserPlus,
-    route: DASHBOARD_ROUTES.addCustomer,
-  },
-  {
-    id: 'new-booking',
-    label: 'New Booking',
-    icon: CalendarPlus,
-    route: DASHBOARD_ROUTES.addBooking,
-  },
-  {
-    id: 'add-service',
-    label: 'Add Service',
-    icon: Wrench,
-    route: DASHBOARD_ROUTES.addService,
-  },
-  {
-    id: 'view-reports',
-    label: 'View Reports',
-    icon: BarChart3,
-    route: DASHBOARD_ROUTES.reports,
-  },
-];
-
-const STATUS_TONE = {
-  Scheduled: 'blue',
-  'In Progress': 'green',
-  Pending: 'orange',
-  Inspection: 'purple',
-  Open: 'red',
-  Assigned: 'blue',
-  Resolved: 'green',
-  'In Review': 'purple',
-};
-
-const PRIORITY_TONE = {
-  High: 'red',
-  Medium: 'orange',
-  Low: 'green',
-};
-
-function getInitials(name) {
-  return name
-    .split(' ')
-    .filter(Boolean)
-    .map((part) => part[0])
-    .join('')
-    .slice(0, 2)
+function normalizeStatus(value) {
+  return String(value || "")
+    .trim()
+    .replaceAll("-", "_")
+    .replaceAll(" ", "_")
     .toUpperCase();
 }
 
-function formatDisplayDate(isoDate) {
-  const parsed = new Date(`${isoDate}T00:00:00`);
-  return parsed.toLocaleDateString('en-GB', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
+function formatCurrency(value) {
+  return new Intl.NumberFormat("en-IN", {
+    style: "currency",
+    currency: "INR",
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+  }).format(Number(value || 0));
+}
+
+function parseDate(value) {
+  if (!value) {
+    return null;
+  }
+
+  const date =
+    typeof value === "string" &&
+    /^\d{4}-\d{2}-\d{2}$/.test(value)
+      ? new Date(`${value}T00:00:00`)
+      : new Date(value);
+
+  return Number.isNaN(date.getTime())
+    ? null
+    : date;
+}
+
+function getDateTimestamp(value) {
+  return parseDate(value)?.getTime() || 0;
+}
+
+function formatDate(value) {
+  const date = parseDate(value);
+
+  if (!date) {
+    return "Not available";
+  }
+
+  return date.toLocaleDateString("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
   });
 }
 
-function StatusBadge({ label, tone }) {
+function formatTime(value) {
+  const date = parseDate(value);
+
+  if (!date) {
+    return "";
+  }
+
+  return date.toLocaleTimeString("en-IN", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+function formatBookingId(id) {
+  if (id === null || id === undefined) {
+    return "Not available";
+  }
+
+  return `BK-${String(id).padStart(4, "0")}`;
+}
+
+function formatBookingStatus(status) {
+  const labels = {
+    PENDING: "Pending",
+    ACCEPTED: "Accepted",
+    ASSIGNED: "Assigned",
+    IN_PROGRESS: "In Progress",
+    COMPLETED: "Completed",
+    CANCELLED: "Cancelled",
+    REJECTED: "Rejected",
+  };
+
+  const normalized = normalizeStatus(status);
+
   return (
-    <span className={`admin-dashboard-badge admin-dashboard-badge--${tone}`}>
-      {label}
-    </span>
+    labels[normalized] ||
+    String(status || "Unknown")
   );
 }
 
-function StatCard({ title, value, trend, trendType, icon: Icon, onClick }) {
+function formatPaymentStatus(status) {
+  const labels = {
+    PAID: "Paid",
+    PENDING: "Pending",
+    FAILED: "Failed",
+    REFUNDED: "Refunded",
+    PARTIALLY_REFUNDED:
+      "Partially Refunded",
+  };
+
+  const normalized = normalizeStatus(status);
+
   return (
-    <button type="button" className="admin-dashboard-stat-card" onClick={onClick}>
-      <span className="admin-dashboard-stat-icon" aria-hidden="true">
-        <Icon size={22} />
-      </span>
-      <span className="admin-dashboard-stat-text">
-        <span className="admin-dashboard-stat-title">{title}</span>
-        <span className="admin-dashboard-stat-value">{value}</span>
-        <span className={`admin-dashboard-stat-trend admin-dashboard-stat-trend--${trendType}`}>
-          {trendType === 'up' && <TrendingUp size={14} aria-hidden="true" />}
-          {trend}
-        </span>
-      </span>
-    </button>
+    labels[normalized] ||
+    String(status || "Unknown")
   );
 }
 
-function TechnicianAvatar({ name }) {
+function getInitials(name = "") {
+  const generatedInitials = String(name)
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((part) => part[0])
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
+
+  return generatedInitials || "NA";
+}
+
+function getAvatarTone(name = "") {
+  const characterTotal = String(name)
+    .split("")
+    .reduce(
+      (total, character) =>
+        total + character.charCodeAt(0),
+      0
+    );
+
+  return AVATAR_TONES[
+    characterTotal % AVATAR_TONES.length
+  ];
+}
+
+function getPaymentCustomerName(payment) {
   return (
-    <span className="admin-dashboard-avatar" aria-hidden="true">
-      {getInitials(name)}
-    </span>
+    payment.customerName ||
+    payment.customer?.fullName ||
+    payment.customer?.name ||
+    "Customer"
   );
 }
 
-function UpcomingServicesCard({ navigate }) {
+function getPaymentBookingNumber(payment) {
+  if (payment.bookingNumber) {
+    return payment.bookingNumber;
+  }
+
+  if (
+    payment.bookingId !== null &&
+    payment.bookingId !== undefined
+  ) {
+    return formatBookingId(
+      payment.bookingId
+    );
+  }
+
+  return "Not available";
+}
+
+function getPaymentTransactionId(payment) {
   return (
-    <section className="admin-dashboard-card">
-      <div className="admin-dashboard-card-header">
-        <h2 className="admin-dashboard-card-title">
-          <CalendarDays size={18} aria-hidden="true" />
-          Upcoming Services
-        </h2>
-        <button
-          type="button"
-          className="admin-dashboard-btn admin-dashboard-btn--outline"
-          onClick={() => navigate(DASHBOARD_ROUTES.booking)}
-        >
-          View All Schedule
-          <ChevronRight size={16} aria-hidden="true" />
-        </button>
-      </div>
-      <div className="admin-dashboard-table-wrapper">
-        <table className="admin-dashboard-table">
-          <thead>
-            <tr>
-              <th scope="col">Date &amp; Time</th>
-              <th scope="col">Customer</th>
-              <th scope="col">Service Type</th>
-              <th scope="col">Property / Location</th>
-              <th scope="col">Technician</th>
-              <th scope="col">Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {UPCOMING_SERVICES.map((row) => (
-              <tr key={row.id}>
-                <td>
-                  <div className="admin-dashboard-cell-datetime">
-                    <span className="admin-dashboard-cell-icon-box" aria-hidden="true">
-                      <CalendarDays size={14} />
-                    </span>
-                    <div className="admin-dashboard-cell-stack">
-                      <span className="admin-dashboard-cell-primary">{row.date}</span>
-                      <span className="admin-dashboard-cell-muted admin-dashboard-cell-inline">
-                        <Clock3 size={12} aria-hidden="true" />
-                        {row.time}
-                      </span>
-                    </div>
-                  </div>
-                </td>
-                <td className="admin-dashboard-cell-primary">{row.customer}</td>
-                <td>
-                  <span className="admin-dashboard-cell-inline">
-                    <Bug size={14} aria-hidden="true" />
-                    {row.service}
-                  </span>
-                </td>
-                <td>
-                  <div className="admin-dashboard-cell-stack">
-                    <span className="admin-dashboard-cell-primary admin-dashboard-cell-inline">
-                      <Building2 size={12} aria-hidden="true" />
-                      {row.property}
-                    </span>
-                    <span className="admin-dashboard-cell-muted admin-dashboard-cell-inline">
-                      <MapPin size={12} aria-hidden="true" />
-                      {row.location}
-                    </span>
-                  </div>
-                </td>
-                <td>
-                  <div className="admin-dashboard-cell-inline">
-                    <TechnicianAvatar name={row.technician} />
-                    <span>{row.technician}</span>
-                  </div>
-                </td>
-                <td>
-                  <StatusBadge label={row.status} tone={STATUS_TONE[row.status]} />
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </section>
+    payment.transactionId ||
+    payment.referenceNumber ||
+    `PAY-${String(
+      payment.id || "NA"
+    ).padStart(4, "0")}`
   );
 }
 
-function ComplaintsCard({ navigate }) {
+function getPaymentDate(payment) {
   return (
-    <section className="admin-dashboard-card">
-      <div className="admin-dashboard-card-header">
-        <h2 className="admin-dashboard-card-title">
-          <MessageSquareWarning size={18} aria-hidden="true" />
-          Recent Complaints &amp; Requests
-        </h2>
-        <button
-          type="button"
-          className="admin-dashboard-btn admin-dashboard-btn--outline"
-          onClick={() => navigate(DASHBOARD_ROUTES.complaints)}
-        >
-          View All Complaints
-          <ChevronRight size={16} aria-hidden="true" />
-        </button>
-      </div>
-      <div className="admin-dashboard-table-wrapper">
-        <table className="admin-dashboard-table">
-          <thead>
-            <tr>
-              <th scope="col">Request ID</th>
-              <th scope="col">Customer</th>
-              <th scope="col">Issue / Service</th>
-              <th scope="col">Date</th>
-              <th scope="col">Priority</th>
-              <th scope="col">Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {RECENT_COMPLAINTS.map((row) => (
-              <tr key={row.id}>
-                <td className="admin-dashboard-cell-primary">{row.id}</td>
-                <td>{row.customer}</td>
-                <td className="admin-dashboard-cell-muted">{row.issue}</td>
-                <td className="admin-dashboard-cell-muted">{row.date}</td>
-                <td>
-                  <StatusBadge label={row.priority} tone={PRIORITY_TONE[row.priority]} />
-                </td>
-                <td>
-                  <StatusBadge label={row.status} tone={STATUS_TONE[row.status]} />
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </section>
+    payment.createdAt ||
+    payment.paymentDate ||
+    payment.paidAt ||
+    payment.updatedAt
   );
 }
 
-function ActiveServicesCard({ navigate }) {
-  return (
-    <section className="admin-dashboard-card">
-      <div className="admin-dashboard-card-header">
-        <h2 className="admin-dashboard-card-title">
-          <ShieldCheck size={18} aria-hidden="true" />
-          Active Services
-        </h2>
-        <button
-          type="button"
-          className="admin-dashboard-btn admin-dashboard-btn--outline"
-          onClick={() => navigate(DASHBOARD_ROUTES.services)}
-        >
-          View All
-          <ChevronRight size={16} aria-hidden="true" />
-        </button>
-      </div>
-      <ul className="admin-dashboard-active-list">
-        {ACTIVE_SERVICES.map((item) => {
-          const Icon = item.icon;
-          return (
-            <li key={item.id} className="admin-dashboard-active-item">
-              <span className="admin-dashboard-active-icon" aria-hidden="true">
-                <Icon size={18} />
-              </span>
-              <div className="admin-dashboard-active-body">
-                <div className="admin-dashboard-active-top">
-                  <span className="admin-dashboard-active-service">{item.service}</span>
-                  <StatusBadge label={item.status} tone={STATUS_TONE[item.status]} />
-                </div>
-                <span className="admin-dashboard-cell-primary">{item.customer}</span>
-                <span className="admin-dashboard-cell-muted admin-dashboard-cell-inline">
-                  <Building2 size={12} aria-hidden="true" />
-                  {item.property}
-                </span>
-                <span className="admin-dashboard-cell-muted admin-dashboard-cell-inline">
-                  <MapPin size={12} aria-hidden="true" />
-                  {item.location}
-                </span>
-                <span className="admin-dashboard-cell-muted admin-dashboard-cell-inline">
-                  <Clock3 size={12} aria-hidden="true" />
-                  {item.date}
-                </span>
-              </div>
-            </li>
-          );
-        })}
-      </ul>
-    </section>
-  );
+function getErrorMessage(error, fallback) {
+  const data = error?.response?.data;
+
+  if (
+    typeof data === "string" &&
+    data.trim()
+  ) {
+    return data;
+  }
+
+  if (data?.message) {
+    return data.message;
+  }
+
+  if (data?.error) {
+    return data.error;
+  }
+
+  if (!error?.response) {
+    return "Unable to connect to the backend.";
+  }
+
+  return fallback;
 }
 
-function QuickActionButton({ label, icon: Icon, onClick }) {
-  return (
-    <button type="button" className="admin-dashboard-quick-action" onClick={onClick}>
-      <span className="admin-dashboard-quick-action-icon" aria-hidden="true">
-        <Icon size={18} />
-      </span>
-      <span className="admin-dashboard-quick-action-label">{label}</span>
-      <ChevronRight size={16} className="admin-dashboard-quick-action-chevron" aria-hidden="true" />
-    </button>
-  );
-}
-
-function QuickActionsCard({ navigate }) {
-  return (
-    <section className="admin-dashboard-card">
-      <div className="admin-dashboard-quick-actions-header">
-        <h2 className="admin-dashboard-card-title">Quick Actions</h2>
-        <p className="admin-dashboard-card-subtitle">Manage common operations quickly.</p>
-      </div>
-      <div className="admin-dashboard-quick-actions-grid">
-        {QUICK_ACTIONS.map((action) => (
-          <QuickActionButton
-            key={action.id}
-            label={action.label}
-            icon={action.icon}
-            onClick={() => navigate(action.route)}
-          />
-        ))}
-      </div>
-    </section>
-  );
-}
-
-function InfoBanner({ navigate }) {
-  return (
-    <section className="admin-dashboard-banner">
-      <span className="admin-dashboard-banner-icon" aria-hidden="true">
-        <Leaf size={24} />
-      </span>
-      <div className="admin-dashboard-banner-body">
-        <h2 className="admin-dashboard-banner-title">
-          Efficient operations create safer environments.
-        </h2>
-        <p className="admin-dashboard-banner-text">
-          Track every booking, service, technician and customer request from one centralized dashboard.
-        </p>
-      </div>
-      <button
-        type="button"
-        className="admin-dashboard-btn admin-dashboard-btn--secondary"
-        onClick={() => navigate("/admin/reports")}
-      >
-        View Reports
-        <ArrowRight size={16} aria-hidden="true" />
-      </button>
-    </section>
-  );
-}
-
-export default function Dashboard() {
-  const navigate = useNavigate();
-  const [selectedDate, setSelectedDate] = useState('2026-07-19');
-
-  const handleDateChange = (event) => {
-    setSelectedDate(event.target.value);
+function BookingStatusBadge({ status }) {
+  const toneMap = {
+    Completed: "ad-badge--success",
+    "In Progress": "ad-badge--info",
+    Pending: "ad-badge--warning",
+    Accepted: "ad-badge--info",
+    Assigned: "ad-badge--info",
+    Cancelled: "ad-badge--danger",
+    Rejected: "ad-badge--danger",
   };
 
   return (
-    <div className="admin-dashboard-page">
-      <header className="admin-dashboard-header">
-        <div className="admin-dashboard-header-text">
-          <h1 className="admin-dashboard-title">Admin Dashboard</h1>
-          <p className="admin-dashboard-subtitle">
-            Monitor customers, bookings, technicians and pest control operations.
+    <span
+      className={`ad-badge ${
+        toneMap[status] ||
+        "ad-badge--neutral"
+      }`}
+    >
+      {status}
+    </span>
+  );
+}
+
+function PaymentStatusBadge({ status }) {
+  const toneMap = {
+    Paid: "ad-badge--success",
+    Pending: "ad-badge--warning",
+    Failed: "ad-badge--danger",
+    Refunded: "ad-badge--neutral",
+    "Partially Refunded":
+      "ad-badge--info",
+  };
+
+  return (
+    <span
+      className={`ad-badge ${
+        toneMap[status] ||
+        "ad-badge--neutral"
+      }`}
+    >
+      {status}
+    </span>
+  );
+}
+
+export default function AdminDashboard() {
+  const navigate = useNavigate();
+
+  const {
+    user,
+    logout,
+  } = useAuth();
+
+  const [bookings, setBookings] =
+    useState([]);
+
+  const [services, setServices] =
+    useState([]);
+
+  const [payments, setPayments] =
+    useState([]);
+
+  const [complaints, setComplaints] =
+    useState([]);
+
+  const [loading, setLoading] =
+    useState(true);
+
+  const [
+    dashboardError,
+    setDashboardError,
+  ] = useState("");
+
+  const loadDashboard = useCallback(
+    async () => {
+      try {
+        setLoading(true);
+        setDashboardError("");
+
+        const results =
+          await Promise.allSettled([
+            api.get("/admin/services"),
+            api.get("/admin/payments"),
+            api.get("/admin/complaints"),
+
+            ...BOOKING_ENDPOINTS.map(
+              (endpoint) =>
+                api.get(endpoint)
+            ),
+          ]);
+
+        const unauthorized =
+          results.some(
+            (result) =>
+              result.status ===
+                "rejected" &&
+              result.reason?.response
+                ?.status === 401
+          );
+
+        if (unauthorized) {
+          logout();
+
+          navigate("/login", {
+            replace: true,
+          });
+
+          return;
+        }
+
+        const [
+          servicesResult,
+          paymentsResult,
+          complaintsResult,
+          ...bookingResults
+        ] = results;
+
+        const errors = [];
+
+        if (
+          servicesResult.status ===
+          "fulfilled"
+        ) {
+          setServices(
+            toArray(
+              servicesResult.value.data
+            )
+          );
+        } else {
+          setServices([]);
+
+          errors.push(
+            getErrorMessage(
+              servicesResult.reason,
+              "Services could not be loaded."
+            )
+          );
+        }
+
+        if (
+          paymentsResult.status ===
+          "fulfilled"
+        ) {
+          setPayments(
+            toArray(
+              paymentsResult.value.data
+            )
+          );
+        } else {
+          setPayments([]);
+
+          errors.push(
+            getErrorMessage(
+              paymentsResult.reason,
+              "Payments could not be loaded."
+            )
+          );
+        }
+
+        if (
+          complaintsResult.status ===
+          "fulfilled"
+        ) {
+          setComplaints(
+            toArray(
+              complaintsResult.value.data
+            )
+          );
+        } else {
+          setComplaints([]);
+
+          errors.push(
+            getErrorMessage(
+              complaintsResult.reason,
+              "Complaints could not be loaded."
+            )
+          );
+        }
+
+        const successfulBookingResults =
+          bookingResults.filter(
+            (result) =>
+              result.status ===
+              "fulfilled"
+          );
+
+        if (
+          successfulBookingResults.length ===
+          0
+        ) {
+          setBookings([]);
+
+          errors.push(
+            "Bookings could not be loaded."
+          );
+        } else {
+          const bookingMap = new Map();
+
+          successfulBookingResults
+            .flatMap((result) =>
+              toArray(
+                result.value.data
+              )
+            )
+            .forEach((booking) => {
+              const key =
+                booking.id ??
+                `${booking.status}-${booking.createdAt}`;
+
+              bookingMap.set(
+                String(key),
+                booking
+              );
+            });
+
+          setBookings([
+            ...bookingMap.values(),
+          ]);
+
+          if (
+            successfulBookingResults.length !==
+            BOOKING_ENDPOINTS.length
+          ) {
+            errors.push(
+              "Some booking categories could not be loaded."
+            );
+          }
+        }
+
+        setDashboardError(
+          [...new Set(errors)].join(" ")
+        );
+      } catch (error) {
+        setDashboardError(
+          getErrorMessage(
+            error,
+            "Unable to load dashboard information."
+          )
+        );
+      } finally {
+        setLoading(false);
+      }
+    },
+    [logout, navigate]
+  );
+
+  useEffect(() => {
+    loadDashboard();
+  }, [loadDashboard]);
+
+  const adminName =
+    user?.fullName ||
+    user?.name ||
+    user?.username ||
+    "Admin";
+
+  const today = useMemo(() => {
+    const currentDate = new Date();
+
+    return {
+      dateLabel:
+        currentDate.toLocaleDateString(
+          "en-IN",
+          {
+            day: "2-digit",
+            month: "short",
+            year: "numeric",
+          }
+        ),
+
+      dayLabel:
+        currentDate.toLocaleDateString(
+          "en-IN",
+          {
+            weekday: "long",
+          }
+        ),
+    };
+  }, []);
+
+  const totalRevenue = useMemo(() => {
+    return payments.reduce(
+      (total, payment) => {
+        const status =
+          normalizeStatus(
+            payment.status
+          );
+
+        const amount = Number(
+          payment.amount || 0
+        );
+
+        const refundedAmount = Number(
+          payment.refundedAmount || 0
+        );
+
+        if (status === "PAID") {
+          return total + amount;
+        }
+
+        if (
+          status ===
+          "PARTIALLY_REFUNDED"
+        ) {
+          return (
+            total +
+            Math.max(
+              0,
+              amount - refundedAmount
+            )
+          );
+        }
+
+        return total;
+      },
+      0
+    );
+  }, [payments]);
+
+  const activeServicesCount =
+    useMemo(() => {
+      return services.filter(
+        (service) => {
+          const status =
+            normalizeStatus(
+              service.status
+            );
+
+          return (
+            service.active !== false &&
+            status !== "INACTIVE"
+          );
+        }
+      ).length;
+    }, [services]);
+
+  const openComplaintsCount =
+    useMemo(() => {
+      const closedStatuses = new Set([
+        "RESOLVED",
+        "CLOSED",
+        "REJECTED",
+      ]);
+
+      return complaints.filter(
+        (complaint) =>
+          !closedStatuses.has(
+            normalizeStatus(
+              complaint.status
+            )
+          )
+      ).length;
+    }, [complaints]);
+
+  const stats = useMemo(
+    () => [
+      {
+        id: "bookings",
+        label: "Total Bookings",
+        value: bookings.length,
+        icon: ClipboardList,
+        tone: "blue",
+        linkLabel:
+          "View all bookings",
+        path: "/admin/bookings",
+      },
+      {
+        id: "services",
+        label: "Active Services",
+        value: activeServicesCount,
+        icon: ClipboardCheck,
+        tone: "green",
+        linkLabel:
+          "View all services",
+        path: "/admin/services",
+      },
+      {
+        id: "payments",
+        label: "Total Payments",
+        value: payments.length,
+        icon: Wallet,
+        tone: "purple",
+        linkLabel:
+          "View all payments",
+        path: "/admin/payments",
+      },
+      {
+        id: "revenue",
+        label: "Total Revenue",
+        value:
+          formatCurrency(
+            totalRevenue
+          ),
+        icon: IndianRupee,
+        tone: "orange",
+        linkLabel: "View payments",
+        path: "/admin/payments",
+      },
+      {
+        id: "complaints",
+        label: "Open Complaints",
+        value: openComplaintsCount,
+        icon: AlertCircle,
+        tone: "red",
+        linkLabel:
+          "View complaints",
+        path: "/admin/complaints",
+      },
+    ],
+    [
+      bookings.length,
+      activeServicesCount,
+      payments.length,
+      totalRevenue,
+      openComplaintsCount,
+    ]
+  );
+
+  const recentBookings = useMemo(
+    () => {
+      return [...bookings]
+        .sort((first, second) => {
+          const secondDate =
+            getDateTimestamp(
+              second.updatedAt ||
+                second.createdAt ||
+                second.preferredDate
+            );
+
+          const firstDate =
+            getDateTimestamp(
+              first.updatedAt ||
+                first.createdAt ||
+                first.preferredDate
+            );
+
+          if (
+            secondDate !== firstDate
+          ) {
+            return (
+              secondDate - firstDate
+            );
+          }
+
+          return (
+            Number(second.id || 0) -
+            Number(first.id || 0)
+          );
+        })
+        .slice(0, 5)
+        .map((booking) => ({
+          rawId: booking.id,
+
+          id: formatBookingId(
+            booking.id
+          ),
+
+          customer:
+            booking.customerName ||
+            booking.customer?.fullName ||
+            booking.customer?.name ||
+            "Customer",
+
+          service:
+            booking.serviceName ||
+            booking.service?.name ||
+            "Pest Control Service",
+
+          date: formatDate(
+            booking.preferredDate ||
+              booking.createdAt
+          ),
+
+          time:
+            booking.preferredTimeSlot ||
+            formatTime(
+              booking.createdAt
+            ) ||
+            "Not selected",
+
+          status:
+            formatBookingStatus(
+              booking.status
+            ),
+        }));
+    },
+    [bookings]
+  );
+
+  const recentPayments = useMemo(
+    () => {
+      return [...payments]
+        .sort((first, second) => {
+          return (
+            getDateTimestamp(
+              getPaymentDate(second)
+            ) -
+            getDateTimestamp(
+              getPaymentDate(first)
+            )
+          );
+        })
+        .slice(0, 5)
+        .map((payment) => ({
+          rawId: payment.id,
+
+          transactionId:
+            getPaymentTransactionId(
+              payment
+            ),
+
+          customer:
+            getPaymentCustomerName(
+              payment
+            ),
+
+          bookingId:
+            getPaymentBookingNumber(
+              payment
+            ),
+
+          bookingRawId:
+            payment.bookingId,
+
+          amount: formatCurrency(
+            payment.amount
+          ),
+
+          status:
+            formatPaymentStatus(
+              payment.status
+            ),
+
+          date: formatDate(
+            getPaymentDate(payment)
+          ),
+        }));
+    },
+    [payments]
+  );
+
+  const goTo = (path) => {
+    if (path) {
+      navigate(path);
+    }
+  };
+
+  const openBookingDetails = (
+    booking
+  ) => {
+    if (!booking.rawId) {
+      navigate("/admin/bookings");
+      return;
+    }
+
+    sessionStorage.setItem(
+      "pcmsSelectedBookingId",
+      String(booking.rawId)
+    );
+
+    navigate(
+      "/admin/bookings/details",
+      {
+        state: {
+          bookingId: booking.rawId,
+        },
+      }
+    );
+  };
+
+  const openPaymentDetails = (
+    payment
+  ) => {
+    if (!payment.rawId) {
+      navigate("/admin/payments");
+      return;
+    }
+
+    sessionStorage.setItem(
+      "pcmsAdminPaymentId",
+      String(payment.rawId)
+    );
+
+    sessionStorage.setItem(
+      "pcmsAdminTransactionId",
+      payment.transactionId
+    );
+
+    navigate(
+      "/admin/payments/details",
+      {
+        state: {
+          paymentId: payment.rawId,
+          transactionId:
+            payment.transactionId,
+        },
+      }
+    );
+  };
+
+  return (
+    <main className="ad-page">
+      <header className="ad-header">
+        <div className="ad-header__content">
+          <h1 className="ad-welcome">
+            Welcome back, {adminName}!
+
+            <span
+              className="ad-wave"
+              role="img"
+              aria-label="Waving hand"
+            >
+              👋
+            </span>
+          </h1>
+
+          <p className="ad-subtitle">
+            Here&apos;s what&apos;s
+            happening with your pest
+            control business today.
           </p>
         </div>
-        <div className="admin-dashboard-header-actions">
-          <div className="admin-dashboard-date-control">
-            <CalendarDays size={18} className="admin-dashboard-date-icon" aria-hidden="true" />
-            <span className="admin-dashboard-date-display" aria-hidden="true">
-              {formatDisplayDate(selectedDate)}
-            </span>
-            <input
-              type="date"
-              className="admin-dashboard-date-input"
-              value={selectedDate}
-              onChange={handleDateChange}
-              aria-label="Dashboard date"
+
+        <div className="ad-date-card">
+          <span className="ad-date-icon">
+            <Calendar
+              size={18}
+              strokeWidth={2}
             />
+          </span>
+
+          <div>
+            <p className="ad-date-value">
+              {today.dateLabel}
+            </p>
+
+            <p className="ad-date-day">
+              {today.dayLabel}
+            </p>
           </div>
-          <button
-            type="button"
-            className="admin-dashboard-btn admin-dashboard-btn--primary"
-            onClick={() => navigate(DASHBOARD_ROUTES.addBooking)}
-          >
-            <CalendarPlus size={18} aria-hidden="true" />
-            New Booking
-          </button>
         </div>
       </header>
 
-      <section className="admin-dashboard-stats-grid" aria-label="Key statistics">
-        {STAT_CARDS.map((card) => (
-          <StatCard
-            key={card.id}
-            title={card.title}
-            value={card.value}
-            trend={card.trend}
-            trendType={card.trendType}
-            icon={card.icon}
-            onClick={() => navigate(card.route)}
+      {dashboardError && (
+        <div
+          className="ad-dashboard-message"
+          role="alert"
+        >
+          <AlertCircle
+            size={18}
+            strokeWidth={2}
           />
-        ))}
+
+          <span>{dashboardError}</span>
+
+          <button
+            type="button"
+            onClick={loadDashboard}
+          >
+            Retry
+          </button>
+        </div>
+      )}
+
+      <section
+        className="ad-stats"
+        aria-label="Dashboard statistics"
+      >
+        {stats.map((stat) => {
+          const Icon = stat.icon;
+
+          return (
+            <article
+              className="ad-card ad-stat-card"
+              key={stat.id}
+            >
+              <span
+                className={`ad-stat-icon ad-stat-icon--${stat.tone}`}
+              >
+                <Icon
+                  size={22}
+                  strokeWidth={2}
+                />
+              </span>
+
+              <div className="ad-stat-body">
+                <p className="ad-stat-label">
+                  {stat.label}
+                </p>
+
+                <p className="ad-stat-value">
+                  {loading
+                    ? "—"
+                    : stat.value}
+                </p>
+
+                <button
+                  type="button"
+                  className={`ad-stat-link ad-stat-link--${stat.tone}`}
+                  onClick={() =>
+                    goTo(stat.path)
+                  }
+                >
+                  {stat.linkLabel}
+
+                  <ArrowRight
+                    size={13}
+                    strokeWidth={2}
+                  />
+                </button>
+              </div>
+            </article>
+          );
+        })}
       </section>
 
-      <div className="admin-dashboard-main-grid">
-        <div className="admin-dashboard-column admin-dashboard-column--left">
-          <UpcomingServicesCard navigate={navigate} />
-          <ComplaintsCard navigate={navigate} />
-        </div>
-        <div className="admin-dashboard-column admin-dashboard-column--right">
-          <ActiveServicesCard navigate={navigate} />
-          <QuickActionsCard navigate={navigate} />
-        </div>
+      <div className="ad-twocol">
+        <section className="ad-card ad-table-card">
+          <div className="ad-card__header">
+            <h2>Recent Bookings</h2>
+
+            <button
+              type="button"
+              className="ad-btn ad-btn--outline ad-btn--sm"
+              onClick={() =>
+                goTo("/admin/bookings")
+              }
+            >
+              View All Bookings
+            </button>
+          </div>
+
+          <div className="ad-table-wrap">
+            <table className="ad-table ad-bookings-table">
+              <thead>
+                <tr>
+                  <th>Booking ID</th>
+                  <th>Customer Name</th>
+                  <th>Service Type</th>
+                  <th>Date &amp; Time</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                {loading ? (
+                  <tr>
+                    <td
+                      colSpan={5}
+                      className="ad-table-empty"
+                    >
+                      Loading bookings...
+                    </td>
+                  </tr>
+                ) : recentBookings.length ===
+                  0 ? (
+                  <tr>
+                    <td
+                      colSpan={5}
+                      className="ad-table-empty"
+                    >
+                      No bookings found.
+                    </td>
+                  </tr>
+                ) : (
+                  recentBookings.map(
+                    (booking) => (
+                      <tr
+                        key={
+                          booking.rawId ||
+                          booking.id
+                        }
+                        className="ad-table__row"
+                        tabIndex={0}
+                        onClick={() =>
+                          openBookingDetails(
+                            booking
+                          )
+                        }
+                        onKeyDown={(
+                          event
+                        ) => {
+                          if (
+                            event.key ===
+                              "Enter" ||
+                            event.key === " "
+                          ) {
+                            event.preventDefault();
+
+                            openBookingDetails(
+                              booking
+                            );
+                          }
+                        }}
+                      >
+                        <td className="ad-table__id">
+                          {booking.id}
+                        </td>
+
+                        <td>
+                          <div className="ad-customer">
+                            <span
+                              className={`ad-avatar ${getAvatarTone(
+                                booking.customer
+                              )}`}
+                            >
+                              {getInitials(
+                                booking.customer
+                              )}
+                            </span>
+
+                            <span className="ad-customer__name">
+                              {
+                                booking.customer
+                              }
+                            </span>
+                          </div>
+                        </td>
+
+                        <td>
+                          {booking.service}
+                        </td>
+
+                        <td>
+                          <div className="ad-datetime">
+                            <Calendar
+                              size={13}
+                              strokeWidth={2}
+                            />
+
+                            <div>
+                              <p>
+                                {
+                                  booking.date
+                                }
+                              </p>
+
+                              <span>
+                                {
+                                  booking.time
+                                }
+                              </span>
+                            </div>
+                          </div>
+                        </td>
+
+                        <td>
+                          <BookingStatusBadge
+                            status={
+                              booking.status
+                            }
+                          />
+                        </td>
+                      </tr>
+                    )
+                  )
+                )}
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section className="ad-card ad-table-card">
+          <div className="ad-card__header">
+            <h2>Recent Payments</h2>
+
+            <button
+              type="button"
+              className="ad-btn ad-btn--outline ad-btn--sm"
+              onClick={() =>
+                goTo("/admin/payments")
+              }
+            >
+              View All Payments
+            </button>
+          </div>
+
+          <div className="ad-table-wrap">
+            <table className="ad-table ad-payments-table">
+              <thead>
+                <tr>
+                  <th>Transaction ID</th>
+                  <th>Customer Name</th>
+                  <th>Booking ID</th>
+                  <th>Amount</th>
+                  <th>Status</th>
+                  <th>Date</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                {loading ? (
+                  <tr>
+                    <td
+                      colSpan={6}
+                      className="ad-table-empty"
+                    >
+                      Loading payments...
+                    </td>
+                  </tr>
+                ) : recentPayments.length ===
+                  0 ? (
+                  <tr>
+                    <td
+                      colSpan={6}
+                      className="ad-table-empty"
+                    >
+                      No payments found.
+                    </td>
+                  </tr>
+                ) : (
+                  recentPayments.map(
+                    (payment) => (
+                      <tr
+                        key={
+                          payment.rawId ||
+                          payment.transactionId
+                        }
+                        className="ad-table__row"
+                        tabIndex={0}
+                        onClick={() =>
+                          openPaymentDetails(
+                            payment
+                          )
+                        }
+                        onKeyDown={(
+                          event
+                        ) => {
+                          if (
+                            event.key ===
+                              "Enter" ||
+                            event.key === " "
+                          ) {
+                            event.preventDefault();
+
+                            openPaymentDetails(
+                              payment
+                            );
+                          }
+                        }}
+                      >
+                        <td className="ad-table__id">
+                          {
+                            payment.transactionId
+                          }
+                        </td>
+
+                        <td>
+                          {payment.customer}
+                        </td>
+
+                        <td>
+                          {payment.bookingId}
+                        </td>
+
+                        <td className="ad-table__amount">
+                          {payment.amount}
+                        </td>
+
+                        <td>
+                          <PaymentStatusBadge
+                            status={
+                              payment.status
+                            }
+                          />
+                        </td>
+
+                        <td>
+                          {payment.date}
+                        </td>
+                      </tr>
+                    )
+                  )
+                )}
+              </tbody>
+            </table>
+          </div>
+        </section>
       </div>
 
-      <InfoBanner navigate={navigate} />
-    </div>
+      <section className="ad-card ad-quickaccess-card">
+        <div className="ad-card__header">
+          <h2>Quick Access</h2>
+        </div>
+
+        <div className="ad-quickaccess-grid">
+          {QUICK_ACCESS.map(
+            (item) => {
+              const Icon = item.icon;
+
+              return (
+                <button
+                  type="button"
+                  className="ad-quickaccess"
+                  key={item.id}
+                  onClick={() =>
+                    goTo(item.path)
+                  }
+                >
+                  <span
+                    className={`ad-quickaccess__icon ad-quickaccess__icon--${item.tone}`}
+                  >
+                    <Icon
+                      size={22}
+                      strokeWidth={2}
+                    />
+                  </span>
+
+                  <span className="ad-quickaccess__text">
+                    <span className="ad-quickaccess__label">
+                      {item.label}
+                    </span>
+
+                    <span className="ad-quickaccess__caption">
+                      {item.caption}
+                    </span>
+                  </span>
+
+                  <ChevronRight
+                    size={18}
+                    strokeWidth={2}
+                    className="ad-quickaccess__chevron"
+                  />
+                </button>
+              );
+            }
+          )}
+        </div>
+      </section>
+    </main>
   );
 }

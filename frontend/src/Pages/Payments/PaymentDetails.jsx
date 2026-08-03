@@ -1987,18 +1987,6 @@ function PaymentDetails() {
                   {bookingStatus}
                 </strong>
               </div>
-
-              <button
-                className="pdt-button pdt-button--outline pdt-booking-button"
-                type="button"
-                onClick={openBooking}
-              >
-                <CalendarDays
-                  aria-hidden="true"
-                  size={18}
-                />
-                View Booking
-              </button>
             </div>
           </section>
 
