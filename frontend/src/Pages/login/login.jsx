@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+import { GoogleLogin } from "@react-oauth/google";
 import {
   HiOutlineUser,
   HiOutlineLockClosed,
@@ -248,6 +249,72 @@ const Login = () => {
     }
   };
 
+  const handleGoogleLogin = async (credentialResponse) => {
+    try {
+      setSubmitting(true);
+      setError("");
+
+      const response = await api.post(
+        "/users/google-login",
+        {
+          credential: credentialResponse.credential,
+        }
+      );
+
+      const data = response.data || {};
+
+      const token =
+        data.token ||
+        data.accessToken ||
+        data.jwtToken;
+
+      if (!token) {
+        throw new Error(
+          "Google login response did not return a JWT token."
+        );
+      }
+
+      const role = String(data.role || "")
+        .replace(/^ROLE_/, "")
+        .toUpperCase();
+
+      login({
+        id: data.id,
+        fullName: data.fullName,
+        email: data.email,
+        role,
+        token,
+      });
+
+      if (role === "ADMIN") {
+        navigate("/admin/dashboard", {
+          replace: true,
+        });
+      } else if (role === "CUSTOMER") {
+        navigate("/customer/dashboard", {
+          replace: true,
+        });
+      } else {
+        setError("This account has an unsupported role.");
+      }
+
+    } catch (requestError) {
+
+      const data = requestError.response?.data;
+
+      if (data?.message) {
+        setError(data.message);
+      } else if (data?.error) {
+        setError(data.error);
+      } else {
+        setError("Google login failed. Please try again.");
+      }
+
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const updateForm = (event) => {
     const { name, value } = event.target;
 
@@ -428,10 +495,15 @@ const Login = () => {
               <span className="divider-line" />
             </div>
 
-            <button type="button" className="btn btn-google">
-              <FcGoogle />
-              Login with Google
-            </button>
+            <div className="google-login-wrapper">
+              <GoogleLogin
+                onSuccess={handleGoogleLogin}
+                onError={() => {
+                  setError("Google login failed. Please try again.");
+                }}
+                useOneTap={false}
+              />
+            </div>
           </form>
 
           <p className="register-text">
